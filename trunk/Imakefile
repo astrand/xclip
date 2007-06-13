@@ -1,5 +1,5 @@
 /*
- *  $Id: Imakefile,v 1.5 2001/04/25 04:54:47 kims Exp $
+ *  $Id: Imakefile,v 1.6 2001/05/28 07:22:47 kims Exp $
  *
  *  xclip - reads standard in or files into X server selection for pasting
  *  Copyright (C) 2001 Kim Saunders
@@ -18,7 +18,9 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
  
-LOCAL_LIBRARIES = $(XLIB)
+LOCAL_LIBRARIES = $(XLIB) $(XMULIB)
+
+CDEBUGFLAGS = -Wall
 
 SRCS = xclip.c xcprint.c
 OBJS = xclip.o xcprint.o

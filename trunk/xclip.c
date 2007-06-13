@@ -1,5 +1,5 @@
 /*
- *  $Id: xclip.c,v 1.26 2001/05/05 15:22:46 kims Exp $
+ *  $Id: xclip.c,v 1.29 2001/05/28 07:22:47 kims Exp $
  * 
  *  xclip.c - command line interface to X server selections 
  *  Copyright (C) 2001 Kim Saunders
@@ -21,25 +21,29 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Intrinsic.h>
+#include <X11/Xmu/Atoms.h>
+#include <X11/Xmu/StdSel.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 #include "xcdef.h"
 
 /* command line option table for XrmParseCommand() */
 static XrmOptionDescRec opt_tab[] = {
-  {"-loops",	".loops",	XrmoptionSepArg,	(XPointer) NULL	},
-  {"-display",	".display",	XrmoptionSepArg,	(XPointer) NULL	},
-  {"-filter",	".filter",	XrmoptionNoArg,		(XPointer) ST	},
-  {"-in",	".direction",	XrmoptionNoArg,		(XPointer) "I"	},
-  {"-out",	".direction",	XrmoptionNoArg,		(XPointer) "O"	},
-  {"-version",	".print",	XrmoptionNoArg,		(XPointer) "V"	},
-  {"-help",	".print",	XrmoptionNoArg,		(XPointer) "H"	},
-  {"-silent",	".olevel",	XrmoptionNoArg,		(XPointer) "S"	},
-  {"-quiet",	".olevel",	XrmoptionNoArg,		(XPointer) "Q"	},
-  {"-verbose",	".olevel",	XrmoptionNoArg,		(XPointer) "V"	},
+  {"-loops",	 ".loops",	XrmoptionSepArg,	(XPointer) NULL	},
+  {"-display",	 ".display",	XrmoptionSepArg,	(XPointer) NULL	},
+  {"-selection", ".selection",	XrmoptionSepArg,	(XPointer) NULL	},
+  {"-filter",	 ".filter",	XrmoptionNoArg,		(XPointer) ST	},
+  {"-in",	 ".direction",	XrmoptionNoArg,		(XPointer) "I"	},
+  {"-out",	 ".direction",	XrmoptionNoArg,		(XPointer) "O"	},
+  {"-version",	 ".print",	XrmoptionNoArg,		(XPointer) "V"	},
+  {"-help",	 ".print",	XrmoptionNoArg,		(XPointer) "H"	},
+  {"-silent",	 ".olevel",	XrmoptionNoArg,		(XPointer) "S"	},
+  {"-quiet",	 ".olevel",	XrmoptionNoArg,		(XPointer) "Q"	},
+  {"-verbose",	 ".olevel",	XrmoptionNoArg,		(XPointer) "V"	},
 };
 
 int main(int argc, char *argv[])
@@ -61,6 +65,7 @@ int main(int argc, char *argv[])
   /* Options that get set on the command line */
   int   sloop = 0;			/* number of loops */
   char *sdisp = "";			/* X display to connect to */
+  Atom  sseln = XA_PRIMARY;		/* X selection to work with */
 
   /* Flags for command line options */
   static int fverb = OSILENT;		/* output level */
@@ -71,7 +76,6 @@ int main(int argc, char *argv[])
    
   XrmDatabase	opt_db = NULL;
   XrmValue	val;
-  char		*rstr = NULL;
   char		*res_type;
 	  
   XrmInitialize();			/* initialise resource manager */
@@ -202,6 +206,39 @@ int main(int argc, char *argv[])
     exit(EXIT_FAILURE); /* exit */
   }
   
+  /* set selection to work with */
+  if (
+    XrmGetResource(
+      opt_db,
+      "xclip.selection",
+      "Xclip.Selection",
+      &res_type,
+      &val
+    )
+  ){
+	 switch (tolower(val.addr[0])){
+		case 'p':
+			sseln = XA_PRIMARY;
+			break;
+		case 's':
+			sseln = XA_SECONDARY;
+			break;
+		case 'c':
+			sseln = XA_CLIPBOARD(dpy);
+			break;
+	 }
+	 if (fverb == OVERBOSE){
+	   fprintf(stderr, "Using selection: ");
+	   if (sseln == XA_PRIMARY)
+             fprintf(stderr, "XA_PRIMARY");
+	   if (sseln == XA_SECONDARY)
+             fprintf(stderr, "XA_SECONDARY");
+	   if (sseln == XA_CLIPBOARD(dpy))
+	     fprintf(stderr, "XA_CLIPBOARD");
+           fprintf(stderr, "\n");
+         }
+  }
+  
   /* Create a window that will trap events */
   win = XCreateSimpleWindow(
     dpy,
@@ -273,7 +310,7 @@ int main(int argc, char *argv[])
     /* Take control of the selection */
     XSetSelectionOwner(
       dpy,
-      XA_PRIMARY,
+      sseln,
       win,
       CurrentTime
     );
@@ -387,19 +424,18 @@ int main(int argc, char *argv[])
   }
   else {
     static Atom	pty;
-    char	*buff_p;
     int		format;
     Atom	type_return;
 
     unsigned char	*data;
-    unsigned long	nitems, pty_size, total;
+    unsigned long	nitems, pty_size;
     
     pty = XInternAtom(dpy, "XCLIP_OUT", False); /* a property of our window
 						   for apps to put their
 						   selection into */
     XConvertSelection(
       dpy,
-      XA_PRIMARY,
+      sseln,
       XA_STRING,
       pty,
       win,
@@ -429,9 +465,10 @@ int main(int argc, char *argv[])
       );
 
       /* I read somewhere that requesting a pty_size that is too big
-       * can crash some X servers. Doesn't happen to me...
-       * /
-      /* actually get property and put into seltxt */
+         can crash some X servers. Doesn't happen to me...
+	 
+	 actually get property and put into seltxt
+       */
       XGetWindowProperty(
         dpy,
         win,
@@ -460,11 +497,13 @@ int main(int argc, char *argv[])
        * and if you are able to modify this code to print the output for formats
        * of 16 and 32, please do and submit the patch!
        */
-      if (format == 8){
+      if ( format == 8 ){
         printf(seltxt);
       }
       else {
-        errformat();
+	/* format == 0 means the selection is empty, no error */
+	if (format)
+          errformat();
       }
     }
   }

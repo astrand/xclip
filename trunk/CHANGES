@@ -1,4 +1,4 @@
-$Id: CHANGES,v 1.9 2001/05/05 15:16:18 kims Exp $
+$Id: CHANGES,v 1.11 2001/05/29 07:07:12 kims Exp $
 
 Version 0.01:
 	Everything. First release, pretty basic, but it worked.
@@ -35,3 +35,12 @@ Version 0.04:
 
 	Added xclip -out (out mode) and -filter (print stdin back to stdout).
 
+Version 0.05:
+	Added -selection option to allow access to XA_SECONDARY and
+	XA_CLIPBOARD. Use "-selection secondary", or "-s s"
+
+	Changed email address.
+
+	Added -Wall to C compiler options in Imakefile, fixed up some warnings.
+
+	Updated man page.
