@@ -1,0 +1,90 @@
+.\" $Id: xclip.man,v 1.6 2001/04/04 04:16:22 kims Exp $
+.\"
+.\" xclip - reads standard in or files into X server selection for pasting
+.\" Copyright (C) 2001 Kim Saunders
+.\"
+.\" This program is free software; you can redistribute it and/or modify
+.\" it under the terms of the GNU General Public License as published by
+.\" the Free Software Foundation; either version 2 of the License, or
+.\" (at your option) any later version.
+.\"
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; if not, write to the Free Software
+.\" Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+.\"
+.TH XCLIP 1 
+.SH NAME
+xclip \- makes text available as an X selection
+.SH SYNOPSIS
+.B xclip
+[OPTION] [FILE]
+.SH DESCRIPTION
+Reads text from standard in, or from one or more files, and makes it available as an X selection for pasting into X applications.
+.SH OPTIONS
+.TP 8
+.B \-l, --loops=N \fInumber of loops\fB
+number of X selection requests (pastes to X applications) to wait for before exiting. The default value of 0 causes xclip to wait for an unlimited number or requests.
+.TP 8
+.B \-d, --display=hostname:x \fIX display\fB
+X display to use (e.g. "localhost:0"). Defaults to the value in DISPLAY.
+.TP 8
+.B \-v, --version \fIversion and copyright information\fB
+show version information.
+.TP 8
+.B \-h, --help \fIoption summary\fB
+show quick summary of options.
+.TP 8
+.B \--silent \fIsilent output, fork into background\fB
+forks into the background to wait for requests, no informational output, errors only - this is the default.
+.TP 8
+.B \--quiet \fIquiet output\fB
+show what's happeing on the terminal, instead of hiding in the background.
+.TP 8
+.B \--verbose \fIverbose output\fB
+provide a running commentary of what xclip is doing.
+
+.PP
+xclip reads text from standard in or files and makes it available to other X applications for pasting as an X selection
+(traditionally with the middle mouse button). It was designed to allow intergration between the output of command
+line applications and X applications.
+
+The default action is to silently wait in the background for X selection requests (pastes) until another X application
+places data in the clipboard, at which point xclip exits silently. You can use the
+.B
+--verbose
+option to see if and when xclip actually recieves selection requests from other X applications.
+
+.SH EXAMPLES
+.PP
+I hate man pages without examples!
+
+.B
+uptime | xclip
+.PP
+Put your uptime in the X selection. Then middle click in an X application to paste.
+
+.B xclip --loops=10 --verbose /etc/passwd
+.PP
+Exit after /etc/passwd has been pasted 10 times. Show how many selection requests (pastes) have been processed.
+
+.SH ENVIRONMENT
+.TP
+.SM DISPLAY
+X display to use if none is specified with the
+.B
+-d
+or
+.B
+--display
+options.
+
+.SH REPORTING BUGS
+Please report any bugs, problems, queries, experiences, etc. directly to the author.
+
+.SH AUTHOR
+Kim Saunders <kim.saunders@fortytwo.com.au>
+.br

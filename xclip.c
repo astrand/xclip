@@ -7,7 +7,9 @@
 #include <unistd.h>
 
 /*
- *  xclip - puts standard in into X server selection for pasting
+ *  $Id: xclip.c,v 1.20 2001/04/03 12:44:27 kims Exp $
+ * 
+ *  xclip - reads standard in or files into X server selection for pasting
  *  Copyright (C) 2001 Kim Saunders
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -25,12 +27,16 @@
  */
 
 // xclip version
-#define VERSION 0.02
+#define VERSION 0.03
 
 // output level constants
 #define OSILENT  0
 #define OQUIET   1
 #define OVERBOSE 2
+
+// generic true/false constants for stuff
+#define F 0	// false...
+#define T 1	// true...
 
 // A function to print out the help message
 void prhelp (){
@@ -38,12 +44,12 @@ void prhelp (){
   printf("Puts data from standard input or FILES into a X server selection for pasting.\n");
   printf("\n");
   printf("-l,  --loops     number of selection requests to wait for before exiting\n");
-  printf("-d,  --display   X display to connect to (eg \"localhost:0\"\n");
-  printf("-bg, --bg        wait for selection requests in the background\n");
-  printf("-s,  --silent    silent mode (errors only, for scripting, etc)\n");
-  printf("-q,  --quiet     normal level of output (default)\n");
-  printf("-v,  --verbose   verbose mode (running commentary of what's happening)\n");
+  printf("-d,  --display   X display to connect to (eg \"localhost:0\")\n");
+  printf("-v,  --version   version information\n");
   printf("-h,  --help      usage information\n");
+  printf("     --silent    silent mode (errors only, default)\n");
+  printf("     --quiet     show what's happing, don't fork into background\n");
+  printf("     --verbose   running commentary\n");
   printf("\n");
   printf("Report bugs to <kim.saunders@fortytwo.com.au>\n");
 }
@@ -76,35 +82,34 @@ int main(int argc, char *argv[])
   int dloop = 0;				// done loops counter
 
   // Options that get set on the command line
-  int   sloop = 1;				// number of loops
+  int   sloop = 0;				// number of loops
   char *sdisp = "";				// X display to connect to
 
   // Flags for command line options
-  static int fverb = OQUIET;			// output level
-  static int fhelp = 0;				// dispay help
-  static int fvers = 0;				// dispay version info
-  static int ffork = 0;				// fork into the background
+  static int fverb = OSILENT;			// output level
+  static int fhelp = F;				// dispay help
+  static int fvers = F;				// dispay version info
+//  static int ffork = T;				// fork into the background
 
   pid_t cpid;					// child pid if forking
    
   // options
   static struct option long_options[] = {
-    { "silent" 	, 0, &fverb, OSILENT	},
-    { "quiet"  	, 0, &fverb, OQUIET	},
-    { "verbose"	, 0, &fverb, OVERBOSE	},
-    { "help"	, 0, &fhelp, 1		},
-    { "version"	, 0, &fvers, 1		},
-    { "bg"	, 0, &ffork, 1		},
-    { "display"	, 1,      0, 0		},
-    { "loops"  	, 1,      0, 0		}
+    { "silent" 	, F, &fverb, OSILENT		},
+    { "quiet"  	, F, &fverb, OQUIET		},
+    { "verbose"	, F, &fverb, OVERBOSE		},
+    { "help"	, F, 	  0, 'h'		},
+    { "version"	, F,      0, 'v'		},
+    { "display"	, T,      0, 'd'		},
+    { "loops"  	, T,      0, 'l'		}
   };
 
   while (1) {
     // Get the option into optc
-    optc = getopt_long_only(
+    optc = getopt_long(
       argc,
       argv,
-      "abc",
+      "l:d:hv",
       long_options,
       &opti
     );
@@ -113,24 +118,31 @@ int main(int argc, char *argv[])
     if (optc == -1)
       break;
 
-    if (optarg){  // the if below seems to segfault if optarg is null. Why???
-      if ( long_options[opti].flag == 0 ) {
-        // display option
-        if ( strcmp(long_options[opti].name, "display") == 0) {
-          sdisp = optarg;
-	  if (fverb == OVERBOSE) // display in verbose mode only
-            fprintf(stderr,"Display: %s\n", optarg);
-        } 
-        // loops option
-        if ( strcmp(long_options[opti].name, "loops"  ) == 0) {
-          sloop = atoi(optarg);
-	  if (fverb == OVERBOSE) // display in verbose mode only
-            fprintf(stderr,"Loops: %s\n", optarg);
-        }
-      }
+    switch (optc){
+
+      case 'd':			// display option
+        sdisp = optarg;
+	if (fverb == OVERBOSE)	// display in verbose mode only
+          printf("Display: %s\n", optarg);
+	break;
+	
+      case 'l':			// loops option
+        sloop = atoi(optarg);
+	if (fverb == OVERBOSE)	// display in verbose mode only
+          printf("Loops: %s\n", optarg);
+	break;
+	
+      case 'v':			// show version info
+	fvers = T;
+	break;
+	
+      case 'h':			// show help
+	fhelp = T;
+	break;
+	
     }
   }
-   
+  
   // --help flag set
   if (fhelp){
     prhelp();			// print help message
@@ -162,7 +174,7 @@ int main(int argc, char *argv[])
   }
   else {
     // couldn't connect to X server. Print error.
-    printf("Could not connect to X server.\n");
+    fprintf(stderr, "Error: Could not connect to X server.\n");
     perror(NULL);
     // exit
     exit(EXIT_FAILURE);
@@ -170,6 +182,10 @@ int main(int argc, char *argv[])
 
   inalloc = 16;  // Reasonable ballpark figure
   in = malloc(inalloc);
+  if (in == NULL){
+    fprintf(stderr, "Error: Could not allocate memory.\n");
+    exit(EXIT_FAILURE);
+  }
 
   // Put chars into inc from stdin or files until we hit EOF
   do {
@@ -177,9 +193,17 @@ int main(int argc, char *argv[])
       inf = stdin;
     }
     else {
-      inf = fopen(files[currFile], "r");
-      if (fverb == OVERBOSE)
-        printf("Reading %s...\n", files[currFile]);
+      if ( (inf = fopen(files[currFile], "r")) == NULL ){ // open the file
+	// error, exit if there is a problem opening the file
+	fprintf(stderr, "Error: can't open %s for reading\n", files[currFile]);
+        perror(NULL);
+        exit(EXIT_FAILURE);
+      }
+      else {
+	// file opened successfully. Print message if we're in verbose mode.
+        if (fverb == OVERBOSE)
+          printf("Reading %s...\n", files[currFile]);
+      }
     }
     currFile++;
 
@@ -198,15 +222,6 @@ int main(int argc, char *argv[])
       n = fread(in + inelems, 1, inalloc - inelems, inf);
       inelems += n;
       in[inelems] = '\0';
-      /* For debugging this loop.
-      fprintf(
-        stderr,
-        "Read: %d\nUsed elems: %d\nContents: %s\n",
-	 n,
-	 inelems,
-	 in
-      );
-      */
     }
   } while (currFile < numFiles);
   
@@ -226,13 +241,12 @@ int main(int argc, char *argv[])
   // Take control of the selection 
   XSetSelectionOwner(display, XA_PRIMARY, w, CurrentTime);
 
-  // fork into the background, exit parent process if required
-  if (ffork){
+  // fork into the background, exit parent process if we are in silent mode
+  if (fverb == OSILENT){
     cpid = fork();
     if (cpid){
       exit(EXIT_SUCCESS); // exit the parent process;
     }
-    fverb = OSILENT;      // no output from child
   }
 
   // print a message saying what we're waiting for
@@ -291,8 +305,10 @@ int main(int argc, char *argv[])
       // Another app is telling us that it now owns the selection,
       // so we don't get selectionrequest events from the x server
       // any more, time to exit...
-      printf("Error: Another application took ownership of the selection.\n");
-      exit(EXIT_FAILURE);
+      if (fverb == OVERBOSE)
+	// print message in verbose mode only.
+        printf("Another application took ownership of the selection.\n");
+      exit(EXIT_SUCCESS);
     }
     dloop++;
   }
