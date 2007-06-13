@@ -1,64 +1,45 @@
-xclip
+$Id: README,v 1.10 2001/04/04 04:16:22 kims Exp $
 
 WHAT IS XCLIP?
 
-xclip is a simple little utility that is designed to be run on the command line
-on a *n?x system. It reads input from standard in (usually piped to it) or
-files and puts it in the X selection of an X server ready for pasting into any
-x app with your middle mouse button. I primarily use a GNOME setup, and xclip
-allows better intergration with command line software. For example, it's  handy
-if you need to email the output of a command to someone. Say someone wants you
-to email a whois record to them, with xclip it's as simple as "whois domain.com
-| xclip", then middle click in an email. Just saves you from selecting the
-right text, which can be slightly tricky if it spans multiple pages, etc.
+xclip is a utility that is designed to be run from the command line on a *n?x
+system. It reads input from standard in (usually piped to it) and puts it in
+the X selection of an X server for pasting into any X app with your middle
+mouse button. I primarily use a GNOME setup, and xclip allows better
+integration with command line programs. For example, it's handy if you need to
+email the output of a command to someone - you could email a whois record with
+xclip by running "whois domain.com | xclip", then middle clicking in an email.
+It can also read an entire file into the X selection for pasting into another
+document, e.g. "xclip /proc/cpuinfo".
+
 
 I am somewhat surprised that a utility like this hasn't been implemented before
 - am I missing something? If not, I feel xclip is a pretty "core" utility that
 most people would use. It's in the Unix spirit of a simple program to add to
 the toolbox, to integrate with other tools. If no alternative to xclip exists,
-I'd like to see to become a pretty standard X tool!
+I'd like to see to become a pretty standard X tool.
 
 FEATURES
 
 * Reads data piped to standard in or files given as arguments
-* Connects to the X display in $DISPLAY, or specified with -display host:0 
-* Can wait for more than one paste of the selection data
-
-TODO
-
-* Not dependant on GNU glibc's getopt_long_only for compatibility with non-GNU
-  *n?x systems
-* A proper configure script to find xlibs, not hardcoded into Makefile...
-* Test, make work on as many platforms as possible
-* Write man page
-* Option to make xclip fork into the background while waiting for selection
-  requestes, instead of tying up the terminal with commentary
-* Submit to X distributions (X Consortium, XFree86, etc)
+* Connects to the X display in DISPLAY, or specified with -display host:0 
+* Waits for pastes in the background
 
 CAN I HELP?
 
-Glad you asked! xclip is my first project in C! Not to mention my first time
-using xlib, etc, etc. Hence, I am aware that it is probably pretty badly
-written at the moment. I'd really appreciate help achieving the goals in the
-TODO above. If you speak C or xlib, please check the code out, and submit any
-comments/fixes to me, but please, explain what the changes are. If you just
-submit a patch, I'm likely to not understand it, and I would like to get better
-at this stuff. After all, I wrote this to learn C on *n?x, xlib, etc as much as
-anything else. No, I didn't spend many hrs on this to save me 3 seconds of
-selecting text...
-
-I'm sure the tasks above would only take 2 or 3 hrs each for someone who knew
-what they were doing - I'd be appreciative to anyone who is willing to put in
-that time, and tell me how they did it, to save me stabbing around in the dark.
+Glad you asked! xclip is my first project in C, and hence my first encounter
+with xlib, make, xmkmf and friends. So, if you speak C or xlib, please check
+out the code, and submit any comments/fixes.
 
 VERSION
 
-0.02 - Second public release. A few steps closer to completion, see the
-changelog.
+0.03 - Getting pretty usable. Should be pretty portable now, has decent man
+pages, etc. Only a few more things to do until I'm ready to declare it
+"finished".
 
 LICENSE
 
-GNU GPL, see the LICENSE file for details
+GNU GPL, see the COPYING  file for details
 
 CONTACT
 
@@ -68,4 +49,4 @@ http://www.mercuryit.com.au/~kims/xclip/
 Email:
 kim.saunders@fortytwo.com.au
 
-Please email with about problems, experiences, patches, fixes, etc.
+Please email me about problems, experiences, patches, fixes, etc.

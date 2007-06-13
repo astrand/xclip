@@ -1,12 +1,25 @@
+$Id: CHANGES,v 1.8 2001/04/03 12:44:26 kims Exp $
+
 Version 0.01:
 	Everything. First release, pretty basic, but it worked.
 
 Version 0.02:
-	Patch to allow reading from files if specified as arguments, or stdin
-	if no files are specified kindly contributed by xxx applied.
+	Patch to allow reading from files if specified as arguments applied.
 
 	Cleaned up source file (indenting, comments, etc).
 
-	Wrapped README file at 80 chars.
+	Started wrapping documentation at 80 chars.
 
-	Added this changelog
+	Added this changelog.
+
+Version 0.03:
+	Changed use of getopt_long_only to getopt_long, which should work
+	better with non-GNU platforms.
+	
+	Fixed segfault when given a non-existant file to read.
+
+	Made Imakefile for use with xmkmf. This means that xclip should build
+	and install fairly nicely on any system with an X Consortium derived
+	X server (nearly all Unix style X servers I would imagine).
+
+	Wrote a decent man page.

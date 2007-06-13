@@ -1,0 +1,37 @@
+$Id: INSTALL,v 1.4 2001/04/04 04:16:22 kims Exp $
+
+BUILDING
+
+You should be able to build and install xclip by running the following commands
+in the xclip source directory:
+
+xmkmf			# create the makefile
+make			# build the binary
+su			# su to root to install
+make install		# install xclip
+make install.man	# install man page
+
+This should make and install xclip using the configuration (in terms of install
+directories, libraries, etc) used to build everything else in your X11
+distribution.
+
+REQUIREMENTS
+
+xclip should compile on pretty much any Unix-like system. The requirements to
+compile xclip are pretty minimal, if you can compile any X apps at all, you'll
+be able to compile xclip.
+
+This means you will need a C compiler, C development environment, xlib
+development environment, make, etc. All of these should be available as
+packages for most useful distributions.
+
+PLATFORMS
+
+I would really like to get confirmation of all the platforms xclip has compiled
+on to list here - I want to make sure it works on all platforms that X11 works
+on. If you compile xclip successfully on a platform not listed here, please
+email me the details. If you *can't* compile xclip on a platform, please email
+me with the problem so I can try to fix it.
+
+* GNU/Linux
+* Cygwin
