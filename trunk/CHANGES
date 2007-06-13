@@ -1,0 +1,12 @@
+Version 0.01:
+	Everything. First release, pretty basic, but it worked.
+
+Version 0.02:
+	Patch to allow reading from files if specified as arguments, or stdin
+	if no files are specified kindly contributed by xxx applied.
+
+	Cleaned up source file (indenting, comments, etc).
+
+	Wrapped README file at 80 chars.
+
+	Added this changelog
