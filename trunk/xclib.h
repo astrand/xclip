@@ -1,5 +1,5 @@
 /*
- *  $Id: xclib.h,v 1.6 2001/10/22 07:52:51 kims Exp $
+ *  $Id: xclib.h,v 1.8 2001/11/11 23:56:33 kims Exp $
  * 
  *  xclib.h - header file for functions in xclib.c
  *  Copyright (C) 2001 Kim Saunders
@@ -20,9 +20,36 @@
 
 #include <X11/Xlib.h>
 
+/* xcout() contexts */
+#define XCLIB_XCOUT_NONE	0	/* no context */
+#define XCLIB_XCOUT_SENTCONVSEL	1	/* sent a request */
+#define XCLIB_XCOUT_INCR	2	/* in an incr loop */
+
+/* xcin() contexts */
+#define XCLIB_XCIN_NONE		0
+#define XCLIB_XCIN_SELREQ	1
+#define XCLIB_XCIN_INCR		2
+
 /* functions in xclib.c */
-extern int xcout(Display*, Window, Atom, unsigned char**, unsigned long*);
-extern int xcin(Display*, XEvent, unsigned char*, unsigned long);
+extern int xcout(
+	Display*,
+	Window,
+	XEvent,
+	Atom,
+	unsigned char**,
+	unsigned long*,
+	unsigned int*
+);
+extern int xcin(
+	Display*,
+	Window*,
+	XEvent,
+	Atom*,
+	unsigned char*,
+	unsigned long,
+	unsigned long*,
+	unsigned int*
+);
 extern void *xcmalloc(size_t);
 extern void *xcrealloc(void*, size_t);
 extern void *xcstrdup(const char *);

@@ -1,5 +1,5 @@
 /*
- *  $Id: xcprint.c,v 1.12 2001/10/22 13:36:33 kims Exp $
+ *  $Id: xcprint.c,v 1.13 2001/12/17 06:14:40 kims Exp $
  * 
  *  xcprint.c - functions to print help, version, errors, etc
  *  Copyright (C) 2001 Kim Saunders
@@ -48,7 +48,7 @@ void prhelp (char *name)
 		"      -quiet       run in foreground, show what's happening\n"\
 		"      -verbose     running commentary\n"\
 		"\n"\
-		"Report bugs to <kim.saunders@mercuryit.com.au>\n",
+		"Report bugs to <kims@debian.org>\n",
 		name
 	);
 	exit(EXIT_SUCCESS);

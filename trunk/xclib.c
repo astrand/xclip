@@ -1,5 +1,5 @@
 /*
- *  $Id: xclib.c,v 1.9 2001/10/22 07:52:51 kims Exp $
+ *  $Id: xclib.c,v 1.12 2001/12/17 06:14:40 kims Exp $
  * 
  *  xclib.c - xclip library to look after xlib mechanics for xclip
  *  Copyright (C) 2001 Kim Saunders
@@ -70,141 +70,162 @@ void *xcstrdup (const char *string)
 	return(mem);
 }
 
-/* return selection data. Arguments are the display and window, the selection
- * to be returned, and a pointer to a buffer and a long which get set to the
- * contents of the selection, and the size of the buffer. Returns a 0, unless
- * a SelectionNotify event is received, in which case 1 is returned. It's
- * pretty unlikely that we own the selection if we're pasting... but hey, you
- * never know....
+/* Retrieves the contents of a selections. Arguments are:
+ *
+ * A display that has been opened.
+ * 
+ * A window
+ * 
+ * An event to process
+ * 
+ * The selection to return
+ * 
+ * A pointer to a char array to put the selection into.
+ * 
+ * A pointer to a long to record the length of the char array
+ *
+ * A pointer to an int to record the context in which to process the event
+ *
+ * Return value is 1 if the retrieval of the selection data is complete,
+ * otherwise it's 0.
  */
 int xcout (
 	Display *dpy,
 	Window win,
+	XEvent evt,
 	Atom sel,
 	unsigned char **txt,
-	unsigned long *len
+	unsigned long *len,
+	unsigned int *context
 )
 {
-	Atom		pty, inc, pty_type;
-	int		pty_format;
-	XEvent		evt;
-	unsigned int	retval = 0;
-
+	/* a property for other windows to put their selection into */
+	Atom pty, inc, pty_type;
+	int pty_format;
+		
 	/* buffer for XGetWindowProperty to dump data into */
-	unsigned char	*buffer;
-	unsigned long	pty_size, pty_items;
+	unsigned char *buffer;
+	unsigned long pty_size, pty_items;
 
 	/* local buffer of text to return */
-	unsigned char	*ltxt;
+	unsigned char *ltxt;
 
-	/* Two new window properties for transferring the selection */
-	pty = XInternAtom(dpy, "XCLIP_OUT",	False);
-	inc = XInternAtom(dpy, "INCR",		False);
+	pty = XInternAtom(dpy, "XCLIP_OUT", False);
 
-	/* initialise return length to 0 */
-	*len = 0;
-
-	/* send a selection request */
-	XConvertSelection(
-		dpy,
-		sel,
-		XA_STRING,
-		pty,
-		win,
-		CurrentTime
-	);
-
-	/* wait for a SelectionNotify in response to our request */
-	while (1)
+	switch (*context)
 	{
-		XNextEvent(dpy, &evt);
-		if (evt.type == SelectionClear)
-			retval = 1;
-		if (evt.type == SelectionNotify || evt.type == None )
-			break;
-	}
+		/* there is no context, do an XConvertSelection() */
+		case XCLIB_XCOUT_NONE:
+			/* initialise return length to 0 */
+			if (*len > 0)
+			{
+				free(*txt);
+				*len = 0;
+			}
 
-	/* quit if there is nothing in the selection */
-	if (evt.type == None)
-		return(0);
-    
-	/* find out the size and format of the data in property */
-	XGetWindowProperty(
-		dpy,
-		win,
-		pty,
-		0,
-		0,
-		False,
-		AnyPropertyType,
-		&pty_type,
-		&pty_format,
-		&pty_items,
-		&pty_size,
-		&buffer
-	);
-	XFree(buffer);
-
-	if (pty_format == 8)
-	{
-		/* not using INCR mechanism, just read and print the property */
-		XGetWindowProperty(
-			dpy,
-			win,
-			pty,
-			0,
-			(long)pty_size,
-			False,
-			AnyPropertyType,
-			&pty_type,
-			&pty_format,
-			&pty_items,
-			&pty_size,
-			&buffer
-		);
-
-		/* finished with property, delete it */
-		XDeleteProperty(dpy, win, pty);
+			/* send a selection request */
+			XConvertSelection(
+				dpy,
+				sel,
+				XA_STRING,
+				pty,
+				win,
+				CurrentTime
+			);
+			*context = XCLIB_XCOUT_SENTCONVSEL;
+			return(0);
 		
-		/* copy the buffer to the pointer for returned data */
-		ltxt = (unsigned char *)xcmalloc(pty_items);
-		memcpy(ltxt, buffer, pty_items);
+		case XCLIB_XCOUT_SENTCONVSEL:
+			inc = XInternAtom(dpy, "INCR", False);
 
-		/* set the length of the returned data */
-		*len = pty_items;
+			if (evt.type != SelectionNotify)
+				return(0);
 
-		/* free the buffer */
-		XFree(buffer);
-	} else if (pty_type == inc)
-	{
-		/* Using INCR mechanism, start by deleting the property */
-		XDeleteProperty(dpy, win, pty);
+			/* find the size and format of the data in property */
+			XGetWindowProperty(
+				dpy,
+				win,
+				pty,
+				0,
+				0,
+				False,
+				AnyPropertyType,
+				&pty_type,
+				&pty_format,
+				&pty_items,
+				&pty_size,
+				&buffer
+			);
+			XFree(buffer);
 
-		while (1)
-		{
+			if (pty_type == inc)
+			{
+				/* start INCR mechanism by deleting property */
+				XDeleteProperty(dpy, win, pty);
+				XFlush(dpy);
+				*context = XCLIB_XCOUT_INCR;
+				return(0);
+			}
+
+			/* if it's not incr, and not format == 8, then there's
+			 * nothing in the selection (that xclip understands,
+			 * anyway)
+			 */ 
+			if (pty_format != 8)
+			{
+				*context = XCLIB_XCOUT_NONE;
+				return(0);
+			}
+
+			/* not using INCR mechanism, just read the property */
+			XGetWindowProperty(
+				dpy,
+				win,
+				pty,
+				0,
+				(long)pty_size,
+				False,
+				AnyPropertyType,
+				&pty_type,
+				&pty_format,
+				&pty_items,
+				&pty_size,
+				&buffer
+			);
+	
+			/* finished with property, delete it */
+			XDeleteProperty(dpy, win, pty);
+		
+			/* copy the buffer to the pointer for returned data */
+			ltxt = (unsigned char *)xcmalloc(pty_items);
+			memcpy(ltxt, buffer, pty_items);
+
+			/* set the length of the returned data */
+			*len = pty_items;
+			*txt = ltxt;
+
+			/* free the buffer */
+			XFree(buffer);
+			
+			*context = XCLIB_XCOUT_NONE;
+
+			/* complete contents of selection fetched, return 1 */
+			return(1);
+	
+		case XCLIB_XCOUT_INCR:
 			/* To use the INCR method, we basically delete the
 			 * property with the selection in it, wait for an
 			 * event indicating that the property has been created,
 			 * then read it, delete it, etc.
 			 */
 
-			/* flush to force any pending XDeleteProperty calls
-			 * from the previous running of the loop, get the next
-			 * event in the event queue
-			 */
-			XFlush(dpy);
-			XNextEvent(dpy, &evt);
-
-			if (evt.type == SelectionClear)
-				retval = 0;
-
-			/* skip unless is a property event */
+			/* make sure that the event is relevant */
 			if (evt.type != PropertyNotify)
-				continue;
+				return(0);
 
 			/* skip unless the property has a new value */
 			if (evt.xproperty.state != PropertyNewValue)
-				continue;
+				return(0);
 	
 			/* check size and format of the property */
 			XGetWindowProperty(
@@ -226,10 +247,11 @@ int xcout (
 			{
 				/* property does not contain text, delete it
 				 * to tell the other X client that we have read
-				 * it and to send the next property */
+				 * it and to send the next property
+				 */
 				XFree(buffer);
 				XDeleteProperty(dpy, win, pty);
-				continue;
+				return(0);
 			}
 
 			if (pty_size == 0)
@@ -237,7 +259,12 @@ int xcout (
 				/* no more data, exit from loop */
 				XFree(buffer);
 				XDeleteProperty(dpy, win, pty);
-				break;
+				*context = XCLIB_XCOUT_NONE;
+				
+				/* this means that an INCR transfer is now
+				 * complete, return 1
+				 */
+				return(1);
 			}
 
 			/* if we have come this far, the propery contains
@@ -269,140 +296,186 @@ int xcout (
 				ltxt = (unsigned char *)xcrealloc(ltxt, *len);
 			}
 
-			/* add data to *txt */
+			/* add data to ltxt */
 			memcpy(
 				&ltxt[*len - pty_items],
 				buffer,
 				pty_items
 			);
+
+			*txt = ltxt;
 			
 			/* delete property to get the next item */
 			XDeleteProperty(dpy, win, pty);
-		}
+			XFlush(dpy);
+			return(0);
 	}
-	*txt = ltxt;
-	return(retval);
+
+	return (0);
 }
 
-/* send selection data in response to a request. Returns 1 if a SelectionClear
- * was received, otherwise 0
+/* put data into a selection, in response to a SelecionRequest event from
+ * another window (and any subsequent events relating to an INCR transfer).
+ *
+ * Arguments are:
+ *
+ * A display
+ * 
+ * A window
+ * 
+ * The event to respond to
+ * 
+ * A pointer to an Atom. This gets set to the property nominated by the other
+ * app in it's SelectionRequest. Things are likely to break if you change the
+ * value of this yourself.
+ * 
+ * A pointer to an array of chars to read selection data from.
+ * 
+ * The length of the array of chars.
+ *
+ * In the case of an INCR transfer, the position within the array of chars
+ * that is being processed.
+ *
+ * The context that event is the be processed within.
  */
-int xcin (Display *dpy, XEvent rev, unsigned char *txt, unsigned long len)
+int xcin (
+	Display *dpy,
+	Window *win,
+	XEvent evt,
+	Atom *pty,
+	unsigned char *txt,
+	unsigned long len,
+	unsigned long *pos,
+	unsigned int *context
+)
 {
-	unsigned int	retval = 0;
-	unsigned int	incr = F;	/* incr mode flag */
+	unsigned long chunk_len;	/* length of current chunk (for incr
+					 * transfers only)
+					 */
 	XEvent		res;		/* response to event */
 	Atom		inc;
 
-	if (rev.type == SelectionClear)
-		return(1);
-	
-	/* send only continue if this is a SelectionRequest event */
-	if (rev.type != SelectionRequest)
-		return(0);
-	
-	/* test whether to use INCR or not */
-	if ( len > XC_CHUNK )
+	switch (*context)
 	{
-		incr = T;
-		inc = XInternAtom(dpy, "INCR", False);
-	}
+		case XCLIB_XCIN_NONE:
+			if (evt.type != SelectionRequest)
+				return(0);
+		
+			/* set the window and property that is being used */
+			*win = evt.xselectionrequest.requestor;
+			*pty = evt.xselectionrequest.property;
 
-	/* put the data into an property */
-	if (incr)
-	{
-		/* send INCR response */
-		XChangeProperty(
-			dpy,
-			rev.xselectionrequest.requestor,
-			rev.xselectionrequest.property,
-			inc,
-			32,
-			PropModeReplace,
-			0,
-			0
-		);
-
-		/* With the INCR mechanism, we need to know when the
-		 * requestor window changes (deletes) its properties
-		 */
-		XSelectInput(
-			dpy,
-			rev.xselectionrequest.requestor,
-			PropertyChangeMask
-		);
-	} else 
-	{
-		/* send data all at once (not using INCR) */
-		XChangeProperty(
-			dpy,
-			rev.xselectionrequest.requestor,
-			rev.xselectionrequest.property,
-			XA_STRING,
-			8,
-			PropModeReplace,
-			(unsigned char*) txt,
-			(int)len
-		);
-	}
-	
-	/* set values for the response event */
-	res.xselection.property  = rev.xselectionrequest.property;
-	res.xselection.type      = SelectionNotify;
-	res.xselection.display   = rev.xselectionrequest.display;
-	res.xselection.requestor = rev.xselectionrequest.requestor;
-	res.xselection.selection = rev.xselectionrequest.selection;
-	res.xselection.target    = rev.xselectionrequest.target;
-	res.xselection.time      = rev.xselectionrequest.time;
-
-	/* send the response event */
-	XSendEvent(dpy, rev.xselectionrequest.requestor, 0, 0, &res);
-	XFlush(dpy);
-
-	if (incr)
-	{
-		/* position in txt that the current chunk starts */
-		unsigned long chunk_pos = 0;
-
-		/* length of current chunk */
-		unsigned long chunk_len = XC_CHUNK;
-
-		while (1)
-		{
-			/* wait the propery we just wrote to to be deleted
-			 * before we write to it again
-			 */
-			while (1)
+			/* reset position to 0 */
+			*pos = 0;
+		
+			/* put the data into an property */
+			if (len > XC_CHUNK)
 			{
-				XEvent	spe;
+				/* INCR Atom to set response property to */
+				inc = XInternAtom(dpy, "INCR", False);
+			
+				/* send INCR response */
+				XChangeProperty(
+					dpy,
+					*win,	
+					*pty,
+					inc,
+					32,
+					PropModeReplace,
+					0,
+					0
+				);
 
-				XNextEvent(dpy, &spe);
-				if (spe.type == SelectionClear)
-				{
-					retval = 1;
-					continue;
-				}
-				if (spe.type != PropertyNotify)
-					continue;
-				if (spe.xproperty.state == PropertyDelete)
-					break;
+				/* With the INCR mechanism, we need to know
+				 * when the requestor window changes (deletes)
+				 * its properties
+				 */
+				XSelectInput(
+					dpy,
+					*win,
+					PropertyChangeMask
+				);
+
+				*context = XCLIB_XCIN_INCR;
+			} else 
+			{
+				/* send data all at once (not using INCR) */
+				XChangeProperty(
+					dpy,
+					*win,
+					*pty,
+					XA_STRING,
+					8,
+					PropModeReplace,
+					(unsigned char*) txt,
+					(int)len
+			       );
 			}
-	    
+	
+			/* set values for the response event */
+			res.xselection.property =
+				*pty;
+			res.xselection.type =
+				SelectionNotify;
+			res.xselection.display =
+				evt.xselectionrequest.display;
+			res.xselection.requestor =
+				*win;
+			res.xselection.selection =
+				evt.xselectionrequest.selection;
+			res.xselection.target =
+				evt.xselectionrequest.target;
+			res.xselection.time =
+				evt.xselectionrequest.time;
+
+			/* send the response event */
+			XSendEvent(
+				dpy,
+				evt.xselectionrequest.requestor,
+				0,
+				0,
+				&res
+			);
+			XFlush(dpy);
+
+			/* if len < XC_CHUNK, then the data was sent all at
+			 * once and the transfer is now complete, return 1
+			 */
+			if (len > XC_CHUNK)
+				return(0);
+			else
+				return(1);
+
+			break;
+
+		case XCLIB_XCIN_INCR:
+			/* length of current chunk */
+
+			/* ignore non-property events */
+			if (evt.type != PropertyNotify)
+				return(0);
+
+			/* ignore the event unless it's to report that the
+			 * property has been deleted
+			 */
+			if (evt.xproperty.state != PropertyDelete)
+				return(0);
+
 			/* set the chunk length to the maximum size */
 			chunk_len = XC_CHUNK;
 
 			/* if a chunk length of maximum size would extend
-			 * beyond the end ot txt, set the length to be the
-			 * remaining length of txt
-			 */
-			if ( (chunk_pos + chunk_len) > len )
-				chunk_len = len - chunk_pos;
+		 	 * beyond the end ot txt, set the length to be the
+		 	 * remaining length of txt
+		 	 */
+			if ( (*pos + chunk_len) > len )
+				chunk_len = len - *pos;
 
 			/* if the start of the chunk is beyond the end of txt,
 			 * then we've already sent all the data, so set the
 			 * length to be zero
 			 */
-			if (chunk_pos > len)
+			if (*pos > len)
 				chunk_len = 0;
 
 			if (chunk_len)
@@ -410,23 +483,23 @@ int xcin (Display *dpy, XEvent rev, unsigned char *txt, unsigned long len)
 				/* put the chunk into the property */
 				XChangeProperty(
 					dpy,
-					rev.xselectionrequest.requestor,
-					rev.xselectionrequest.property,
+					*win,
+					*pty,
 					XA_STRING,
 					8,
 					PropModeReplace,
-					&txt[chunk_pos],
+					&txt[*pos],
 					(int)chunk_len
 				);
 			} else
 			{
-				/* make an empty propery to show we've finished
-				 * the transfer
+				/* make an empty property to show we've
+				 * finished the transfer
 				 */
 				XChangeProperty(
 					dpy,
-					rev.xselectionrequest.requestor,
-					rev.xselectionrequest.property,
+					*win,
+					*pty,
 					XA_STRING,
 					8,
 					PropModeReplace,
@@ -438,10 +511,18 @@ int xcin (Display *dpy, XEvent rev, unsigned char *txt, unsigned long len)
 
 			/* all data has been sent, break out of the loop */
 			if (!chunk_len)
-				break;
+				*context = XCLIB_XCIN_NONE;
 
-			chunk_pos += XC_CHUNK;
-		}
+			*pos += XC_CHUNK;
+
+			/* if chunk_len == 0, we just finished the transfer,
+			 * return 1
+			 */
+			if (chunk_len > 0)
+				return(0);
+			else
+				return(1);
+			break;
 	}
-	return(retval);
+	return(0);
 }
