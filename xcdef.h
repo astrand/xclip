@@ -1,5 +1,5 @@
 /*
- *  $Id: xcdef.h,v 1.2 2001/05/28 07:22:47 kims Exp $
+ *  $Id: xcdef.h,v 1.6 2001/09/02 10:32:11 kims Exp $
  * 
  *  xcdef.h - definitions for use throughout xclip
  *  Copyright (C) 2001 Kim Saunders
@@ -19,7 +19,7 @@
  */
 
 /* xclip version and name */
-#define XC_VERS 0.05
+#define XC_VERS 0.06
 #define XC_NAME "xclip"
 
 /* output level constants */
@@ -35,8 +35,5 @@
 #define SF "F"	/* false */
 #define ST "T"	/* true  */
 
-/* functions in xcprint.c */
-extern void prhelp();
-extern void prversion();
-extern void errmalloc();
-extern void errformat();
+/* maximume size to read/write to/from a property at once in bytes */
+#define XC_CHUNK 4096

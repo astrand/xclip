@@ -1,7 +1,7 @@
 /*
- *  $Id: Imakefile,v 1.8 2001/09/02 10:32:11 kims Exp $
- *
- *  xclip - reads standard in or files into X server selection for pasting
+ *  $Id: xcprint.h,v 1.2 2001/09/19 08:38:01 kims Exp $
+ * 
+ *  xcprint.h - header file for functions in xcprint.c
  *  Copyright (C) 2001 Kim Saunders
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -17,12 +17,10 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
- 
-LOCAL_LIBRARIES = $(XLIB) $(XMULIB)
 
-CDEBUGFLAGS = -Wall
-
-SRCS = xclib.c xcprint.c xclip.c
-OBJS = xclib.o xcprint.o xclip.o
-
-ComplexProgramTarget(xclip)
+/* functions in xcprint.c */
+extern void prhelp(char *);
+extern void prversion();
+extern void errmalloc();
+extern void errxdisplay(char *);
+extern void errperror(char *, ...);
