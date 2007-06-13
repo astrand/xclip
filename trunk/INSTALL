@@ -1,6 +1,7 @@
-$Id: INSTALL,v 1.5 2001/05/02 11:20:06 kims Exp $
+$Id: INSTALL,v 1.9 2001/09/19 11:54:06 kims Exp $
 
 BUILDING
+========
 
 You should be able to build and install xclip by running the following commands
 in the xclip source directory:
@@ -16,6 +17,7 @@ directories, libraries, etc) used to build everything else in your X11
 distribution.
 
 REQUIREMENTS
+============
 
 xclip should compile on pretty much any unix-like system. The requirements to
 compile xclip are pretty minimal, if you can compile any X apps at all, you'll
@@ -26,12 +28,22 @@ development environment, make, etc. All of these should be available as
 packages for most useful distributions.
 
 PLATFORMS
+=========
 
-I would really like to get confirmation of all the platforms xclip has compiled
-on to list here - I want to make sure it works on all platforms that X11 works
-on. If you compile xclip successfully on a platform not listed here, please
-email me the details. If you *can't* compile xclip on a platform, please email
-me with the problem so I can try to fix it.
+I've given up trying to compile a list that xclip does work on, because it's
+likely that it will change with every version. Rather, please report to me if
+you have any trouble compiling, installing and using xclip in any unix-like
+system that you feel it should work on.
 
-* GNU/Linux
-* Cygwin
+TESTING
+=======
+
+The xctest shell script tests xclip by creating a file, and transferring it
+with xclip -i and xclip -o to put it trough xclip, then making sure that
+xclip -o returns exactly what we put in with xclip -i with diff. It was written
+primarily for my own benefit so that I can quickly test that all xclip features
+are working correctly after I make a change. However, I have included it to
+help out anyone who may be modifying the xclip code themselves.
+
+Basically, when you run xctest, you shouln't see any extra output from diff
+inbetween each test (because the input and output should be identical).

@@ -1,4 +1,4 @@
-$Id: README,v 1.16 2001/05/29 07:07:12 kims Exp $
+$Id: README,v 1.20 2001/09/18 05:11:26 kims Exp $
 
 WHAT IS XCLIP?
 ==============
@@ -7,13 +7,13 @@ xclip is a command line utility that is designed to run on any system with an
 X11 implementation. It provides an interface to X selections ("the clipboard")
 from the command line. It can read data from standard in or a file and place it
 in an X selection for pasting into other X applications. xclip can also print
-an X selection to standard out, which can then be piped to a file or another
-program.
+an X selection to standard out, which can then be redirected to a file or
+another program.
 
 USING XCLIP
 ===========
 
-Here are some nifty things you can do with xclip:
+Here are some ideas for things you can do with xclip:
 
 	Copy your uptime into the selection for pasting:
 	uptime | xclip
@@ -21,8 +21,11 @@ Here are some nifty things you can do with xclip:
 	Copy your password file for pasting:
 	xclip /etc/passwd
 
-	Save the example code you Edit | Copied in a web browser:
-	xclip -o -sel clip > helloworld.c
+	Save some text you have Edit | Copied in a web browser:
+	xclip -o -sel clip > webpage.txt
+
+	Open a URL selected in an email client
+	mozilla `xclip -o`
 
 	Copy XA_PRIMARY to XA_CLIPBOARD
 	xclip -o | xclip -sel clip
@@ -47,7 +50,7 @@ SELECTIONS
 For a good overview of what selections are about, have a look at 
 <http://www.freedesktop.org/standards/clipboards.txt>. Short version:
 
-* XA_PRIMARY cntains the last text you highlighted
+* XA_PRIMARY contains the last text you highlighted
 * Middle click pastes XA_PRIMARY
 * XA_CLIPBOARD contains text explicitly copied with Edit | Copy, Ctrl-C etc.
 * Edit | Paste pastes XA_CLIPBOARD
@@ -58,13 +61,12 @@ CAN I HELP?
 
 Glad you asked! xclip is my first project in C, and hence my first encounter
 with xlib, make, xmkmf and friends. So, if you speak C or xlib, please check
-out the code, and submit any comments/fixes. There are a few things highlighted
-in the source that need to be fixed, but I don't have the ability to do so.
+out the code, and submit any comments/fixes.
 
 VERSION
 =======
 
-0.05 - Pretty much complete feature wise, just more tweaking.
+0.06 - Pretty much complete feature wise, internal improvements.
 
 LICENSE
 =======
@@ -80,4 +82,7 @@ http://www.mercuryit.com.au/~kims/xclip/
 Email:
 kim.saunders@mercuryit.com.au
 
-Please email me about problems, experiences, patches, fixes, etc.
+Please email me about problems, experiences, patches, fixes, etc. Also, please
+drop me an email to let me know if you are going to feature xclip on a website,
+in a publication or in a distribution. Obviously, you are encouraged to do
+these things, I'd just appreciate knowing about it.

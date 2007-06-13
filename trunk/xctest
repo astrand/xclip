@@ -1,0 +1,87 @@
+#!/bin/sh
+#
+#  $Id: xctest,v 1.6 2001/09/19 08:38:01 kims Exp $
+# 
+#  xctest - shell script to test xclip
+#  Copyright (C) 2001 Kim Saunders
+# 
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+# 
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+delay=1 # seconds to wait before running xclip -o
+
+# test to make sure ./xclip exists
+if [ ! -f xclip ];
+then
+	echo "Error: xclip doesn't exist in the current directory."
+	exit
+fi
+
+# test xclip on different amounts of data to bring out any errors
+for lines in 2 16 128 1024 8192
+do
+	# temp file names (in and out)
+	tempi=`tempfile`
+	tempo=`tempfile`
+
+	linec=0	# current line of file in while loop
+
+	# append lines two at a time to input temp file
+	while [ $linec -lt `expr $lines / 2` ]
+	do
+		echo -n -e "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890\n" >> $tempi
+		echo -n -e "abcdefghijklmnopqrstuvwzyz!@#$%^&*()\n" >> $tempi
+		linec=$(($linec+1))
+	done
+
+	# test piping the file to xclip, using all selections
+	echo Piping a $lines line file to xclip
+	for sel in primary secondary clipboard
+	do
+		echo "  Using the $sel selection"
+		cat $tempi | ./xclip -sel $sel -i
+		sleep $delay
+		./xclip -sel $sel -o > $tempo
+		diff $tempi $tempo
+	done
+	echo
+
+	# test xclip reading the file
+	echo Reading a $lines line file with xclip
+	for sel in primary secondary clipboard
+	do
+		echo "  Using the $sel selection"
+		./xclip -sel $sel -i $tempi
+		sleep $delay
+		./xclip -sel $sel -o > $tempo
+		diff $tempi $tempo
+	done
+	echo
+	
+	# test xclip filtering a file
+	echo Filtering a $lines line file through xclip
+	for sel in primary secondary clipboard
+	do
+		echo "  Using the $sel selection"
+		./xclip -sel $sel -f < $tempi > $tempo
+		sleep $delay
+		diff $tempi $tempo
+	done
+	echo
+
+	# quietly remove temp files
+	rm $tempi $tempo 2> /dev/null
+done
+
+# Kill any remain xclip processes
+killall xclip

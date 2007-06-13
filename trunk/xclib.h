@@ -1,7 +1,7 @@
 /*
- *  $Id: Imakefile,v 1.8 2001/09/02 10:32:11 kims Exp $
- *
- *  xclip - reads standard in or files into X server selection for pasting
+ *  $Id: xclib.h,v 1.4 2001/09/19 08:38:01 kims Exp $
+ * 
+ *  xclib.h - header file for functions in xclib.c
  *  Copyright (C) 2001 Kim Saunders
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -17,12 +17,11 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
- 
-LOCAL_LIBRARIES = $(XLIB) $(XMULIB)
 
-CDEBUGFLAGS = -Wall
+#include <X11/Xlib.h>
 
-SRCS = xclib.c xcprint.c xclip.c
-OBJS = xclib.o xcprint.o xclip.o
-
-ComplexProgramTarget(xclip)
+/* functions in xclib.c */
+extern char *xcout(Display*, Window, Atom);
+extern int xcin(Display*, Window, XEvent, char*);
+extern void *xcmalloc(size_t);
+extern void *xcrealloc(void*, size_t);

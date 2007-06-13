@@ -1,4 +1,4 @@
-$Id: CHANGES,v 1.11 2001/05/29 07:07:12 kims Exp $
+$Id: CHANGES,v 1.16 2001/09/19 08:38:01 kims Exp $
 
 Version 0.01:
 	Everything. First release, pretty basic, but it worked.
@@ -25,7 +25,7 @@ Version 0.03:
 	Wrote a decent man page.
 
 Version 0.04:
-	Changed use of getop_long() to XrmParseCommand(), a function in xlib,
+	Changed use of getopt_long() to XrmParseCommand(), a function in xlib,
 	for portability. Apparently System V Unix derived machines don't have
 	getopt_long(). XrmParseCommand() is part of xlib, and hence should
 	*always* be available. XrmParseCommand is pretty average. It ignores
@@ -44,3 +44,22 @@ Version 0.05:
 	Added -Wall to C compiler options in Imakefile, fixed up some warnings.
 
 	Updated man page.
+
+Version 0.06:
+	Added support for INCR mechanism. This means that -o should be able to
+	print out selections that were previously too big and would have
+	resulted in a message "Error: Support for format not yet implemented."
+	In in mode, using the INCR mechanism means that you can use xclip on
+	really big data. It used to work OK on big data, but it is better
+	behaved about it now.
+
+	Created xclib.c file to look after the xlib selection and property code
+	from xclip.c. This may (or may not) be handy for anyone who wants a
+	simple way to use selections without using a widget set or getting
+	too involved in doing it themselves with xlib. I know a lot of people
+	are using xclip from inside scripts or other programs at the moment,
+	perhaps it xclib.c would be allow people to integrate the code into
+	their own projects easily.
+
+	All in all, a general cleanup (as I am now semi-competant with C), and
+	complete support for the INCR mechanism.

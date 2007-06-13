@@ -1,4 +1,4 @@
-.\" $Id: xclip.man,v 1.12 2001/05/29 07:07:12 kims Exp $
+.\" $Id: xclip.man,v 1.13 2001/09/19 11:44:13 kims Exp $
 .\"
 .\" xclip.man - xclip manpage
 .\" Copyright (C) 2001 Kim Saunders
@@ -24,7 +24,6 @@ xclip \- command line interface to X selections (clipboard)
 [OPTION] [FILE]
 .SH DESCRIPTION
 Reads text from standard in, or from one or more files, and makes it available as an X selection for pasting into X applications. Prints current X selection to standard out.
-.SH OPTIONS
 .TP 8
 .B \-i, -in \fIin mode\fB
 read text into X selection from standard input or files (default).
