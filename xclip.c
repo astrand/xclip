@@ -1,5 +1,5 @@
 /*
- *  $Id: xclip.c,v 1.57 2001/10/22 13:36:33 kims Exp $
+ *  $Id: xclip.c,v 1.60 2001/11/12 00:00:21 kims Exp $
  * 
  *  xclip.c - command line interface to X server selections 
  *  Copyright (C) 2001 Kim Saunders
@@ -502,33 +502,64 @@ int main (int argc, char *argv[])
 			/* wait for a SelectionRequest event */
 			while (1)
 			{
+				static unsigned int clear = 0;
+				static unsigned int context = XCLIB_XCIN_NONE;
+				static unsigned long sel_pos = 0;
+				static Window cwin;
+				static Atom pty;
+				int finished;
+
 				XNextEvent(dpy, &evt);
 
-				/* request for selection, process
-				 * with xcin()
-				 */
-				if (evt.type == SelectionRequest)
-					break;
+				finished = xcin(
+					dpy,
+					&cwin,
+					evt,
+					&pty,
+					sel_buf,
+					sel_len,
+					&sel_pos,
+					&context
+				);
 
-				/* lost ownership of selection, exit */
 				if (evt.type == SelectionClear)
-					exit(EXIT_SUCCESS);
-			}
+					clear = 1;
 
-			/* recieved request, send response with xcin().
-			 * xcin() will return a true value if it
-			 * received a SelectionClear, in which case
-			 * xclip should exit
-			 */
-			if (xcin(dpy, evt, sel_buf, sel_len))
-				exit(EXIT_SUCCESS);
+				if ( (context == XCLIB_XCIN_NONE) && clear)
+					exit(EXIT_SUCCESS);
+
+				if (finished)
+					break;
+			}
 
 			dloop++;	/* increment loop counter */
 		}
 	} else
 	{
-		/* out mode - get selection, print it, free the memory */
-		xcout(dpy, win, sseln, &sel_buf, &sel_len);
+		unsigned int context = XCLIB_XCOUT_NONE;
+
+		while (1)
+		{
+			/* only get an event if xcout() is doing something */
+			if (context != XCLIB_XCOUT_NONE)
+				XNextEvent(dpy, &evt);
+
+			/* fetch the selection, or part of it */
+			xcout(
+				dpy,
+				win,
+				evt,
+				sseln,
+				&sel_buf,
+				&sel_len,
+				&context
+			);
+
+			/* only continue if xcout() is doing something */
+			if (context == XCLIB_XCOUT_NONE)
+				break;
+		}
+		
 		if (sel_len)
 		{
 			/* only print the buffer out, and free it, if it's not

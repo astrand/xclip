@@ -1,4 +1,4 @@
-$Id: CHANGES,v 1.19 2001/10/23 00:26:05 kims Exp $
+$Id: CHANGES,v 1.20 2001/12/17 06:14:39 kims Exp $
 
 Version 0.01:
 	Everything. First release, pretty basic, but it worked.
@@ -97,3 +97,10 @@ Version 0.07:
 	I have successfully used xclip to copy and paste a 500k PNG image, it
 	came out identical (same md5sum), so it's fairly robust in terms of
 	the size and nature of the data that it will handle.
+
+Version 0.08:
+	Remove all event loops from xclib fuctions, to allow xclib to be
+	integrated into general-purpose event loops of other software more
+	easily.
+
+	Started using debian.org for email and website.

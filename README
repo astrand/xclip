@@ -1,4 +1,4 @@
-$Id: README,v 1.23 2001/10/22 13:36:33 kims Exp $
+$Id: README,v 1.24 2001/12/17 06:14:40 kims Exp $
 
 WHAT IS XCLIP?
 ==============
@@ -61,16 +61,16 @@ CAN I HELP?
 ===========
 
 Glad you asked! At this stage, I'm pretty happy with the features and
-implementation, so if you have anythingthing at all that should be done, I want
-to hear about it. Doesn't matter how small, compiler warnings, segfaults,
-spelling mistakes, whatever, I want to get it sorted out. xclip is not a big
-project, I'd like to get all these things sorted out and then declare it
-"complete".
+implementation, so if you have anything at all that should be done, I want to
+hear about it. Doesn't matter how small, compiler warnings, segfaults, spelling
+mistakes, whatever, I want to get it sorted out. xclip is not a big project,
+I'd like to get all these things sorted out and then declare it "complete".
 
 VERSION
 =======
 
-0.07 - Approaching completion. No added features since the last release, just bug and portability fixes.
+0.08 - No added features. Updated xclib to be more friendly to integrate into
+other software. Changed email address (again) and website.
 
 LICENSE
 =======
@@ -81,10 +81,10 @@ CONTACT
 =======
 
 Web:
-http://www.mercuryit.com.au/~kims/xclip/
+http://people.debian.org/~kims/xclip/
 
 Email:
-kim.saunders@mercuryit.com.au
+kims@debian.org
 
 Please email me about problems, experiences, patches, fixes, etc. Also, please
 drop me an email to let me know if you are going to feature xclip on a website,

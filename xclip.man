@@ -1,4 +1,4 @@
-.\" $Id: xclip.man,v 1.15 2001/10/23 00:26:05 kims Exp $
+.\" $Id: xclip.man,v 1.16 2001/12/17 06:14:40 kims Exp $
 .\"
 .\" xclip.man - xclip manpage
 .\" Copyright (C) 2001 Kim Saunders
@@ -100,5 +100,5 @@ option.
 Please report any bugs, problems, queries, experiences, etc. directly to the author.
 
 .SH AUTHOR
-Kim Saunders <kim.saunders@mercuryit.com.au>
+Kim Saunders <kims@debian.org>
 .br

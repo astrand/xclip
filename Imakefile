@@ -1,5 +1,5 @@
 /*
- *  $Id: Imakefile,v 1.13 2001/10/23 00:26:05 kims Exp $
+ *  $Id: Imakefile,v 1.15 2001/11/12 00:00:21 kims Exp $
  *
  *  xclip - reads standard in or files into X server selection for pasting
  *  Copyright (C) 2001 Kim Saunders

@@ -1,5 +1,5 @@
 /*
- *  $Id: xcdef.h,v 1.7 2001/10/18 04:49:27 kims Exp $
+ *  $Id: xcdef.h,v 1.8 2001/12/17 06:14:40 kims Exp $
  * 
  *  xcdef.h - definitions for use throughout xclip
  *  Copyright (C) 2001 Kim Saunders
@@ -19,7 +19,7 @@
  */
 
 /* xclip version and name */
-#define XC_VERS 0.07
+#define XC_VERS 0.08
 #define XC_NAME "xclip"
 
 /* output level constants */
