@@ -1,4 +1,4 @@
-$Id: INSTALL,v 1.9 2001/09/19 11:54:06 kims Exp $
+$Id: INSTALL,v 1.10 2001/10/22 13:36:33 kims Exp $
 
 BUILDING
 ========
@@ -30,10 +30,14 @@ packages for most useful distributions.
 PLATFORMS
 =========
 
-I've given up trying to compile a list that xclip does work on, because it's
-likely that it will change with every version. Rather, please report to me if
-you have any trouble compiling, installing and using xclip in any unix-like
-system that you feel it should work on.
+xclip should compile and work on any unix-like platform, I have taken great
+effort to avoid using anything that isn't absolutely standard.
+
+I have decided that it's not practical to compile a list of specific platforms
+that xclip works on, but it has been known to work on GNU/Linux, Solaris,
+Cygwin and Irix. If you are able to get xclip working on a different platform,
+or have any problems getting it to work on a platform you feel it should work
+on, please drop me an email - I'd be interested to know.
 
 TESTING
 =======

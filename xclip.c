@@ -1,5 +1,5 @@
 /*
- *  $Id: xclip.c,v 1.51 2001/09/19 11:44:13 kims Exp $
+ *  $Id: xclip.c,v 1.57 2001/10/22 13:36:33 kims Exp $
  * 
  *  xclip.c - command line interface to X server selections 
  *  Copyright (C) 2001 Kim Saunders
@@ -30,19 +30,7 @@
 #include "xclib.h"
 
 /* command line option table for XrmParseCommand() */
-static XrmOptionDescRec opt_tab[] = {
-	{"-loops",	".loops",	XrmoptionSepArg, (XPointer) NULL },
-	{"-display",	".display",	XrmoptionSepArg, (XPointer) NULL },
-	{"-selection",	".selection",	XrmoptionSepArg, (XPointer) NULL },
-	{"-filter",	".filter",	XrmoptionNoArg,	 (XPointer) ST   },
-	{"-in",		".direction",	XrmoptionNoArg,	 (XPointer) "I"  },
-	{"-out",	".direction",	XrmoptionNoArg,	 (XPointer) "O"  },
-	{"-version",	".print",	XrmoptionNoArg,	 (XPointer) "V"  },
-	{"-help",	".print",	XrmoptionNoArg,	 (XPointer) "H"  },
-	{"-silent",	".olevel",	XrmoptionNoArg,	 (XPointer) "S"  },
-	{"-quiet",	".olevel",	XrmoptionNoArg,	 (XPointer) "Q"  },
-	{"-verbose",	".olevel",	XrmoptionNoArg,	 (XPointer) "V"  },
-};
+XrmOptionDescRec opt_tab[11];
 
 /* Options that get set on the command line */
 int             sloop = 0;			/* number of loops */
@@ -59,15 +47,17 @@ XrmDatabase     opt_db = NULL;			/* database for options */
 
 char          **fil_names;			/* names of files to read */
 int             fil_number = 0;                 /* number of files to read */
-int		fil_current;
+int		fil_current = 0;
 FILE*           fil_handle = NULL;
 
 /* variables to hold Xrm database record and type */
 XrmValue        rec_val;
 char           *rec_typ;
 
+int		tempi = 0;
+
 /* Use XrmParseCommand to parse command line options to option variable */
-void doOptMain (int argc, char *argv[])
+static void doOptMain (int argc, char *argv[])
 {
 	/* Initialise resource manager and parse options into database */
 	XrmInitialize();
@@ -183,7 +173,7 @@ void doOptMain (int argc, char *argv[])
 	}
 
 	/* Read remaining options (filenames) */
-	while (optind < argc)
+	while ( (fil_number + 1) < argc )
 	{
 		if (fil_number > 0)
 		{
@@ -195,13 +185,13 @@ void doOptMain (int argc, char *argv[])
 		{
 			fil_names = xcmalloc(sizeof(char*));
 		}
-		fil_names[fil_number++] = strdup(argv[optind]);
-		optind++;
+		fil_names[fil_number] = argv[fil_number + 1];
+		fil_number++;
 	}
-};
+}
 
 /* process selection command line option */
-void doOptSel (int argc, char *argv[])
+static void doOptSel (void)
 {
 	/* set selection to work with */
 	if (
@@ -246,14 +236,88 @@ void doOptSel (int argc, char *argv[])
 int main (int argc, char *argv[])
 {
 	/* Declare variables */
-	char *seltxt;			/* selection text string */
-	unsigned long stelems = 0;	/* number of used elements in seltxt */
-	unsigned long stalloc = 0;	/* size of seltxt */
+	unsigned char *sel_buf;		/* buffer for selection data */
+	unsigned long sel_len = 0;	/* length of sel_buf */
+	unsigned long sel_all = 0;	/* allocated size of sel_buf */
 	Window win;			/* Window */
 	XEvent evt;			/* X Event Structures */
 	int dloop = 0;			/* done loops counter */
 
 	pid_t pid;			/* child pid if forking */
+
+	/* set up option table. I can't figure out a better way than this to
+	 * do it while sticking to pure ANSI C. The option and specifier
+	 * members have a type of volatile char *, so they need to be allocated
+	 * by strdup or malloc, you can't set them to a string constant at
+	 * declare time, this is note pure ANSI C apparently, although it does
+	 * work with gcc
+	 */
+	
+	/* loop option entry */
+	opt_tab[0].option 	=	xcstrdup("-loops");
+	opt_tab[0].specifier	=	xcstrdup(".loops");
+	opt_tab[0].argKind	=	XrmoptionSepArg;
+	opt_tab[0].value	=	(XPointer) NULL;
+
+	/* display option entry */
+	opt_tab[1].option	=	xcstrdup("-display");
+	opt_tab[1].specifier	=	xcstrdup(".display");
+	opt_tab[1].argKind	=	XrmoptionSepArg;
+	opt_tab[1].value	=	(XPointer) NULL;
+				
+	/* selection option entry */
+	opt_tab[2].option 	=	xcstrdup("-selection");
+	opt_tab[2].specifier	=	xcstrdup(".selection");
+	opt_tab[2].argKind	=	XrmoptionSepArg;
+	opt_tab[2].value	=	(XPointer) NULL;
+		
+	/* filter option entry */
+	opt_tab[3].option	=	xcstrdup("-filter");
+	opt_tab[3].specifier	=	xcstrdup(".filter");
+	opt_tab[3].argKind	=	XrmoptionNoArg;	
+	opt_tab[3].value	=	(XPointer) xcstrdup(ST);
+		
+	/* in option entry */
+	opt_tab[4].option	=	xcstrdup("-in");
+	opt_tab[4].specifier	=	xcstrdup(".direction");
+	opt_tab[4].argKind	=	XrmoptionNoArg;
+	opt_tab[4].value	=	(XPointer) xcstrdup("I");
+		
+	/* out option entry */
+	opt_tab[5].option	=	xcstrdup("-out");
+	opt_tab[5].specifier	=	xcstrdup(".direction");
+	opt_tab[5].argKind	=	XrmoptionNoArg;
+	opt_tab[5].value	=	(XPointer) xcstrdup("O");
+		
+	/* version option entry */
+	opt_tab[6].option	=	xcstrdup("-version");
+	opt_tab[6].specifier	=	xcstrdup(".print");
+	opt_tab[6].argKind	=	XrmoptionNoArg;
+	opt_tab[6].value	=	(XPointer) xcstrdup("V");
+		
+	/* help option entry */
+	opt_tab[7].option	=	xcstrdup("-help");
+	opt_tab[7].specifier	=	xcstrdup(".print");
+	opt_tab[7].argKind	=	XrmoptionNoArg;
+	opt_tab[7].value	=	(XPointer) xcstrdup("H");
+		
+	/* silent option entry */
+	opt_tab[8].option	=	xcstrdup("-silent");
+	opt_tab[8].specifier	=	xcstrdup(".olevel");
+	opt_tab[8].argKind	=	XrmoptionNoArg;
+	opt_tab[8].value	=	(XPointer) xcstrdup("S");
+		
+	/* quiet option entry */
+	opt_tab[9].option	=	xcstrdup("-quiet");
+	opt_tab[9].specifier	=	xcstrdup(".olevel");
+	opt_tab[9].argKind	=	XrmoptionNoArg;
+	opt_tab[9].value	=	(XPointer) xcstrdup("Q");
+		
+	/* verbose option entry */
+	opt_tab[10].option	=	xcstrdup("-verbose");
+	opt_tab[10].specifier	=	xcstrdup(".olevel");
+	opt_tab[10].argKind	=	XrmoptionNoArg;
+	opt_tab[10].value	=	(XPointer) xcstrdup("V");
 
 	/* parse command line options */
 	doOptMain(argc, argv);
@@ -271,7 +335,7 @@ int main (int argc, char *argv[])
 	}
 
 	/* parse selection command line option */
-	doOptSel(argc, argv);
+	doOptSel();
   
 	/* Create a window to trap events */
 	win = XCreateSimpleWindow(
@@ -292,19 +356,17 @@ int main (int argc, char *argv[])
 	if (fdiri)
 	{
 		/* in mode */
-		stalloc = 16;  /* Reasonable ballpark figure */
-		seltxt = xcmalloc(stalloc);
+		sel_all = 16;		/* Reasonable ballpark figure */
+		sel_buf = xcmalloc(sel_all * sizeof(char));
 
 		/* Put chars into inc from stdin or files until we hit EOF */
 		do {
-			
 			if (fil_number == 0)
 			{
 				/* read from stdin if no files specified */
 				fil_handle = stdin;
 			} else
 			{
-				/* open the current file for reading */
 				if (
 					(fil_handle = fopen(
 						fil_names[fil_current],
@@ -313,6 +375,7 @@ int main (int argc, char *argv[])
 				)
 				{
 					errperror(
+						3,
 						argv[0],
 						": ",
 						fil_names[fil_current]
@@ -331,34 +394,30 @@ int main (int argc, char *argv[])
 						);
 				}
 			}
+
 			fil_current++;
 			while (!feof(fil_handle))
 			{
-				int n = 0;
-
-				/* If in is full (used elems =
+				/* If sel_buf is full (used elems =
 				 * allocated elems)
 				 */
-				if (stelems == stalloc)
+				if (sel_len == sel_all)
 				{
 					/* double the number of
 					 * allocated elements
 					 */
-					stalloc *= 2 + 1;
-					seltxt = (char *)xcrealloc(
-						seltxt,
-						stalloc * sizeof(char)
+					sel_all *= 2;
+					sel_buf = (unsigned char *)xcrealloc(
+						sel_buf,
+						sel_all * sizeof(char)
 					);
 				}
-				n = fread(
-					seltxt + stelems,
-					1,
-					stalloc - stelems,
+				sel_len += fread(
+					sel_buf + sel_len,
+					sizeof(char),
+					sel_all - sel_len,
 					fil_handle
 				);
-	
-				stelems += n;
-				seltxt[stelems] = '\0';
 			}
 		} while (fil_current < fil_number);
 
@@ -367,7 +426,7 @@ int main (int argc, char *argv[])
 		 * spit all the input back out to stdout
 		 */
 		if ((fil_number == 0) && ffilt)
-			printf(seltxt);
+			fwrite(sel_buf, sizeof(char), sel_len, stdout); 
     
 		/* take control of the selection so that we receive
 		 * SelectionRequest events from other windows
@@ -461,7 +520,7 @@ int main (int argc, char *argv[])
 			 * received a SelectionClear, in which case
 			 * xclip should exit
 			 */
-			if (xcin(dpy, win, evt, seltxt))
+			if (xcin(dpy, evt, sel_buf, sel_len))
 				exit(EXIT_SUCCESS);
 
 			dloop++;	/* increment loop counter */
@@ -469,9 +528,15 @@ int main (int argc, char *argv[])
 	} else
 	{
 		/* out mode - get selection, print it, free the memory */
-		seltxt = xcout(dpy, win, sseln);
-		printf(seltxt);
-		free(seltxt);
+		xcout(dpy, win, sseln, &sel_buf, &sel_len);
+		if (sel_len)
+		{
+			/* only print the buffer out, and free it, if it's not
+			 * empty
+			 */
+			fwrite(sel_buf, sizeof(char), sel_len, stdout);
+			free(sel_buf);
+		}
 	}
 
 	/* Disconnect from the X server */

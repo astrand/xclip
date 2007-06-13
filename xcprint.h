@@ -1,5 +1,5 @@
 /*
- *  $Id: xcprint.h,v 1.2 2001/09/19 08:38:01 kims Exp $
+ *  $Id: xcprint.h,v 1.3 2001/10/18 04:49:27 kims Exp $
  * 
  *  xcprint.h - header file for functions in xcprint.c
  *  Copyright (C) 2001 Kim Saunders
@@ -20,7 +20,7 @@
 
 /* functions in xcprint.c */
 extern void prhelp(char *);
-extern void prversion();
-extern void errmalloc();
+extern void prversion(void);
+extern void errmalloc(void);
 extern void errxdisplay(char *);
-extern void errperror(char *, ...);
+extern void errperror(int, ...);

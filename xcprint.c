@@ -1,5 +1,5 @@
 /*
- *  $Id: xcprint.c,v 1.9 2001/09/19 08:38:01 kims Exp $
+ *  $Id: xcprint.c,v 1.12 2001/10/22 13:36:33 kims Exp $
  * 
  *  xcprint.c - functions to print help, version, errors, etc
  *  Copyright (C) 2001 Kim Saunders
@@ -24,35 +24,39 @@
 #include <string.h>
 #include "xcdef.h"
 #include "xclib.h"
+#include "xcprint.h"
 
 /* print the help screen. argument is argv[0] from main() */
 void prhelp (char *name)
 {
-	fprintf(stderr, "Usage: %s [OPTIONS] [FILES]\n", name);
-	fprintf(stderr, "Puts data from standard input or FILES into an X ");
-	fprintf(stderr, "server selection for pasting.\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "-i,  -in        in mode\n");
-	fprintf(stderr, "-o,  -out       out mode\n");
-	fprintf(stderr, "-l,  -loops     number of selection requests to ");
-	fprintf(stderr, "wait for before exiting\n");
-	fprintf(stderr, "-s,  -selection selection to access (\"primary\", ");
-	fprintf(stderr, "\"secondary\" or \"clipboard\")\n");
-	fprintf(stderr, "-d,  -display   X display to connect to (eg ");
-	fprintf(stderr, "\"localhost:0\")\n");
-	fprintf(stderr, "-h,  -help      usage information\n");
-	fprintf(stderr, "     -version   version information\n");
-	fprintf(stderr, "     -silent    silent mode (errors only, default)\n");
-	fprintf(stderr, "     -quiet     show what's happing, don't fork ");
-	fprintf(stderr, "into background\n");
-	fprintf(stderr, "     -verbose   running commentary\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Report bugs to <kim.saunders@mercuryit.com.au>\n");
+	fprintf(
+		stderr,
+		"Usage: %s [OPTION] [FILE]...\n"\
+		"Access an X server selection for reading or writing.\n"\
+		"\n"\
+		"  -i, -in          in mode\n"\
+		"  -o, -out         out mode\n"\
+		"  -l, -loops       number of selection requests to "\
+		"wait for before exiting\n"\
+		"  -d, -display     X display to connect to (eg "\
+		"localhost:0\")\n"\
+		"  -h, -help        usage information\n"\
+		"      -selection   selection to access (\"primary\", "\
+		"\"secondary\" or \"clipboard\")\n"\
+		"      -version     version information\n"\
+		"      -silent      errors only, run in background (default)\n"\
+		"      -quiet       run in foreground, show what's happening\n"\
+		"      -verbose     running commentary\n"\
+		"\n"\
+		"Report bugs to <kim.saunders@mercuryit.com.au>\n",
+		name
+	);
 	exit(EXIT_SUCCESS);
 }
 
+
 /* A function to print the software version info */
-void prversion ()
+void prversion (void)
 {
 	fprintf(stderr, "%s version %1.2f\n", XC_NAME, XC_VERS);
 	fprintf(stderr, "Copyright (C) 2001 Kim Saunders\n");
@@ -61,7 +65,7 @@ void prversion ()
 }
 
 /* failure message for malloc() problems */
-void errmalloc ()
+void errmalloc (void)
 {
 	fprintf(stderr, "Error: Could not allocate memory.\n");
 	exit(EXIT_FAILURE);
@@ -80,28 +84,44 @@ void errxdisplay (char *display)
 	exit(EXIT_FAILURE);
 }
 
-/* a wrapper for perror that joins multiple prefixes together */
-void errperror(char *msg, ...)
+/* a wrapper for perror that joins multiple prefixes together. Arguments
+ * are an integer, and any number of strings. The integer needs to be set to
+ * the number of strings that follow.
+ */
+void errperror(int prf_tot, ...)
 {
 	va_list ap;		/* argument pointer */
-	char *msg_all = NULL;	/* all messages so far */
+	char *msg_all;		/* all messages so far */
 	char *msg_cur;		/* current message string */
+	int prf_cur;		/* current prefix number */
+	
+	/* start off with an empty string */
+	msg_all = xcstrdup("");
 
-	if (msg != NULL)
+	/* start looping through the viariable arguments */
+	va_start(ap, prf_tot);
+
+	/* loop through each of the arguments */
+	for (prf_cur = 0; prf_cur < prf_tot; prf_cur++)
 	{
-		msg_all = strdup(msg);
-	
-		va_start(ap, msg);
-		while ((msg_cur = va_arg(ap,char *)))
-		{
-			msg_all = (char *)xcrealloc(
-				msg_all,
-				strlen(msg_all) + strlen(msg_cur) + 1
-			);
-			strcat(msg_all, msg_cur);
-		}
-		va_end(ap);
+		/* get the current argument */
+		msg_cur = va_arg(ap, char *);
+		
+		/* realloc msg_all so it's big enough for itself, the current
+		 * argument, and a null terminator
+		 */
+		msg_all = (char *)xcrealloc(
+			msg_all,
+			strlen(msg_all) + strlen(msg_cur) + sizeof(char)
+		);
+
+		/* append the current message the the total message */
+		strcat(msg_all, msg_cur);
 	}
-	
+	va_end(ap);
+
 	perror(msg_all);
+
+	/* free the complete string */
+	free(msg_all);
 }

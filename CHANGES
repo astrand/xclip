@@ -1,4 +1,4 @@
-$Id: CHANGES,v 1.16 2001/09/19 08:38:01 kims Exp $
+$Id: CHANGES,v 1.19 2001/10/23 00:26:05 kims Exp $
 
 Version 0.01:
 	Everything. First release, pretty basic, but it worked.
@@ -63,3 +63,37 @@ Version 0.06:
 
 	All in all, a general cleanup (as I am now semi-competant with C), and
 	complete support for the INCR mechanism.
+
+Version 0.07:
+	Not a lot of changes in terms of features, but tonnes of bug and
+	portability fixes, as well as general code cleanup.
+	
+	Fixed a segfault problem with errperror in v0.06. Can't believe I
+	didn't notice it before I released it.
+
+	Cleaned up the code, hopefully for complete compatibilty with more C
+	compilers and platforms. xclip compiles without warning on my Debian
+	GNU/Linux development platform with gcc -Wall -W -pedantic -ansi
+	-Wtraditional -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast
+	-Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Wsign-compare
+	-Waggregate-return -Wstrict-prototypes -Wmissing-prototypes
+	-Wmissing-declarations -Wredundant-decls -Wnested-externs -Winline
+
+	I figure if it compiles without warning with those options, it should
+	compile OK on pretty much any suitable platform (see README for what
+	counts as a suitable platform). I wish GCC just had a -Wanal-retentive
+	option...
+
+	I discovered the wonders of Electric Fence, so I was able to fix up
+	some memory problems that didn't cause problems before, but probably
+	wouldn't have helped things either.
+
+	I rewrote the way a few things work. For example, xclip doesn't store
+	the selection data in strings any more, but rather just in allocated
+	memory of known length, so you can now copy and paste data with nulls
+	in it. It's probably not recommended though, gtk doesn't seem to read
+	beyond the first null byte.
+	
+	I have successfully used xclip to copy and paste a 500k PNG image, it
+	came out identical (same md5sum), so it's fairly robust in terms of
+	the size and nature of the data that it will handle.
