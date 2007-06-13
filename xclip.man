@@ -1,4 +1,4 @@
-.\" $Id: xclip.man,v 1.9 2001/05/05 15:22:46 kims Exp $
+.\" $Id: xclip.man,v 1.12 2001/05/29 07:07:12 kims Exp $
 .\"
 .\" xclip.man - xclip manpage
 .\" Copyright (C) 2001 Kim Saunders
@@ -18,31 +18,34 @@
 .\"
 .TH XCLIP 1 
 .SH NAME
-xclip \- command line interface to X server selection (clipboard)
+xclip \- command line interface to X selections (clipboard)
 .SH SYNOPSIS
 .B xclip
 [OPTION] [FILE]
 .SH DESCRIPTION
-Reads text from standard in, or from one or more files, and makes it available for pasting into X applications, prints current X selection to standard out.
+Reads text from standard in, or from one or more files, and makes it available as an X selection for pasting into X applications. Prints current X selection to standard out.
 .SH OPTIONS
 .TP 8
 .B \-i, -in \fIin mode\fB
-read text in from stdin or files into X selection (default).
+read text into X selection from standard input or files (default).
 .TP 8
 .B \-o, -out \fIout mode\fB
-prints the current selection to stdout (generally for piping to a file or program).
+prints the selection to standard out (generally for piping to a file or program).
 .TP 8
 .B \-f, -filter \fIfilter\fB
-when xclip is invoked in the in mode, silent output level (the default), the filter option will cause xclip to print the text piped to standard in back to standard out unmodified.
+when xclip is invoked in the in mode with output level set to silent (the defaults), the filter option will cause xclip to print the text piped to standard in back to standard out unmodified.
 .TP 8
-.B \-l, -loops=N \fInumber of loops\fB
-number of X selection requests (pastes to X applications) to wait for before exiting. The default value of 0 causes xclip to wait for an unlimited number or requests until another application (or invocation of xclip) takes ownership of the selection.
+.B \-l, -loops \fInumber of loops\fB
+number of X selection requests (pastes into X applications) to wait for before exiting. The default value of 0 causes xclip to wait for an unlimited number or requests until another application (or invocation of xclip) takes ownership of the selection.
 .TP 8
-.B \-d, -display=hostname:x \fIX display\fB
+.B \-d, -display \fIX11 display\fB
 X display to use (e.g. "localhost:0"). Defaults to the value in DISPLAY.
 .TP 8
 .B \-h, -help \fIoption summary\fB
 show quick summary of options.
+.TP 8
+.B \-selection \fIselection to access\fB
+Specify which X selection to use. Options are "primary" to use XA_PRIMARY (default), "secondary" for XA_SECONDARY and "clipboard" for XA_CLIPBOARD. Note that only the first letter of the argument is important, so "p", "sec", "cilp", etc. will all have the desired effect.
 .TP 8
 .B \-version \fIversion and copyright information\fB
 show version information.
@@ -76,7 +79,7 @@ uptime | xclip
 .PP
 Put your uptime in the X selection. Then middle click in an X application to paste.
 
-.B xclip --loops=10 --verbose /etc/passwd
+.B xclip -loops 10 -verbose /etc/passwd
 .PP
 Exit after /etc/passwd has been pasted 10 times. Show how many selection requests (pastes) have been processed.
 
@@ -89,15 +92,12 @@ Put the contents of the selection into a file.
 .SM DISPLAY
 X display to use if none is specified with the
 .B
--d
-or
-.B
---display
-options.
+-display
+option.
 
 .SH REPORTING BUGS
 Please report any bugs, problems, queries, experiences, etc. directly to the author.
 
 .SH AUTHOR
-Kim Saunders <kim.saunders@fortytwo.com.au>
+Kim Saunders <kim.saunders@mercuryit.com.au>
 .br

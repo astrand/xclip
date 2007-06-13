@@ -1,5 +1,5 @@
 /*
- *  $Id: xcprint.c,v 1.2 2001/05/05 15:22:46 kims Exp $
+ *  $Id: xcprint.c,v 1.4 2001/05/28 07:22:47 kims Exp $
  * 
  *  xcprint.c - functions to print help, version, etc
  *  Copyright (C) 2001 Kim Saunders
@@ -31,6 +31,7 @@ void prhelp (){
   fprintf(stderr, "-i,  -in        in mode\n");
   fprintf(stderr, "-o,  -out       out mode\n");
   fprintf(stderr, "-l,  -loops     number of selection requests to wait for before exiting\n");
+  fprintf(stderr, "-s,  -selection selection to access (\"primary\", \"secondary\" or \"clipboard\")\n");
   fprintf(stderr, "-d,  -display   X display to connect to (eg \"localhost:0\")\n");
   fprintf(stderr, "-h,  -help      usage information\n");
   fprintf(stderr, "     -version   version information\n");
@@ -38,7 +39,7 @@ void prhelp (){
   fprintf(stderr, "     -quiet     show what's happing, don't fork into background\n");
   fprintf(stderr, "     -verbose   running commentary\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "Report bugs to <kim.saunders@fortytwo.com.au>\n");
+  fprintf(stderr, "Report bugs to <kim.saunders@mercuryit.com.au>\n");
   exit(EXIT_SUCCESS);
 }
 
