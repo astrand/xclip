@@ -1,4 +1,4 @@
-$Id: CHANGES,v 1.8 2001/04/03 12:44:26 kims Exp $
+$Id: CHANGES,v 1.9 2001/05/05 15:16:18 kims Exp $
 
 Version 0.01:
 	Everything. First release, pretty basic, but it worked.
@@ -23,3 +23,15 @@ Version 0.03:
 	X server (nearly all Unix style X servers I would imagine).
 
 	Wrote a decent man page.
+
+Version 0.04:
+	Changed use of getop_long() to XrmParseCommand(), a function in xlib,
+	for portability. Apparently System V Unix derived machines don't have
+	getopt_long(). XrmParseCommand() is part of xlib, and hence should
+	*always* be available. XrmParseCommand is pretty average. It ignores
+	ambiguous options (-ver gets ignored, instead of going to -verbose or
+	-version). It doesn't do multiple options with one hyphen (-if instead
+	of (-i -f), etc.
+
+	Added xclip -out (out mode) and -filter (print stdin back to stdout).
+
