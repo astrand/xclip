@@ -1,0 +1,46 @@
+xclip
+
+WHAT IS XCLIP?
+
+xclip is a simple little utility that is designed to be run on the command line on a *n?x system. It reads input from standard in (usually piped to it) and puts it in the X selection of an X server ready for pasting into any x app with your middle mouse button. I primarily use a GNOME setup, xclip allows better intergration with command line software, it's very handy if you need to email the output of a command to someone. Say someone wants you to email a whois record to them, with xclip it's as simple as "whois domain.com | xclip", then middle click in an email. Just saves you from selecting the right text, slightly tricky if its multiple pages, etc.
+
+I am somewhat surprised a utility like this hasn't been done before - have I missed something? If not, I feel xclip is a pretty "core" utility that most people would use. It's in the Unix spirit of a simple program to add to the toolbox, to integrate with other tools. If no alternative to xclip exists, I'd like to see to become a pretty standard X tool!
+
+FEATURES
+
+* Reads data piped to standard in
+* Connects to the X display in $DISPLAY, or specified with -display host:0 
+* Can wait for more than one paste of the selection data
+
+TODO
+
+* Allow files to be specified as arguments - reads all files into X selection, reads from standard in if no files are specified (like cat)
+* Not dependant on GNU glibc's getopt_long_only
+* A proper configure script to find xlibs, not hardcoded into Makefile...
+* Test, make work on as many platforms as possible
+* Write man page
+* Submit to X distributions (X Consortium, XFree86, etc)
+
+CAN I HELP?
+
+Glad you asked! xclip is my first project in C! Not to mention my first time using xlib, etc, etc. Hence, I am aware that it is probably pretty badly written at the moment. I'd really appreciate help achieving the goals on the TODO above. If you speak C or xlib, please check the code out, and submit any comments/fixes to me, but please, explain what the changes are. If you just submit a patch, I'm likely to not understand it, and I would like to get better at this stuff. After all, I wrote this to learn C on *n?x, xlib, etc as much as anything else. No, I didn't spend many hrs on this to save me 3 seconds of selecting text...
+
+I'm sure the tasks above would only take 2 or 3 hrs each for someone who know what they were doing - I'd be appreciative to anyone who is willing to put in that time, and tell me how they did it, to save me stabbing around in the dark.
+
+VERSION
+
+0.01 - first public release. Kinda works :)
+
+LICENSE
+
+GNU GPL, see the LICENSE file for details
+
+CONTACT
+
+Web:
+http://www.mercuryit.com.au/~kims/xclip/
+
+Email:
+kim.saunders@fortytwo.com.au
+
+Please  email me about problems, experiences, fixes, etc.
