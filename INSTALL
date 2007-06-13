@@ -1,4 +1,4 @@
-$Id: INSTALL,v 1.4 2001/04/04 04:16:22 kims Exp $
+$Id: INSTALL,v 1.5 2001/05/02 11:20:06 kims Exp $
 
 BUILDING
 
@@ -17,7 +17,7 @@ distribution.
 
 REQUIREMENTS
 
-xclip should compile on pretty much any Unix-like system. The requirements to
+xclip should compile on pretty much any unix-like system. The requirements to
 compile xclip are pretty minimal, if you can compile any X apps at all, you'll
 be able to compile xclip.
 

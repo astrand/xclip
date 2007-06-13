@@ -1,7 +1,7 @@
 /*
- *  $Id: Imakefile,v 1.5 2001/04/25 04:54:47 kims Exp $
- *
- *  xclip - reads standard in or files into X server selection for pasting
+ *  $Id: xcdef.h,v 1.1 2001/04/30 11:16:34 kims Exp $
+ * 
+ *  xcdef.h - definitions for use throughout xclip
  *  Copyright (C) 2001 Kim Saunders
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -17,10 +17,20 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
- 
-LOCAL_LIBRARIES = $(XLIB)
 
-SRCS = xclip.c xcprint.c
-OBJS = xclip.o xcprint.o
+/* xclip version and name */
+#define XC_VERS 0.04
+#define XC_NAME "xclip"
 
-ComplexProgramTarget(xclip)
+/* output level constants */
+#define OSILENT  0
+#define OQUIET   1
+#define OVERBOSE 2
+
+/* generic true/false constants for stuff */
+#define F 0     /* false... */
+#define T 1     /* true...  */
+
+/* true/false string constants */
+#define SF "F"	/* false */
+#define ST "T"	/* true  */

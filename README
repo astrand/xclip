@@ -1,27 +1,36 @@
-$Id: README,v 1.10 2001/04/04 04:16:22 kims Exp $
+$Id: README,v 1.12 2001/05/05 15:16:18 kims Exp $
 
 WHAT IS XCLIP?
 
-xclip is a utility that is designed to be run from the command line on a *n?x
-system. It reads input from standard in (usually piped to it) and puts it in
-the X selection of an X server for pasting into any X app with your middle
-mouse button. I primarily use a GNOME setup, and xclip allows better
-integration with command line programs. For example, it's handy if you need to
-email the output of a command to someone - you could email a whois record with
-xclip by running "whois domain.com | xclip", then middle clicking in an email.
-It can also read an entire file into the X selection for pasting into another
-document, e.g. "xclip /proc/cpuinfo".
+xclip is a command line utility that is designed to run on any system with an
+X11 implementation. It provides an interface to the X selection (the clipboard)
+from the command line. It can read data from standard in or a file and place it
+in the X selection for pasting into other X applicationss. xclip can also print
+the X selection to standard out, which can be piped to a file or another
+program.
 
+USING XCLIP
 
-I am somewhat surprised that a utility like this hasn't been implemented before
-- am I missing something? If not, I feel xclip is a pretty "core" utility that
-most people would use. It's in the Unix spirit of a simple program to add to
-the toolbox, to integrate with other tools. If no alternative to xclip exists,
-I'd like to see to become a pretty standard X tool.
+Here are some nifty things to do with xclip:
+
+	Copy your uptime into the clipboard for pasting:
+	uptime | xclip
+
+	Copy your password file for pasting:
+	xclip /etc/passwd
+
+	Save the selected example code from your web browser to a file:
+	xclip -o > helloword.c
+
+	In command mode in vim, select some lines of text, then press shift-:
+	for and ex prompt, and use this command to copy the selected lines
+	of text to the X selection:
+	!xclip -f
 
 FEATURES
 
 * Reads data piped to standard in or files given as arguments
+* Prints contents of selection to standard out
 * Connects to the X display in DISPLAY, or specified with -display host:0 
 * Waits for pastes in the background
 
@@ -33,13 +42,19 @@ out the code, and submit any comments/fixes.
 
 VERSION
 
-0.03 - Getting pretty usable. Should be pretty portable now, has decent man
-pages, etc. Only a few more things to do until I'm ready to declare it
-"finished".
+0.04 - I don't think there are any major features missing any more, just some
+more testing and tweaking to be done. Should very portable now, I don't think
+xclip uses anything that anyone with a working X11 will be missing.
+
+There have been a *lot* of *major* changes since 0.03 (see CHANGES), so I'm
+sure there will be some bugs in this release. Please report them! Probably best
+not to include this release in distributions at this stage. I'm hoping to come
+up with a very stable (dare I say "finished") version soon if this release goes
+well which I *will* want in as many distributions as possible!
 
 LICENSE
 
-GNU GPL, see the COPYING  file for details
+GNU GPL, see the COPYING file for details.
 
 CONTACT
 
