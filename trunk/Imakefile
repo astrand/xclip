@@ -1,5 +1,5 @@
 /*
- *  $Id: Imakefile,v 1.8 2001/09/02 10:32:11 kims Exp $
+ *  $Id: Imakefile,v 1.13 2001/10/23 00:26:05 kims Exp $
  *
  *  xclip - reads standard in or files into X server selection for pasting
  *  Copyright (C) 2001 Kim Saunders
@@ -20,7 +20,13 @@
  
 LOCAL_LIBRARIES = $(XLIB) $(XMULIB)
 
-CDEBUGFLAGS = -Wall
+/* Development flags for gcc to ensure portability of code
+CFLAGS = -g -Wall -W -pedantic -ansi -Wtraditional -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Wsign-compare -Waggregate-return -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs -Winline
+*/
+
+/* Normal development flags for warnings and debug info
+CFLAGS = -Wall -g
+*/
 
 SRCS = xclib.c xcprint.c xclip.c
 OBJS = xclib.o xcprint.o xclip.o

@@ -1,5 +1,5 @@
 /*
- *  $Id: xclib.c,v 1.6 2001/09/15 05:50:59 kims Exp $
+ *  $Id: xclib.c,v 1.9 2001/10/22 07:52:51 kims Exp $
  * 
  *  xclib.c - xclip library to look after xlib mechanics for xclip
  *  Copyright (C) 2001 Kim Saunders
@@ -25,6 +25,14 @@
 #include <X11/Xatom.h>
 #include "xcdef.h"
 #include "xcprint.h"
+#include "xclib.h"
+
+/* check a pointer to allocater memory, print an error if it's null */
+void xcmemcheck(void *ptr)
+{
+	if (ptr == NULL)
+		errmalloc();
+}
 
 /* wrapper for malloc that checks for errors */
 void *xcmalloc (size_t size)
@@ -32,8 +40,8 @@ void *xcmalloc (size_t size)
 	void *mem;
 	
 	mem = malloc(size);
-	if (mem == NULL)
-		errmalloc();
+	xcmemcheck(mem);
+	
 	return(mem);
 }
 
@@ -43,27 +51,58 @@ void *xcrealloc (void *ptr, size_t size)
 	void *mem;
 
 	mem = realloc(ptr, size);
-	if (mem == NULL)
-		errmalloc();
+	xcmemcheck(mem);
+
 	return(mem);
 }
 
-/* return selection data */
-char *xcout (Display *dpy, Window win, Atom sel)
+/* a strdup() implementation since ANSI C doesn't include strdup() */
+void *xcstrdup (const char *string)
+{
+	void *mem;
+
+	/* allocate a buffer big enough to hold the characters and the
+	 * null terminator, then copy the string into the buffer
+	 */
+	mem = xcmalloc(strlen(string) + sizeof(char));
+	strcpy(mem, string);
+
+	return(mem);
+}
+
+/* return selection data. Arguments are the display and window, the selection
+ * to be returned, and a pointer to a buffer and a long which get set to the
+ * contents of the selection, and the size of the buffer. Returns a 0, unless
+ * a SelectionNotify event is received, in which case 1 is returned. It's
+ * pretty unlikely that we own the selection if we're pasting... but hey, you
+ * never know....
+ */
+int xcout (
+	Display *dpy,
+	Window win,
+	Atom sel,
+	unsigned char **txt,
+	unsigned long *len
+)
 {
 	Atom		pty, inc, pty_type;
 	int		pty_format;
 	XEvent		evt;
-	char		*txt;
-	char		*rtn_str;
-	unsigned int	rtn_siz = 0;
+	unsigned int	retval = 0;
 
-	unsigned char	*data;
-	unsigned long	pty_items, pty_size;
+	/* buffer for XGetWindowProperty to dump data into */
+	unsigned char	*buffer;
+	unsigned long	pty_size, pty_items;
+
+	/* local buffer of text to return */
+	unsigned char	*ltxt;
 
 	/* Two new window properties for transferring the selection */
 	pty = XInternAtom(dpy, "XCLIP_OUT",	False);
 	inc = XInternAtom(dpy, "INCR",		False);
+
+	/* initialise return length to 0 */
+	*len = 0;
 
 	/* send a selection request */
 	XConvertSelection(
@@ -79,13 +118,15 @@ char *xcout (Display *dpy, Window win, Atom sel)
 	while (1)
 	{
 		XNextEvent(dpy, &evt);
+		if (evt.type == SelectionClear)
+			retval = 1;
 		if (evt.type == SelectionNotify || evt.type == None )
 			break;
 	}
 
 	/* quit if there is nothing in the selection */
 	if (evt.type == None)
-		return(rtn_str);
+		return(0);
     
 	/* find out the size and format of the data in property */
 	XGetWindowProperty(
@@ -100,8 +141,9 @@ char *xcout (Display *dpy, Window win, Atom sel)
 		&pty_format,
 		&pty_items,
 		&pty_size,
-		&data
+		&buffer
 	);
+	XFree(buffer);
 
 	if (pty_format == 8)
 	{
@@ -111,28 +153,33 @@ char *xcout (Display *dpy, Window win, Atom sel)
 			win,
 			pty,
 			0,
-			pty_size,
+			(long)pty_size,
 			False,
 			AnyPropertyType,
 			&pty_type,
 			&pty_format,
 			&pty_items,
 			&pty_size,
-			(unsigned char **)&txt
+			&buffer
 		);
 
 		/* finished with property, delete it */
 		XDeleteProperty(dpy, win, pty);
+		
+		/* copy the buffer to the pointer for returned data */
+		ltxt = (unsigned char *)xcmalloc(pty_items);
+		memcpy(ltxt, buffer, pty_items);
 
-		/* make a copy of the selection string, then free it */
-		rtn_str = strdup(txt);
-		XFree(txt);
+		/* set the length of the returned data */
+		*len = pty_items;
 
+		/* free the buffer */
+		XFree(buffer);
 	} else if (pty_type == inc)
 	{
 		/* Using INCR mechanism, start by deleting the property */
 		XDeleteProperty(dpy, win, pty);
-		
+
 		while (1)
 		{
 			/* To use the INCR method, we basically delete the
@@ -147,6 +194,9 @@ char *xcout (Display *dpy, Window win, Atom sel)
 			 */
 			XFlush(dpy);
 			XNextEvent(dpy, &evt);
+
+			if (evt.type == SelectionClear)
+				retval = 0;
 
 			/* skip unless is a property event */
 			if (evt.type != PropertyNotify)
@@ -169,19 +219,23 @@ char *xcout (Display *dpy, Window win, Atom sel)
 				&pty_format,
 				&pty_items,
 				&pty_size,
-				(unsigned char **)&txt
+				(unsigned char **)&buffer
 			);
 
-			if (pty_format != 8){
+			if (pty_format != 8)
+			{
 				/* property does not contain text, delete it
 				 * to tell the other X client that we have read
 				 * it and to send the next property */
+				XFree(buffer);
 				XDeleteProperty(dpy, win, pty);
 				continue;
 			}
 
-			if (pty_size == 0){
+			if (pty_size == 0)
+			{
 				/* no more data, exit from loop */
+				XFree(buffer);
 				XDeleteProperty(dpy, win, pty);
 				break;
 			}
@@ -194,44 +248,51 @@ char *xcout (Display *dpy, Window win, Atom sel)
 				win,
 				pty,
 				0,
-				pty_size,
+				(long)pty_size,
 				False,
 				AnyPropertyType,
 				&pty_type,
 				&pty_format,
 				&pty_items,
 				&pty_size,
-				(unsigned char **)&txt
+				(unsigned char **)&buffer
 			);
 			
-			/* allocate memory to ammodate date in rtn_str */
-			if (rtn_siz == 0)
+			/* allocate memory to ammodate data in *txt */
+			if (*len == 0)
 			{
-				rtn_siz = pty_items;
-				rtn_str = (char *)xcmalloc(rtn_siz);
+				*len = pty_items;
+				ltxt = (unsigned char *)xcmalloc(*len);
 			} else
 			{
-				rtn_siz += pty_items;
-				rtn_str = (char *)xcrealloc(rtn_str, rtn_siz);
+				*len += pty_items;
+				ltxt = (unsigned char *)xcrealloc(ltxt, *len);
 			}
-			
-			/* add data to return_str */
-			strncat(rtn_str, txt, pty_items);
+
+			/* add data to *txt */
+			memcpy(
+				&ltxt[*len - pty_items],
+				buffer,
+				pty_items
+			);
 			
 			/* delete property to get the next item */
 			XDeleteProperty(dpy, win, pty);
 		}
 	}
-	return(rtn_str);
+	*txt = ltxt;
+	return(retval);
 }
 
-/* send selection data in response to a request returns 0 */
-int xcin (Display *dpy, Window win, XEvent rev, char *txt)
+/* send selection data in response to a request. Returns 1 if a SelectionClear
+ * was received, otherwise 0
+ */
+int xcin (Display *dpy, XEvent rev, unsigned char *txt, unsigned long len)
 {
-	unsigned int			incr = F;	/* incr mode flag */
-	XEvent				res;		/* response to event */
-	Atom				inc;
-	unsigned int			selc = F;	/* SelClear event */
+	unsigned int	retval = 0;
+	unsigned int	incr = F;	/* incr mode flag */
+	XEvent		res;		/* response to event */
+	Atom		inc;
 
 	if (rev.type == SelectionClear)
 		return(1);
@@ -241,7 +302,7 @@ int xcin (Display *dpy, Window win, XEvent rev, char *txt)
 		return(0);
 	
 	/* test whether to use INCR or not */
-	if ( strlen(txt) > XC_CHUNK )
+	if ( len > XC_CHUNK )
 	{
 		incr = T;
 		inc = XInternAtom(dpy, "INCR", False);
@@ -281,7 +342,7 @@ int xcin (Display *dpy, Window win, XEvent rev, char *txt)
 			8,
 			PropModeReplace,
 			(unsigned char*) txt,
-			strlen(txt)
+			(int)len
 		);
 	}
 	
@@ -300,16 +361,17 @@ int xcin (Display *dpy, Window win, XEvent rev, char *txt)
 
 	if (incr)
 	{
-		unsigned int sel_pos = 0; /* position in sel_str */
-		unsigned int sel_end = 0;
-		char *chk_str;
+		/* position in txt that the current chunk starts */
+		unsigned long chunk_pos = 0;
 
-		chk_str = (char *)xcmalloc(XC_CHUNK);
+		/* length of current chunk */
+		unsigned long chunk_len = XC_CHUNK;
 
 		while (1)
 		{
-			unsigned int chk_pos = 0;
-
+			/* wait the propery we just wrote to to be deleted
+			 * before we write to it again
+			 */
 			while (1)
 			{
 				XEvent	spe;
@@ -317,7 +379,7 @@ int xcin (Display *dpy, Window win, XEvent rev, char *txt)
 				XNextEvent(dpy, &spe);
 				if (spe.type == SelectionClear)
 				{
-					selc = T;
+					retval = 1;
 					continue;
 				}
 				if (spe.type != PropertyNotify)
@@ -326,23 +388,26 @@ int xcin (Display *dpy, Window win, XEvent rev, char *txt)
 					break;
 			}
 	    
+			/* set the chunk length to the maximum size */
+			chunk_len = XC_CHUNK;
 
-			if (!sel_end)
-			{
-				for (chk_pos=0; chk_pos<=XC_CHUNK; chk_pos++)
-				{
-					if (txt[sel_pos] == (char)NULL)
-					{
-						sel_end = 1;
-						break;
-					}
-					chk_str[chk_pos] = txt[sel_pos];
-					sel_pos++;
-				}
-			}
+			/* if a chunk length of maximum size would extend
+			 * beyond the end ot txt, set the length to be the
+			 * remaining length of txt
+			 */
+			if ( (chunk_pos + chunk_len) > len )
+				chunk_len = len - chunk_pos;
 
-			if (chk_pos)
+			/* if the start of the chunk is beyond the end of txt,
+			 * then we've already sent all the data, so set the
+			 * length to be zero
+			 */
+			if (chunk_pos > len)
+				chunk_len = 0;
+
+			if (chunk_len)
 			{
+				/* put the chunk into the property */
 				XChangeProperty(
 					dpy,
 					rev.xselectionrequest.requestor,
@@ -350,11 +415,14 @@ int xcin (Display *dpy, Window win, XEvent rev, char *txt)
 					XA_STRING,
 					8,
 					PropModeReplace,
-					chk_str,
-					chk_pos
+					&txt[chunk_pos],
+					(int)chunk_len
 				);
 			} else
 			{
+				/* make an empty propery to show we've finished
+				 * the transfer
+				 */
 				XChangeProperty(
 					dpy,
 					rev.xselectionrequest.requestor,
@@ -368,10 +436,12 @@ int xcin (Display *dpy, Window win, XEvent rev, char *txt)
 			}
 			XFlush(dpy);
 
-			/* no more chars to send, break out of the loop */
-			if (!chk_pos)
+			/* all data has been sent, break out of the loop */
+			if (!chunk_len)
 				break;
+
+			chunk_pos += XC_CHUNK;
 		}
 	}
-	return(selc);
+	return(retval);
 }

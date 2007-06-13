@@ -1,4 +1,4 @@
-.\" $Id: xclip.man,v 1.13 2001/09/19 11:44:13 kims Exp $
+.\" $Id: xclip.man,v 1.15 2001/10/23 00:26:05 kims Exp $
 .\"
 .\" xclip.man - xclip manpage
 .\" Copyright (C) 2001 Kim Saunders
@@ -21,53 +21,54 @@
 xclip \- command line interface to X selections (clipboard)
 .SH SYNOPSIS
 .B xclip
-[OPTION] [FILE]
+[OPTION] [FILE]...
 .SH DESCRIPTION
-Reads text from standard in, or from one or more files, and makes it available as an X selection for pasting into X applications. Prints current X selection to standard out.
-.TP 8
-.B \-i, -in \fIin mode\fB
-read text into X selection from standard input or files (default).
-.TP 8
-.B \-o, -out \fIout mode\fB
-prints the selection to standard out (generally for piping to a file or program).
-.TP 8
-.B \-f, -filter \fIfilter\fB
-when xclip is invoked in the in mode with output level set to silent (the defaults), the filter option will cause xclip to print the text piped to standard in back to standard out unmodified.
-.TP 8
-.B \-l, -loops \fInumber of loops\fB
-number of X selection requests (pastes into X applications) to wait for before exiting. The default value of 0 causes xclip to wait for an unlimited number or requests until another application (or invocation of xclip) takes ownership of the selection.
-.TP 8
-.B \-d, -display \fIX11 display\fB
-X display to use (e.g. "localhost:0"). Defaults to the value in DISPLAY.
-.TP 8
-.B \-h, -help \fIoption summary\fB
-show quick summary of options.
-.TP 8
-.B \-selection \fIselection to access\fB
-Specify which X selection to use. Options are "primary" to use XA_PRIMARY (default), "secondary" for XA_SECONDARY and "clipboard" for XA_CLIPBOARD. Note that only the first letter of the argument is important, so "p", "sec", "cilp", etc. will all have the desired effect.
-.TP 8
-.B \-version \fIversion and copyright information\fB
-show version information.
-.TP 8
-.B \-silent \fIsilent output, fork into background\fB
-forks into the background to wait for requests, no informational output, errors only (default).
-.TP 8
-.B \-quiet \fIquiet output\fB
-show what's happeing on the terminal, instead of hiding in the background.
-.TP 8
-.B \-verbose \fIverbose output\fB
-provide a running commentary of what xclip is doing.
+Reads from standard in, or from one or more files, and makes the data available as an X selection for pasting into X applications. Prints current X selection to standard out.
+.TP
+\fB\-i\fR, \fB\-in\fR
+read text into X selection from standard input or files (default)
+.TP
+\fB\-o\fR, \fB\-out\fR
+prints the selection to standard out (generally for piping to a file or program)
+.TP
+\fB\-f\fR, \fB\-filter\fR
+when xclip is invoked in the in mode with output level set to silent (the defaults), the filter option will cause xclip to print the text piped to standard in back to standard out unmodified
+.TP
+\fB\-l\fR, \fB\-loops\fR
+number of X selection requests (pastes into X applications) to wait for before exiting, with a value of 0 (default) causing xclip to wait for an unlimited number of requests until another application (possibly another invokation xclip) takes ownership of the selection
+.TP
+\fB\-d\fR, \fB\-display\fR
+X display to use (e.g. "localhost:0"), xclip defaults to the value in $\fBDISPLAY\fR if this option is omitted
+.TP
+\fB\-h\fR, \fB\-help\fR
+show quick summary of options
+.TP
+\fB\-selection\fR
+specify which X selection to use, options are "primary" to use XA_PRIMARY (default), "secondary" for XA_SECONDARY or "clipboard" for XA_CLIPBOARD
+.TP
+\fB\-version\fR
+show version information
+.TP
+\fB\-silent\fR
+forks into the background to wait for requests, no informational output, errors only (default)
+.TP
+\fB\-quiet\fR
+show informational messages on the terminal and run in the foreground
+.TP
+\fB\-verbose\fR
+provide a running commentary of what xclip is doing
 
 .PP
-xclip reads text from standard in or files and makes it available to other X applications for pasting as an X selection
-(traditionally with the middle mouse button). It was designed to allow intergration between the output of command
-line applications and X applications.
-
-The default action is to silently wait in the background for X selection requests (pastes) until another X application
-places data in the clipboard, at which point xclip exits silently. You can use the
+xclip reads text from standard in or files and makes it available to other X applications for pasting as an X selection (traditionally with the middle mouse button). It reads from all files specified, or from standard in if no files are specified. xclip can also print the contents of a selection to standard out with the
 .B
---verbose
-option to see if and when xclip actually recieves selection requests from other X applications.
+-o
+option.
+
+xclip was designed to allow tighter integration of X applications and command line programs. The default action is to silently wait in the background for X selection requests (pastes) until another X application places data in the clipboard, at which point xclip exits silently. You can use the \fB\-verbose\fR option to see if and when xclip actually recieves selection requests from other X applications.
+
+Options can be abreviated as long as they remain unambiguous. For example, it is possible to use \fB\-d\fR or \fB\-disp\fR instead of \fB\-display\fR. However, \fB\-v\fR couldn't be used because it is ambiguous (it could be short for \fB\-verbose\fR or \fB\-version\fR), so it would be interpreted as a filename.
+
+Note that only the first character of the selection specified with the \fB\-selection\fR option is important. This means that "p", "sec" and "clip" would have the same effect as using "primary", "secondary" or "clipboard" respectively.
 
 .SH EXAMPLES
 .PP
@@ -78,9 +79,9 @@ uptime | xclip
 .PP
 Put your uptime in the X selection. Then middle click in an X application to paste.
 
-.B xclip -loops 10 -verbose /etc/passwd
+.B xclip -loops 10 -verbose /etc/motd
 .PP
-Exit after /etc/passwd has been pasted 10 times. Show how many selection requests (pastes) have been processed.
+Exit after /etc/motd (message of the day) has been pasted 10 times. Show how many selection requests (pastes) have been processed.
 
 .B xclip -o > helloworld.c
 .PP
@@ -88,7 +89,8 @@ Put the contents of the selection into a file.
 
 .SH ENVIRONMENT
 .TP
-.SM DISPLAY
+.SM
+\fBDISPLAY\fR
 X display to use if none is specified with the
 .B
 -display

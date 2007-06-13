@@ -1,5 +1,5 @@
 /*
- *  $Id: xclib.h,v 1.4 2001/09/19 08:38:01 kims Exp $
+ *  $Id: xclib.h,v 1.6 2001/10/22 07:52:51 kims Exp $
  * 
  *  xclib.h - header file for functions in xclib.c
  *  Copyright (C) 2001 Kim Saunders
@@ -21,7 +21,9 @@
 #include <X11/Xlib.h>
 
 /* functions in xclib.c */
-extern char *xcout(Display*, Window, Atom);
-extern int xcin(Display*, Window, XEvent, char*);
+extern int xcout(Display*, Window, Atom, unsigned char**, unsigned long*);
+extern int xcin(Display*, XEvent, unsigned char*, unsigned long);
 extern void *xcmalloc(size_t);
 extern void *xcrealloc(void*, size_t);
+extern void *xcstrdup(const char *);
+extern void xcmemcheck(void*);
