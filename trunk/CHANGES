@@ -104,3 +104,7 @@ Version 0.08:
 	easily.
 
 	Started using debian.org for email and website.
+
+Version 0.09: (Baruch Even)
+	Changed dir to / when staying running so that the current directory can
+	be umounted if necessary.
