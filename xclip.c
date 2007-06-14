@@ -233,17 +233,242 @@ static void doOptSel (void)
 	}
 }
 
-int main (int argc, char *argv[])
+static void doIn(Window win, const char *progname)
 {
-	/* Declare variables */
 	unsigned char *sel_buf;		/* buffer for selection data */
 	unsigned long sel_len = 0;	/* length of sel_buf */
 	unsigned long sel_all = 0;	/* allocated size of sel_buf */
-	Window win;			/* Window */
 	XEvent evt;			/* X Event Structures */
 	int dloop = 0;			/* done loops counter */
 
-	pid_t pid;			/* child pid if forking */
+	/* in mode */
+	sel_all = 16;		/* Reasonable ballpark figure */
+	sel_buf = xcmalloc(sel_all * sizeof(char));
+
+	/* Put chars into inc from stdin or files until we hit EOF */
+	do {
+		if (fil_number == 0)
+		{
+			/* read from stdin if no files specified */
+			fil_handle = stdin;
+		} else
+		{
+			if (
+					(fil_handle = fopen(
+										fil_names[fil_current],
+										"r"
+									   )) == NULL
+			   )
+			{
+				errperror(
+						3,
+						progname[0],
+						": ",
+						fil_names[fil_current]
+						);
+				exit(EXIT_FAILURE);
+			} else
+			{
+				/* file opened successfully. Print
+				 * message (verbose mode only).
+				 */
+				if (fverb == OVERBOSE)
+					fprintf(
+							stderr,
+							"Reading %s...\n",
+							fil_names[fil_current]
+						   );
+			}
+		}
+
+		fil_current++;
+		while (!feof(fil_handle))
+		{
+			/* If sel_buf is full (used elems =
+			 * allocated elems)
+			 */
+			if (sel_len == sel_all)
+			{
+				/* double the number of
+				 * allocated elements
+				 */
+				sel_all *= 2;
+				sel_buf = (unsigned char *)xcrealloc(
+						sel_buf,
+						sel_all * sizeof(char)
+						);
+			}
+			sel_len += fread(
+					sel_buf + sel_len,
+					sizeof(char),
+					sel_all - sel_len,
+					fil_handle
+					);
+		}
+	} while (fil_current < fil_number);
+
+	/* if there are no files being read from (i.e., input
+	 * is from stdin not files, and we are in filter mode,
+	 * spit all the input back out to stdout
+	 */
+	if ((fil_number == 0) && ffilt)
+		fwrite(sel_buf, sizeof(char), sel_len, stdout); 
+
+	/* take control of the selection so that we receive
+	 * SelectionRequest events from other windows
+	 */
+	XSetSelectionOwner(dpy, sseln, win, CurrentTime);
+
+	/* fork into the background, exit parent process if we
+	 * are in silent mode
+	 */
+	if (fverb == OSILENT)
+	{
+		pid_t pid;
+
+		pid = fork();
+		/* exit the parent process; */
+		if (pid)
+			exit(EXIT_SUCCESS);
+	}
+
+	/* print a message saying what we're waiting for */
+	if (fverb > OSILENT)
+	{
+		if (sloop == 1)
+			fprintf(
+					stderr,
+					"Waiting for one selection request.\n"
+				   );
+
+		if (sloop  < 1)
+			fprintf(
+					stderr,
+					"Waiting for selection requests, Control-C to quit\n"
+				   );
+
+		if (sloop  > 1)
+			fprintf(
+					stderr,
+					"Waiting for %i selection requests, Control-C to quit\n",
+					sloop
+				   );
+	}
+
+	/* loop and wait for the expected number of
+	 * SelectionRequest events
+	 */
+	while (dloop < sloop || sloop < 1)
+	{
+		/* print messages about what we're waiting for
+		 * if not in silent mode
+		 */
+		if (fverb > OSILENT)
+		{
+			if (sloop  > 1)
+				fprintf(
+						stderr,
+						"  Waiting for selection request %i of %i.\n",
+						dloop + 1,
+						sloop
+					   );
+
+			if (sloop == 1)
+				fprintf(
+						stderr,
+						"  Waiting for a selection request.\n"
+					   );
+
+			if (sloop  < 1)
+				fprintf(
+						stderr,
+						"  Waiting for selection request number %i\n",
+						dloop + 1
+					   );
+		}
+
+		/* wait for a SelectionRequest event */
+		while (1)
+		{
+			static unsigned int clear = 0;
+			static unsigned int context = XCLIB_XCIN_NONE;
+			static unsigned long sel_pos = 0;
+			static Window cwin;
+			static Atom pty;
+			int finished;
+
+			XNextEvent(dpy, &evt);
+
+			finished = xcin(
+					dpy,
+					&cwin,
+					evt,
+					&pty,
+					sel_buf,
+					sel_len,
+					&sel_pos,
+					&context
+					);
+
+			if (evt.type == SelectionClear)
+				clear = 1;
+
+			if ( (context == XCLIB_XCIN_NONE) && clear)
+				exit(EXIT_SUCCESS);
+
+			if (finished)
+				break;
+		}
+
+		dloop++;	/* increment loop counter */
+	}
+
+}
+
+static void doOut(Window win)
+{
+	unsigned char *sel_buf;		/* buffer for selection data */
+	unsigned long sel_len = 0;	/* length of sel_buf */
+	unsigned long sel_all = 0;	/* allocated size of sel_buf */
+	XEvent evt;			/* X Event Structures */
+	unsigned int context = XCLIB_XCOUT_NONE;
+
+	while (1)
+	{
+		/* only get an event if xcout() is doing something */
+		if (context != XCLIB_XCOUT_NONE)
+			XNextEvent(dpy, &evt);
+
+		/* fetch the selection, or part of it */
+		xcout(
+				dpy,
+				win,
+				evt,
+				sseln,
+				&sel_buf,
+				&sel_len,
+				&context
+			 );
+
+		/* only continue if xcout() is doing something */
+		if (context == XCLIB_XCOUT_NONE)
+			break;
+	}
+
+	if (sel_len)
+	{
+		/* only print the buffer out, and free it, if it's not
+		 * empty
+		 */
+		fwrite(sel_buf, sizeof(char), sel_len, stdout);
+		free(sel_buf);
+	}
+}
+
+int main (int argc, char *argv[])
+{
+	/* Declare variables */
+	Window win;			/* Window */
 
 	/* set up option table. I can't figure out a better way than this to
 	 * do it while sticking to pure ANSI C. The option and specifier
@@ -354,221 +579,9 @@ int main (int argc, char *argv[])
 	XSelectInput(dpy, win, PropertyChangeMask);
   
 	if (fdiri)
-	{
-		/* in mode */
-		sel_all = 16;		/* Reasonable ballpark figure */
-		sel_buf = xcmalloc(sel_all * sizeof(char));
-
-		/* Put chars into inc from stdin or files until we hit EOF */
-		do {
-			if (fil_number == 0)
-			{
-				/* read from stdin if no files specified */
-				fil_handle = stdin;
-			} else
-			{
-				if (
-					(fil_handle = fopen(
-						fil_names[fil_current],
-						"r"
-					)) == NULL
-				)
-				{
-					errperror(
-						3,
-						argv[0],
-						": ",
-						fil_names[fil_current]
-					);
-					exit(EXIT_FAILURE);
-				} else
-				{
-					/* file opened successfully. Print
-					 * message (verbose mode only).
-					 */
-					if (fverb == OVERBOSE)
-						fprintf(
-							stderr,
-							"Reading %s...\n",
-							fil_names[fil_current]
-						);
-				}
-			}
-
-			fil_current++;
-			while (!feof(fil_handle))
-			{
-				/* If sel_buf is full (used elems =
-				 * allocated elems)
-				 */
-				if (sel_len == sel_all)
-				{
-					/* double the number of
-					 * allocated elements
-					 */
-					sel_all *= 2;
-					sel_buf = (unsigned char *)xcrealloc(
-						sel_buf,
-						sel_all * sizeof(char)
-					);
-				}
-				sel_len += fread(
-					sel_buf + sel_len,
-					sizeof(char),
-					sel_all - sel_len,
-					fil_handle
-				);
-			}
-		} while (fil_current < fil_number);
-
-		/* if there are no files being read from (i.e., input
-		 * is from stdin not files, and we are in filter mode,
-		 * spit all the input back out to stdout
-		 */
-		if ((fil_number == 0) && ffilt)
-			fwrite(sel_buf, sizeof(char), sel_len, stdout); 
-    
-		/* take control of the selection so that we receive
-		 * SelectionRequest events from other windows
-		 */
-		XSetSelectionOwner(dpy, sseln, win, CurrentTime);
-
-		/* fork into the background, exit parent process if we
-		 * are in silent mode
-		 */
-		if (fverb == OSILENT)
-		{
-			pid = fork();
-			/* exit the parent process; */
-			if (pid)
-				exit(EXIT_SUCCESS);
-		}
-
-		/* print a message saying what we're waiting for */
-		if (fverb > OSILENT)
-		{
-			if (sloop == 1)
-				fprintf(
-					stderr,
-					"Waiting for one selection request.\n"
-				);
-				
-			if (sloop  < 1)
-				fprintf(
-					stderr,
-					"Waiting for selection requests, Control-C to quit\n"
-				);
-				
-			if (sloop  > 1)
-				fprintf(
-					stderr,
-					"Waiting for %i selection requests, Control-C to quit\n",
-					sloop
-				);
-		}
-  
-		/* loop and wait for the expected number of
-		 * SelectionRequest events
-		 */
-		while (dloop < sloop || sloop < 1)
-		{
-			/* print messages about what we're waiting for
-			 * if not in silent mode
-			 */
-			if (fverb > OSILENT)
-			{
-				if (sloop  > 1)
-					fprintf(
-						stderr,
-						"  Waiting for selection request %i of %i.\n",
-						dloop + 1,
-						sloop
-					);
-					
-				if (sloop == 1)
-					fprintf(
-						stderr,
-						"  Waiting for a selection request.\n"
-					);
-					
-				if (sloop  < 1)
-					fprintf(
-						stderr,
-						"  Waiting for selection request number %i\n",
-						dloop + 1
-					);
-			}
-     
-			/* wait for a SelectionRequest event */
-			while (1)
-			{
-				static unsigned int clear = 0;
-				static unsigned int context = XCLIB_XCIN_NONE;
-				static unsigned long sel_pos = 0;
-				static Window cwin;
-				static Atom pty;
-				int finished;
-
-				XNextEvent(dpy, &evt);
-
-				finished = xcin(
-					dpy,
-					&cwin,
-					evt,
-					&pty,
-					sel_buf,
-					sel_len,
-					&sel_pos,
-					&context
-				);
-
-				if (evt.type == SelectionClear)
-					clear = 1;
-
-				if ( (context == XCLIB_XCIN_NONE) && clear)
-					exit(EXIT_SUCCESS);
-
-				if (finished)
-					break;
-			}
-
-			dloop++;	/* increment loop counter */
-		}
-	} else
-	{
-		unsigned int context = XCLIB_XCOUT_NONE;
-
-		while (1)
-		{
-			/* only get an event if xcout() is doing something */
-			if (context != XCLIB_XCOUT_NONE)
-				XNextEvent(dpy, &evt);
-
-			/* fetch the selection, or part of it */
-			xcout(
-				dpy,
-				win,
-				evt,
-				sseln,
-				&sel_buf,
-				&sel_len,
-				&context
-			);
-
-			/* only continue if xcout() is doing something */
-			if (context == XCLIB_XCOUT_NONE)
-				break;
-		}
-		
-		if (sel_len)
-		{
-			/* only print the buffer out, and free it, if it's not
-			 * empty
-			 */
-			fwrite(sel_buf, sizeof(char), sel_len, stdout);
-			free(sel_buf);
-		}
-	}
+		doIn(win, argv[0]);
+	else
+		doOut(win);
 
 	/* Disconnect from the X server */
 	XCloseDisplay(dpy);
