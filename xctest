@@ -27,6 +27,15 @@ then
 	exit
 fi
 
+checker=""
+
+for param in $@;
+do
+	case $param in
+		--valgrind) checker="valgrind --num-callers=8";;
+	esac
+done
+
 # test xclip on different amounts of data to bring out any errors
 for lines in 2 16 128 1024 8192
 do
@@ -46,34 +55,34 @@ do
 
 	# test piping the file to xclip, using all selections
 	echo Piping a $lines line file to xclip
-	for sel in primary secondary clipboard
+	for sel in primary secondary clipboard buffer
 	do
 		echo "  Using the $sel selection"
-		cat $tempi | ./xclip -sel $sel -i
+		cat $tempi | $checker ./xclip -sel $sel -i
 		sleep $delay
-		./xclip -sel $sel -o > $tempo
+		$checker ./xclip -sel $sel -o > $tempo
 		diff $tempi $tempo
 	done
 	echo
 
 	# test xclip reading the file
 	echo Reading a $lines line file with xclip
-	for sel in primary secondary clipboard
+	for sel in primary secondary clipboard buffer
 	do
 		echo "  Using the $sel selection"
-		./xclip -sel $sel -i $tempi
+		$checker ./xclip -sel $sel -i $tempi
 		sleep $delay
-		./xclip -sel $sel -o > $tempo
+		$checker ./xclip -sel $sel -o > $tempo
 		diff $tempi $tempo
 	done
 	echo
 	
 	# test xclip filtering a file
 	echo Filtering a $lines line file through xclip
-	for sel in primary secondary clipboard
+	for sel in primary secondary clipboard buffer
 	do
 		echo "  Using the $sel selection"
-		./xclip -sel $sel -f < $tempi > $tempo
+		$checker ./xclip -sel $sel -f < $tempi > $tempo
 		sleep $delay
 		diff $tempi $tempo
 	done
