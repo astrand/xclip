@@ -108,7 +108,7 @@ int xcout (
 	unsigned long pty_size, pty_items;
 
 	/* local buffer of text to return */
-	unsigned char *ltxt = 0;
+	unsigned char *ltxt = *txt;
 
 	pty = XInternAtom(dpy, "XCLIP_OUT", False);
 
@@ -285,7 +285,7 @@ int xcout (
 				(unsigned char **)&buffer
 			);
 			
-			/* allocate memory to ammodate data in *txt */
+			/* allocate memory to accommodate data in *txt */
 			if (*len == 0)
 			{
 				*len = pty_items;
