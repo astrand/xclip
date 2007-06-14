@@ -100,7 +100,7 @@ int xcout (
 )
 {
 	/* a property for other windows to put their selection into */
-	Atom pty, inc, pty_type;
+	Atom pty, inc, pty_type, targets;
 	int pty_format;
 		
 	/* buffer for XGetWindowProperty to dump data into */
@@ -111,6 +111,7 @@ int xcout (
 	unsigned char *ltxt = *txt;
 
 	pty = XInternAtom(dpy, "XCLIP_OUT", False);
+	targets = XInternAtom(dpy, "TARGETS", False);
 
 	switch (*context)
 	{
@@ -353,7 +354,9 @@ int xcin (
 					 * transfers only)
 					 */
 	XEvent		res;		/* response to event */
-	Atom		inc;
+	Atom		inc, targets;
+
+	targets = XInternAtom(dpy, "TARGETS", False);
 
 	switch (*context)
 	{
@@ -369,7 +372,22 @@ int xcin (
 			*pos = 0;
 		
 			/* put the data into an property */
-			if (len > XC_CHUNK)
+			if (evt.xselectionrequest.target == targets)
+			{
+				Atom types[2] = { targets, XA_STRING };
+			
+				/* send data all at once (not using INCR) */
+				XChangeProperty(
+					dpy,
+					*win,
+					*pty,
+					targets,
+					8,
+					PropModeReplace,
+					(unsigned char*) types,
+					(int)sizeof(types)
+			       );
+			} else if (len > XC_CHUNK)
 			{
 				/* INCR Atom to set response property to */
 				inc = XInternAtom(dpy, "INCR", False);
