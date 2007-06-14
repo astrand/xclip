@@ -262,7 +262,7 @@ static void doIn(Window win, const char *progname)
 			{
 				errperror(
 						3,
-						progname[0],
+						progname,
 						": ",
 						fil_names[fil_current]
 						);
