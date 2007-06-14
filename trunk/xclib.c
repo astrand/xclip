@@ -268,6 +268,8 @@ int xcout (
 				return(1);
 			}
 
+			XFree(buffer);
+
 			/* if we have come this far, the propery contains
 			 * text, we know the size.
 			 */
@@ -305,6 +307,7 @@ int xcout (
 			);
 
 			*txt = ltxt;
+			XFree(buffer);
 			
 			/* delete property to get the next item */
 			XDeleteProperty(dpy, win, pty);
