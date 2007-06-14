@@ -322,7 +322,7 @@ static void doIn(Window win, const char *progname)
 	/* Handle cut buffer if needed */
 	if (sseln == XA_STRING)
 	{
-		XStoreBuffer(dpy, sel_buf, sel_len, 0);
+		XStoreBuffer(dpy, (char *)sel_buf, (int)sel_len, 0);
 		return;
 	}
 	
@@ -444,7 +444,7 @@ static void doOut(Window win)
 	unsigned int context = XCLIB_XCOUT_NONE;
 
 	if (sseln == XA_STRING)
-		sel_buf = XFetchBuffer(dpy, (int *)&sel_len, 0);
+		sel_buf = (unsigned char *)XFetchBuffer(dpy, (int *)&sel_len, 0);
 	else
 	{
 		while (1)
