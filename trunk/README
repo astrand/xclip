@@ -41,6 +41,7 @@ FEATURES
 * Reads data piped to standard in or files given as arguments
 * Prints contents of selection to standard out
 * Accesses the XA_PRIMARY, XA_SECONDARY or XA_CLIPBOARD selection
+* Accesses the cut-buffers
 * Supports the INCR mechanism for large transfers
 * Connects to the X display in $DISPLAY, or specified with -display host:0 
 * Waits for selection requests in the background
@@ -68,6 +69,9 @@ I'd like to get all these things sorted out and then declare it "complete".
 
 VERSION
 =======
+
+debian internal 0.08-3 - Added cut-buffers support, fixed serious bug with
+handling of large transfers with the INCR mechanism.
 
 0.08 - No added features. Updated xclib to be more friendly to integrate into
 other software. Changed email address (again) and website.
