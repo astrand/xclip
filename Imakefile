@@ -21,7 +21,7 @@
 LOCAL_LIBRARIES = $(XLIB) $(XMULIB)
 
 /* Development flags for gcc to ensure portability of code
-CFLAGS = -g -Wall -W -pedantic -ansi -Wtraditional -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Wsign-compare -Waggregate-return -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs -Winline
+CFLAGS = -g -Wall -W -pedantic -ansi -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Wsign-compare -Waggregate-return -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs -Winline
 */
 
 /* Normal development flags for warnings and debug info
