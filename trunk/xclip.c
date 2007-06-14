@@ -215,6 +215,9 @@ static void doOptSel (void)
 			case 'c':
 				sseln = XA_CLIPBOARD(dpy);
 				break;
+			case 'b':
+				sseln = XA_STRING;
+				break;
 		}
     
 		if (fverb == OVERBOSE)
@@ -227,6 +230,8 @@ static void doOptSel (void)
 				fprintf(stderr, "XA_SECONDARY");
 			if (sseln == XA_CLIPBOARD(dpy))
 				fprintf(stderr, "XA_CLIPBOARD");
+			if (sseln == XA_STRING)
+				fprintf(stderr, "XA_STRING");
 
 			fprintf(stderr, "\n");
 		}
@@ -314,6 +319,13 @@ static void doIn(Window win, const char *progname)
 	if ((fil_number == 0) && ffilt)
 		fwrite(sel_buf, sizeof(char), sel_len, stdout); 
 
+	/* Handle cut buffer if needed */
+	if (sseln == XA_STRING)
+	{
+		XStoreBuffer(dpy, sel_buf, sel_len, 0);
+		return;
+	}
+	
 	/* take control of the selection so that we receive
 	 * SelectionRequest events from other windows
 	 */
@@ -422,7 +434,6 @@ static void doIn(Window win, const char *progname)
 
 		dloop++;	/* increment loop counter */
 	}
-
 }
 
 static void doOut(Window win)
@@ -433,26 +444,31 @@ static void doOut(Window win)
 	XEvent evt;			/* X Event Structures */
 	unsigned int context = XCLIB_XCOUT_NONE;
 
-	while (1)
+	if (sseln == XA_STRING)
+		sel_buf = XFetchBuffer(dpy, (int *)&sel_len, 0);
+	else
 	{
-		/* only get an event if xcout() is doing something */
-		if (context != XCLIB_XCOUT_NONE)
-			XNextEvent(dpy, &evt);
+		while (1)
+		{
+			/* only get an event if xcout() is doing something */
+			if (context != XCLIB_XCOUT_NONE)
+				XNextEvent(dpy, &evt);
 
-		/* fetch the selection, or part of it */
-		xcout(
-				dpy,
-				win,
-				evt,
-				sseln,
-				&sel_buf,
-				&sel_len,
-				&context
-			 );
+			/* fetch the selection, or part of it */
+			xcout(
+					dpy,
+					win,
+					evt,
+					sseln,
+					&sel_buf,
+					&sel_len,
+					&context
+				 );
 
-		/* only continue if xcout() is doing something */
-		if (context == XCLIB_XCOUT_NONE)
-			break;
+			/* only continue if xcout() is doing something */
+			if (context == XCLIB_XCOUT_NONE)
+				break;
+		}
 	}
 
 	if (sel_len)
@@ -461,7 +477,10 @@ static void doOut(Window win)
 		 * empty
 		 */
 		fwrite(sel_buf, sizeof(char), sel_len, stdout);
-		free(sel_buf);
+		if (sseln == XA_STRING)
+			XFree(sel_buf);
+		else
+			free(sel_buf);
 	}
 }
 
