@@ -108,7 +108,7 @@ int xcout (
 	unsigned long pty_size, pty_items;
 
 	/* local buffer of text to return */
-	unsigned char *ltxt;
+	unsigned char *ltxt = 0;
 
 	pty = XInternAtom(dpy, "XCLIP_OUT", False);
 
