@@ -34,8 +34,10 @@ void prhelp (char *name)
 		"Usage: %s [OPTION] [FILE]...\n"\
 		"Access an X server selection for reading or writing.\n"\
 		"\n"\
-		"  -i, -in          in mode\n"\
-		"  -o, -out         out mode\n"\
+		"  -i, -in          read text into X selection from standard input or files\n"\
+		"                   (default)\n"\
+		"  -o, -out         prints the selection to standard out (generally for\n"\
+		"                   piping to a file or program)\n"\
 		"  -l, -loops       number of selection requests to "\
 		"wait for before exiting\n"\
 		"  -d, -display     X display to connect to (eg "\
