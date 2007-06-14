@@ -440,7 +440,6 @@ static void doOut(Window win)
 {
 	unsigned char *sel_buf;		/* buffer for selection data */
 	unsigned long sel_len = 0;	/* length of sel_buf */
-	unsigned long sel_all = 0;	/* allocated size of sel_buf */
 	XEvent evt;			/* X Event Structures */
 	unsigned int context = XCLIB_XCOUT_NONE;
 
