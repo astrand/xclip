@@ -42,7 +42,7 @@ void prhelp (char *name)
 		"localhost:0\")\n"\
 		"  -h, -help        usage information\n"\
 		"      -selection   selection to access (\"primary\", "\
-		"\"secondary\" or \"clipboard\")\n"\
+		"\"secondary\", \"clipboard\" or \"buffer-cut\")\n"\
 		"      -version     version information\n"\
 		"      -silent      errors only, run in background (default)\n"\
 		"      -quiet       run in foreground, show what's happening\n"\
