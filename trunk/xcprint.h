@@ -1,5 +1,5 @@
 /*
- *  $Id: xcprint.h,v 1.3 2001/10/18 04:49:27 kims Exp $
+ *  
  * 
  *  xcprint.h - header file for functions in xcprint.c
  *  Copyright (C) 2001 Kim Saunders

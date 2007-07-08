@@ -1,5 +1,5 @@
 /*
- *  $Id: xcprint.c,v 1.13 2001/12/17 06:14:40 kims Exp $
+ *  
  * 
  *  xcprint.c - functions to print help, version, errors, etc
  *  Copyright (C) 2001 Kim Saunders

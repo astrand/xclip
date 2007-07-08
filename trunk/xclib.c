@@ -1,5 +1,5 @@
 /*
- *  $Id: xclib.c,v 1.12 2001/12/17 06:14:40 kims Exp $
+ *  
  * 
  *  xclib.c - xclip library to look after xlib mechanics for xclip
  *  Copyright (C) 2001 Kim Saunders

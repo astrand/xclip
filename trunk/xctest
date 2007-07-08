@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#  $Id: xctest,v 1.6 2001/09/19 08:38:01 kims Exp $
+#  
 # 
 #  xctest - shell script to test xclip
 #  Copyright (C) 2001 Kim Saunders
