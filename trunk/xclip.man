@@ -16,7 +16,7 @@
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 .\"
-.TH XCLIP 1 
+.TH XCLIP 1x
 .SH NAME
 xclip \- command line interface to X selections (clipboard)
 .SH SYNOPSIS
@@ -35,7 +35,7 @@ prints the selection to standard out (generally for piping to a file or program)
 when xclip is invoked in the in mode with output level set to silent (the defaults), the filter option will cause xclip to print the text piped to standard in back to standard out unmodified
 .TP
 \fB\-l\fR, \fB\-loops\fR
-number of X selection requests (pastes into X applications) to wait for before exiting, with a value of 0 (default) causing xclip to wait for an unlimited number of requests until another application (possibly another invokation xclip) takes ownership of the selection
+number of X selection requests (pastes into X applications) to wait for before exiting, with a value of 0 (default) causing xclip to wait for an unlimited number of requests until another application (possibly another invocation of xclip) takes ownership of the selection
 .TP
 \fB\-d\fR, \fB\-display\fR
 X display to use (e.g. "localhost:0"), xclip defaults to the value in $\fBDISPLAY\fR if this option is omitted
@@ -64,9 +64,9 @@ xclip reads text from standard in or files and makes it available to other X app
 -o
 option.
 
-xclip was designed to allow tighter integration of X applications and command line programs. The default action is to silently wait in the background for X selection requests (pastes) until another X application places data in the clipboard, at which point xclip exits silently. You can use the \fB\-verbose\fR option to see if and when xclip actually recieves selection requests from other X applications.
+xclip was designed to allow tighter integration of X applications and command line programs. The default action is to silently wait in the background for X selection requests (pastes) until another X application places data in the clipboard, at which point xclip exits silently. You can use the \fB\-verbose\fR option to see if and when xclip actually receives selection requests from other X applications.
 
-Options can be abreviated as long as they remain unambiguous. For example, it is possible to use \fB\-d\fR or \fB\-disp\fR instead of \fB\-display\fR. However, \fB\-v\fR couldn't be used because it is ambiguous (it could be short for \fB\-verbose\fR or \fB\-version\fR), so it would be interpreted as a filename.
+Options can be abbreviated as long as they remain unambiguous. For example, it is possible to use \fB\-d\fR or \fB\-disp\fR instead of \fB\-display\fR. However, \fB\-v\fR couldn't be used because it is ambiguous (it could be short for \fB\-verbose\fR or \fB\-version\fR), so it would be interpreted as a filename.
 
 Note that only the first character of the selection specified with the \fB\-selection\fR option is important. This means that "p", "sec" and "clip" would have the same effect as using "primary", "secondary" or "clipboard" respectively.
 
