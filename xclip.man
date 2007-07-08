@@ -1,4 +1,4 @@
-.\" $Id: xclip.man,v 1.16 2001/12/17 06:14:40 kims Exp $
+.\" 
 .\"
 .\" xclip.man - xclip manpage
 .\" Copyright (C) 2001 Kim Saunders

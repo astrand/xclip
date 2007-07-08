@@ -1,5 +1,5 @@
 /*
- *  $Id: xcdef.h,v 1.8 2001/12/17 06:14:40 kims Exp $
+ *  
  * 
  *  xcdef.h - definitions for use throughout xclip
  *  Copyright (C) 2001 Kim Saunders
