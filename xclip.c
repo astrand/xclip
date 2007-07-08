@@ -317,7 +317,10 @@ static void doIn(Window win, const char *progname)
 	 * spit all the input back out to stdout
 	 */
 	if ((fil_number == 0) && ffilt)
+	{
 		fwrite(sel_buf, sizeof(char), sel_len, stdout); 
+		fclose(stdout);
+	}
 
 	/* Handle cut buffer if needed */
 	if (sseln == XA_STRING)
