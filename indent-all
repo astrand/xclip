@@ -1,0 +1,2 @@
+#!/bin/bash
+indent -i4 -br -l100 -npcs *.c
