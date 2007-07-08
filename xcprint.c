@@ -27,103 +27,101 @@
 #include "xcprint.h"
 
 /* print the help screen. argument is argv[0] from main() */
-void prhelp (char *name)
+void
+prhelp(char *name)
 {
-	fprintf(
-		stderr,
-		"Usage: %s [OPTION] [FILE]...\n"\
-		"Access an X server selection for reading or writing.\n"\
-		"\n"\
-		"  -i, -in          read text into X selection from standard input or files\n"\
-		"                   (default)\n"\
-		"  -o, -out         prints the selection to standard out (generally for\n"\
-		"                   piping to a file or program)\n"\
-		"  -l, -loops       number of selection requests to "\
-		"wait for before exiting\n"\
-		"  -d, -display     X display to connect to (eg "\
-		"localhost:0\")\n"\
-		"  -h, -help        usage information\n"\
-		"      -selection   selection to access (\"primary\", "\
-		"\"secondary\", \"clipboard\" or \"buffer-cut\")\n"\
-		"      -version     version information\n"\
-		"      -silent      errors only, run in background (default)\n"\
-		"      -quiet       run in foreground, show what's happening\n"\
-		"      -verbose     running commentary\n"\
-		"\n"\
-		"Report bugs to <kims@debian.org>\n",
-		name
-	);
-	exit(EXIT_SUCCESS);
+    fprintf(stderr,
+	    "Usage: %s [OPTION] [FILE]...\n"
+	    "Access an X server selection for reading or writing.\n"
+	    "\n"
+	    "  -i, -in          read text into X selection from standard input or files\n"
+	    "                   (default)\n"
+	    "  -o, -out         prints the selection to standard out (generally for\n"
+	    "                   piping to a file or program)\n"
+	    "  -l, -loops       number of selection requests to "
+	    "wait for before exiting\n"
+	    "  -d, -display     X display to connect to (eg "
+	    "localhost:0\")\n"
+	    "  -h, -help        usage information\n"
+	    "      -selection   selection to access (\"primary\", "
+	    "\"secondary\", \"clipboard\" or \"buffer-cut\")\n"
+	    "      -version     version information\n"
+	    "      -silent      errors only, run in background (default)\n"
+	    "      -quiet       run in foreground, show what's happening\n"
+	    "      -verbose     running commentary\n"
+	    "\n" "Report bugs to <kims@debian.org>\n", name);
+    exit(EXIT_SUCCESS);
 }
 
 
 /* A function to print the software version info */
-void prversion (void)
+void
+prversion(void)
 {
-	fprintf(stderr, "%s version %1.2f\n", XC_NAME, XC_VERS);
-	fprintf(stderr, "Copyright (C) 2001 Kim Saunders\n");
-	fprintf(stderr, "Distributed under the terms of the GNU GPL\n");
-	exit(EXIT_SUCCESS);
+    fprintf(stderr, "%s version %1.2f\n", XC_NAME, XC_VERS);
+    fprintf(stderr, "Copyright (C) 2001 Kim Saunders\n");
+    fprintf(stderr, "Distributed under the terms of the GNU GPL\n");
+    exit(EXIT_SUCCESS);
 }
 
 /* failure message for malloc() problems */
-void errmalloc (void)
+void
+errmalloc(void)
 {
-	fprintf(stderr, "Error: Could not allocate memory.\n");
-	exit(EXIT_FAILURE);
+    fprintf(stderr, "Error: Could not allocate memory.\n");
+    exit(EXIT_FAILURE);
 }
 
 /* failure to connect to X11 display */
-void errxdisplay (char *display)
+void
+errxdisplay(char *display)
 {
-	/* if the display wasn't specified, read it from the enviroment
-	 * just like XOpenDisplay would
-	 */
-	if (display == NULL)
-		display = getenv("DISPLAY");
-	
-	fprintf(stderr, "Error: Can't open display: %s\n", display);
-	exit(EXIT_FAILURE);
+    /* if the display wasn't specified, read it from the enviroment
+     * just like XOpenDisplay would
+     */
+    if (display == NULL)
+	display = getenv("DISPLAY");
+
+    fprintf(stderr, "Error: Can't open display: %s\n", display);
+    exit(EXIT_FAILURE);
 }
 
 /* a wrapper for perror that joins multiple prefixes together. Arguments
  * are an integer, and any number of strings. The integer needs to be set to
  * the number of strings that follow.
  */
-void errperror(int prf_tot, ...)
+void
+errperror(int prf_tot, ...)
 {
-	va_list ap;		/* argument pointer */
-	char *msg_all;		/* all messages so far */
-	char *msg_cur;		/* current message string */
-	int prf_cur;		/* current prefix number */
-	
-	/* start off with an empty string */
-	msg_all = xcstrdup("");
+    va_list ap;			/* argument pointer */
+    char *msg_all;		/* all messages so far */
+    char *msg_cur;		/* current message string */
+    int prf_cur;		/* current prefix number */
 
-	/* start looping through the viariable arguments */
-	va_start(ap, prf_tot);
+    /* start off with an empty string */
+    msg_all = xcstrdup("");
 
-	/* loop through each of the arguments */
-	for (prf_cur = 0; prf_cur < prf_tot; prf_cur++)
-	{
-		/* get the current argument */
-		msg_cur = va_arg(ap, char *);
-		
-		/* realloc msg_all so it's big enough for itself, the current
-		 * argument, and a null terminator
-		 */
-		msg_all = (char *)xcrealloc(
-			msg_all,
-			strlen(msg_all) + strlen(msg_cur) + sizeof(char)
-		);
+    /* start looping through the viariable arguments */
+    va_start(ap, prf_tot);
 
-		/* append the current message the the total message */
-		strcat(msg_all, msg_cur);
-	}
-	va_end(ap);
+    /* loop through each of the arguments */
+    for (prf_cur = 0; prf_cur < prf_tot; prf_cur++) {
+	/* get the current argument */
+	msg_cur = va_arg(ap, char *);
 
-	perror(msg_all);
+	/* realloc msg_all so it's big enough for itself, the current
+	 * argument, and a null terminator
+	 */
+	msg_all = (char *) xcrealloc(msg_all, strlen(msg_all) + strlen(msg_cur) + sizeof(char)
+	    );
 
-	/* free the complete string */
-	free(msg_all);
+	/* append the current message the the total message */
+	strcat(msg_all, msg_cur);
+    }
+    va_end(ap);
+
+    perror(msg_all);
+
+    /* free the complete string */
+    free(msg_all);
 }
