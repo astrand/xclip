@@ -99,7 +99,9 @@ xcout(Display * dpy,
       XEvent evt, Atom sel, unsigned char **txt, unsigned long *len, unsigned int *context)
 {
     /* a property for other windows to put their selection into */
-    Atom pty, inc, pty_type, targets;
+    static Atom pty;
+    static Atom inc;
+    Atom pty_type;
     int pty_format;
 
     /* buffer for XGetWindowProperty to dump data into */
@@ -109,8 +111,13 @@ xcout(Display * dpy,
     /* local buffer of text to return */
     unsigned char *ltxt = *txt;
 
-    pty = XInternAtom(dpy, "XCLIP_OUT", False);
-    targets = XInternAtom(dpy, "TARGETS", False);
+    if (!pty) {
+	pty = XInternAtom(dpy, "XCLIP_OUT", False);
+    }
+
+    if (!inc) {
+	inc = XInternAtom(dpy, "INCR", False);
+    }
 
     switch (*context) {
 	/* there is no context, do an XConvertSelection() */
@@ -127,8 +134,6 @@ xcout(Display * dpy,
 	return (0);
 
     case XCLIB_XCOUT_SENTCONVSEL:
-	inc = XInternAtom(dpy, "INCR", False);
-
 	if (evt.type != SelectionNotify)
 	    return (0);
 
@@ -309,9 +314,16 @@ xcin(Display * dpy,
 				 * transfers only)
 				 */
     XEvent res;			/* response to event */
-    Atom inc, targets;
+    static Atom inc;
+    static Atom targets;
 
-    targets = XInternAtom(dpy, "TARGETS", False);
+    if (!targets) {
+	targets = XInternAtom(dpy, "TARGETS", False);
+    }
+
+    if (!inc) {
+	inc = XInternAtom(dpy, "INCR", False);
+    }
 
     switch (*context) {
     case XCLIB_XCIN_NONE:
@@ -338,9 +350,6 @@ xcin(Display * dpy,
 		);
 	}
 	else if (len > XC_CHUNK) {
-	    /* INCR Atom to set response property to */
-	    inc = XInternAtom(dpy, "INCR", False);
-
 	    /* send INCR response */
 	    XChangeProperty(dpy, *win, *pty, inc, 32, PropModeReplace, 0, 0);
 
