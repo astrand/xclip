@@ -329,10 +329,10 @@ xcin(Display * dpy,
     /* We consider selections larger than a quarter of the maximum
        request size to be "large". See ICCCM section 2.5 */
     if (!chunk_size) {
-      chunk_size = XExtendedMaxRequestSize(dpy) / 4;
-      if (!chunk_size) {
-	chunk_size = XMaxRequestSize(dpy) / 4;
-      }
+	chunk_size = XExtendedMaxRequestSize(dpy) / 4;
+	if (!chunk_size) {
+	    chunk_size = XMaxRequestSize(dpy) / 4;
+	}
     }
 
     switch (*context) {
