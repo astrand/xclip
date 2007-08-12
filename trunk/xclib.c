@@ -316,6 +316,7 @@ xcin(Display * dpy,
     XEvent res;			/* response to event */
     static Atom inc;
     static Atom targets;
+    static long chunk_size;
 
     if (!targets) {
 	targets = XInternAtom(dpy, "TARGETS", False);
@@ -323,6 +324,15 @@ xcin(Display * dpy,
 
     if (!inc) {
 	inc = XInternAtom(dpy, "INCR", False);
+    }
+
+    /* We consider selections larger than a quarter of the maximum
+       request size to be "large". See ICCCM section 2.5 */
+    if (!chunk_size) {
+      chunk_size = XExtendedMaxRequestSize(dpy) / 4;
+      if (!chunk_size) {
+	chunk_size = XMaxRequestSize(dpy) / 4;
+      }
     }
 
     switch (*context) {
@@ -349,7 +359,7 @@ xcin(Display * dpy,
 			    8, PropModeReplace, (unsigned char *) types, (int) sizeof(types)
 		);
 	}
-	else if (len > XC_CHUNK) {
+	else if (len > chunk_size) {
 	    /* send INCR response */
 	    XChangeProperty(dpy, *win, *pty, inc, 32, PropModeReplace, 0, 0);
 
@@ -368,6 +378,12 @@ xcin(Display * dpy,
 			    *pty, XA_STRING, 8, PropModeReplace, (unsigned char *) txt, (int) len);
 	}
 
+	/* Perhaps FIXME: According to ICCCM section 2.5, we should
+	   confirm that XChangeProperty succeeded without any Alloc
+	   errors before replying with SelectionNotify. However, doing
+	   so would require an error handler which modifies a global
+	   variable, plus doing XSync after each XChangeProperty. */
+
 	/* set values for the response event */
 	res.xselection.property = *pty;
 	res.xselection.type = SelectionNotify;
@@ -381,10 +397,10 @@ xcin(Display * dpy,
 	XSendEvent(dpy, evt.xselectionrequest.requestor, 0, 0, &res);
 	XFlush(dpy);
 
-	/* if len < XC_CHUNK, then the data was sent all at
+	/* if len < chunk_size, then the data was sent all at
 	 * once and the transfer is now complete, return 1
 	 */
-	if (len > XC_CHUNK)
+	if (len > chunk_size)
 	    return (0);
 	else
 	    return (1);
@@ -405,7 +421,7 @@ xcin(Display * dpy,
 	    return (0);
 
 	/* set the chunk length to the maximum size */
-	chunk_len = XC_CHUNK;
+	chunk_len = chunk_size;
 
 	/* if a chunk length of maximum size would extend
 	 * beyond the end ot txt, set the length to be the
@@ -438,7 +454,7 @@ xcin(Display * dpy,
 	if (!chunk_len)
 	    *context = XCLIB_XCIN_NONE;
 
-	*pos += XC_CHUNK;
+	*pos += chunk_size;
 
 	/* if chunk_len == 0, we just finished the transfer,
 	 * return 1

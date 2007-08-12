@@ -34,6 +34,3 @@
 /* true/false string constants */
 #define SF "F"	/* false */
 #define ST "T"	/* true  */
-
-/* maximume size to read/write to/from a property at once in bytes */
-#define XC_CHUNK 4096
