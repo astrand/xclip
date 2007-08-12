@@ -241,6 +241,7 @@ doIn(Window win, const char *progname)
     /* take control of the selection so that we receive
      * SelectionRequest events from other windows
      */
+    /* FIXME: Should not use CurrentTime, according to ICCCM section 2.1 */
     XSetSelectionOwner(dpy, sseln, win, CurrentTime);
 
     /* fork into the background, exit parent process if we
