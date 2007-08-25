@@ -25,9 +25,9 @@ xclip: $(X11OBJ) $(OBJS)
 install: installbin install.man
 
 .PHONY: installbin
-installbin: xclip
+installbin: xclip xclip-copyfile xclip-pastefile
 	mkdir -p $(DESTDIR)$(bindir)
-	$(INSTALL) xclip $(DESTDIR)$(bindir)
+	$(INSTALL) $^ $(DESTDIR)$(bindir)
 
 
 .PHONY: install.man
