@@ -6,7 +6,7 @@ BUILDING
 You should be able to build and install xclip by running the following commands
 in the xclip source directory:
 
-xmkmf			# create the makefile
+./configure		# create the Makefile
 make			# build the binary
 su			# su to root to install
 make install		# install xclip

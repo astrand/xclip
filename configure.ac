@@ -1,0 +1,17 @@
+AC_INIT(xclip, 0.10)
+
+AC_CONFIG_SRCDIR([xclip.c])
+
+AC_PROG_CC
+if test "$GCC" = yes; then
+    CFLAGS="$CFLAGS -Wall"
+fi
+
+AC_PROG_INSTALL
+AC_LANG_C
+AC_HEADER_STDC
+AC_PATH_XTRA
+AC_CHECK_TOOL(STRIP, strip, :)
+
+AC_OUTPUT(Makefile)
+
