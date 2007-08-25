@@ -33,7 +33,7 @@ installbin: xclip xclip-copyfile xclip-pastefile
 .PHONY: install.man
 install.man: xclip.man
 	mkdir -p $(DESTDIR)$(mandir)/man1
-	$(INSTALL) -m 644 xclip.man $(DESTDIR)$(mandir)/man1
+	$(INSTALL) -m 644 xclip.man $(DESTDIR)$(mandir)/man1/xclip.1
 
 .PHONY: clean
 clean:
@@ -46,35 +46,26 @@ distclean: clean
 .PHONY: dist
 dist: xclip-$(VERSION).tar.gz
 
-xclip-$(VERSION).tar.gz: Makefile configure
+.PHONY: xclip-$(VERSION).tar.gz
+xclip-$(VERSION).tar.gz: 
 	mkdir -p /tmp/xclip-make-dist-dir
 	ln -sf `pwd` /tmp/xclip-make-dist-dir/xclip-$(VERSION)
 	(cd /tmp/xclip-make-dist-dir; \
 	tar zcvf xclip-$(VERSION)/xclip-$(VERSION).tar.gz \
 	xclip-$(VERSION)/COPYING \
 	xclip-$(VERSION)/README \
+	xclip-$(VERSION)/CHANGES \
 	xclip-$(VERSION)/configure \
 	xclip-$(VERSION)/configure.ac \
-	xclip-$(VERSION)/config.sub \
-	xclip-$(VERSION)/config.guess \
 	xclip-$(VERSION)/bootstrap \
+	xclip-$(VERSION)/xclip-copyfile \
+	xclip-$(VERSION)/xclip-pastefile \
 	xclip-$(VERSION)/install-sh \
 	xclip-$(VERSION)/Makefile.in \
 	xclip-$(VERSION)/xclip.spec \
 	xclip-$(VERSION)/*.c \
 	xclip-$(VERSION)/*.h \
 	xclip-$(VERSION)/xclip.man )
-	rm -rf /tmp/xclip-make-dist-dir
-
-.PHONY: dist-noversion
-dist-noversion: xclip.tar.gz
-
-xclip.tar.gz: xclip-$(VERSION).tar.gz
-	mkdir -p /tmp/xclip-make-dist-dir
-	tar zxvf $< -C /tmp/xclip-make-dist-dir
-	mv /tmp/xclip-make-dist-dir/xclip-$(VERSION) /tmp/xclip-make-dist-dir/xclip
-	ls /tmp/xclip-make-dist-dir/xclip
-	tar zcvf $@ -C /tmp/xclip-make-dist-dir xclip
 	rm -rf /tmp/xclip-make-dist-dir
 
 Makefile: Makefile.in configure
