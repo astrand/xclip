@@ -2,5 +2,5 @@
 if [ "x$1" = "x" ]; then
     echo Usage: $0 filename >&2
 else
-    exec xclip -selection secondary -i "$1"
+    exec xclip -selection secondary -loops 1 -i "$1"
 fi
