@@ -1,68 +1,15 @@
+Version 0.09: (Baruch Even)
+	Changed dir to / when staying running so that the current directory can
+	be umounted if necessary.
 
 
-Version 0.01:
-	Everything. First release, pretty basic, but it worked.
+Version 0.08:
+	Remove all event loops from xclib fuctions, to allow xclib to be
+	integrated into general-purpose event loops of other software more
+	easily.
 
-Version 0.02:
-	Patch to allow reading from files if specified as arguments applied.
+	Started using debian.org for email and website.
 
-	Cleaned up source file (indenting, comments, etc).
-
-	Started wrapping documentation at 80 chars.
-
-	Added this changelog.
-
-Version 0.03:
-	Changed use of getopt_long_only to getopt_long, which should work
-	better with non-GNU platforms.
-	
-	Fixed segfault when given a non-existant file to read.
-
-	Made Imakefile for use with xmkmf. This means that xclip should build
-	and install fairly nicely on any system with an X Consortium derived
-	X server (nearly all Unix style X servers I would imagine).
-
-	Wrote a decent man page.
-
-Version 0.04:
-	Changed use of getopt_long() to XrmParseCommand(), a function in xlib,
-	for portability. Apparently System V Unix derived machines don't have
-	getopt_long(). XrmParseCommand() is part of xlib, and hence should
-	*always* be available. XrmParseCommand is pretty average. It ignores
-	ambiguous options (-ver gets ignored, instead of going to -verbose or
-	-version). It doesn't do multiple options with one hyphen (-if instead
-	of (-i -f), etc.
-
-	Added xclip -out (out mode) and -filter (print stdin back to stdout).
-
-Version 0.05:
-	Added -selection option to allow access to XA_SECONDARY and
-	XA_CLIPBOARD. Use "-selection secondary", or "-s s"
-
-	Changed email address.
-
-	Added -Wall to C compiler options in Imakefile, fixed up some warnings.
-
-	Updated man page.
-
-Version 0.06:
-	Added support for INCR mechanism. This means that -o should be able to
-	print out selections that were previously too big and would have
-	resulted in a message "Error: Support for format not yet implemented."
-	In in mode, using the INCR mechanism means that you can use xclip on
-	really big data. It used to work OK on big data, but it is better
-	behaved about it now.
-
-	Created xclib.c file to look after the xlib selection and property code
-	from xclip.c. This may (or may not) be handy for anyone who wants a
-	simple way to use selections without using a widget set or getting
-	too involved in doing it themselves with xlib. I know a lot of people
-	are using xclip from inside scripts or other programs at the moment,
-	perhaps it xclib.c would be allow people to integrate the code into
-	their own projects easily.
-
-	All in all, a general cleanup (as I am now semi-competant with C), and
-	complete support for the INCR mechanism.
 
 Version 0.07:
 	Not a lot of changes in terms of features, but tonnes of bug and
@@ -98,13 +45,72 @@ Version 0.07:
 	came out identical (same md5sum), so it's fairly robust in terms of
 	the size and nature of the data that it will handle.
 
-Version 0.08:
-	Remove all event loops from xclib fuctions, to allow xclib to be
-	integrated into general-purpose event loops of other software more
-	easily.
 
-	Started using debian.org for email and website.
+Version 0.06:
+	Added support for INCR mechanism. This means that -o should be able to
+	print out selections that were previously too big and would have
+	resulted in a message "Error: Support for format not yet implemented."
+	In in mode, using the INCR mechanism means that you can use xclip on
+	really big data. It used to work OK on big data, but it is better
+	behaved about it now.
 
-Version 0.09: (Baruch Even)
-	Changed dir to / when staying running so that the current directory can
-	be umounted if necessary.
+	Created xclib.c file to look after the xlib selection and property code
+	from xclip.c. This may (or may not) be handy for anyone who wants a
+	simple way to use selections without using a widget set or getting
+	too involved in doing it themselves with xlib. I know a lot of people
+	are using xclip from inside scripts or other programs at the moment,
+	perhaps it xclib.c would be allow people to integrate the code into
+	their own projects easily.
+
+	All in all, a general cleanup (as I am now semi-competant with C), and
+	complete support for the INCR mechanism.
+
+
+Version 0.05:
+	Added -selection option to allow access to XA_SECONDARY and
+	XA_CLIPBOARD. Use "-selection secondary", or "-s s"
+
+	Changed email address.
+
+	Added -Wall to C compiler options in Imakefile, fixed up some warnings.
+
+	Updated man page.
+
+
+Version 0.04:
+	Changed use of getopt_long() to XrmParseCommand(), a function in xlib,
+	for portability. Apparently System V Unix derived machines don't have
+	getopt_long(). XrmParseCommand() is part of xlib, and hence should
+	*always* be available. XrmParseCommand is pretty average. It ignores
+	ambiguous options (-ver gets ignored, instead of going to -verbose or
+	-version). It doesn't do multiple options with one hyphen (-if instead
+	of (-i -f), etc.
+
+	Added xclip -out (out mode) and -filter (print stdin back to stdout).
+
+
+Version 0.03:
+	Changed use of getopt_long_only to getopt_long, which should work
+	better with non-GNU platforms.
+	
+	Fixed segfault when given a non-existant file to read.
+
+	Made Imakefile for use with xmkmf. This means that xclip should build
+	and install fairly nicely on any system with an X Consortium derived
+	X server (nearly all Unix style X servers I would imagine).
+
+	Wrote a decent man page.
+
+
+Version 0.02:
+	Patch to allow reading from files if specified as arguments applied.
+
+	Cleaned up source file (indenting, comments, etc).
+
+	Started wrapping documentation at 80 chars.
+
+	Added this changelog.
+
+
+Version 0.01:
+	Everything. First release, pretty basic, but it worked.
