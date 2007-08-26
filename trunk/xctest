@@ -40,8 +40,8 @@ done
 for lines in 2 16 128 1024 8192
 do
 	# temp file names (in and out)
-	tempi=`tempfile`
-	tempo=`tempfile`
+	tempi=`mktemp` || exit 1
+	tempo=`mktemp` || exit 1
 
 	linec=0	# current line of file in while loop
 
