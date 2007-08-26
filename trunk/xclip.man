@@ -99,6 +99,7 @@ option.
 .SH REPORTING BUGS
 Please report any bugs, problems, queries, experiences, etc. directly to the author.
 
-.SH AUTHOR
+.SH AUTHORS
 Kim Saunders <kims@debian.org>
+Peter Åstrand <astrand@lysator.liu.se>
 .br
