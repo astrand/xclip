@@ -1,3 +1,17 @@
+Version 0.10 (Peter Åstrand)
+	The performance has been greatly enhanced, especially over
+	slow networks. Two helper scripts, xclip-copyfile and
+	xclip-pastefile, has been added. Taken together, xclip can now
+	be used as an alternative to sftp/scp, thus avoiding password
+	prompt when X11 forwarding has already been setup. 
+
+	Autoconf is now used instead of Imake. 
+
+	The maintainer and web site address has been updated.
+
+	All Debian patches have been applied. 
+
+
 Version 0.09: (Baruch Even)
 	Changed dir to / when staying running so that the current directory can
 	be umounted if necessary.
