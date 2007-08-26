@@ -29,7 +29,7 @@ make install DESTDIR=$RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root)
-%doc COPYING CHANGES
+%doc COPYING ChangeLog
 %{_bindir}/xclip
 %{_bindir}/xclip-copyfile
 %{_bindir}/xclip-pastefile

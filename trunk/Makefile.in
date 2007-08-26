@@ -54,7 +54,7 @@ xclip-$(VERSION).tar.gz:
 	tar zcvf xclip-$(VERSION)/xclip-$(VERSION).tar.gz \
 	xclip-$(VERSION)/COPYING \
 	xclip-$(VERSION)/README \
-	xclip-$(VERSION)/CHANGES \
+	xclip-$(VERSION)/ChangeLog \
 	xclip-$(VERSION)/configure \
 	xclip-$(VERSION)/configure.ac \
 	xclip-$(VERSION)/bootstrap \
