@@ -49,7 +49,7 @@ prhelp(char *name)
 	    "      -silent      errors only, run in background (default)\n"
 	    "      -quiet       run in foreground, show what's happening\n"
 	    "      -verbose     running commentary\n"
-	    "\n" "Report bugs to <kims@debian.org>\n", name);
+	    "\n" "Report bugs to <astrand@lysator.liu.se>\n", name);
     exit(EXIT_SUCCESS);
 }
 

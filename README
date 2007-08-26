@@ -67,15 +67,6 @@ hear about it. Doesn't matter how small, compiler warnings, segfaults, spelling
 mistakes, whatever, I want to get it sorted out. xclip is not a big project,
 I'd like to get all these things sorted out and then declare it "complete".
 
-VERSION
-=======
-
-debian internal 0.08-3 - Added cut-buffers support, fixed serious bug with
-handling of large transfers with the INCR mechanism.
-
-0.08 - No added features. Updated xclib to be more friendly to integrate into
-other software. Changed email address (again) and website.
-
 LICENSE
 =======
 
@@ -85,12 +76,9 @@ CONTACT
 =======
 
 Web:
-http://people.debian.org/~kims/xclip/
+http://xclip.sourceforge.net
 
 Email:
-kims@debian.org
+astrand@lysator.liu.se
 
-Please email me about problems, experiences, patches, fixes, etc. Also, please
-drop me an email to let me know if you are going to feature xclip on a website,
-in a publication or in a distribution. Obviously, you are encouraged to do
-these things, I'd just be interested to know, that's all.
+Please email me about problems, experiences, patches, fixes, etc. 
