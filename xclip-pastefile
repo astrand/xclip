@@ -1,6 +1,7 @@
 #!/bin/sh
+set -e
 if [ "x$1" != "x" ]; then
-    echo Usage: $0 >&2
-else
-    xclip -selection secondary -o | tar zxv
+    echo "Usage: $0" >&2
+    exit 1
 fi
+xclip -selection secondary -o | gunzip -c | tar xv
