@@ -1,6 +1,6 @@
 #!/bin/sh
 if [ "x$1" = "x" ]; then
-    echo Usage: $0 filename >&2
+    echo Usage: $0 file... >&2
 else
-    exec xclip -selection secondary -loops 1 -i "$1"
+    tar zc "$@" | xclip -selection secondary -loops 1 -i
 fi
