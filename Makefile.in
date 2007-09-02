@@ -37,7 +37,7 @@ install.man: xclip.man
 
 .PHONY: clean
 clean:
-	rm -f *.o *~ xclip
+	rm -f *.o *~ xclip xclip-$(VERSION).tar.gz
 
 .PHONY: distclean
 distclean: clean
