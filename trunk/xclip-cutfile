@@ -1,0 +1,15 @@
+#!/bin/sh
+# FIXME: We shouldn't remove the files until xclip has successfully
+# transferred the data. With the current process model, this is not
+# very easy, though. 
+set -e
+if [ "x$1" = "x" ]; then
+    echo "Usage: [options] $0 file..." >&2
+    echo "-p Copy path information; preserve tree structure"
+    exit 1
+fi
+xclip-copyfile "$@"
+if [ "x$1" = "x-p" ]; then
+    shift
+fi
+rm "$@"
