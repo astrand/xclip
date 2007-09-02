@@ -25,7 +25,7 @@ xclip: $(X11OBJ) $(OBJS)
 install: installbin install.man
 
 .PHONY: installbin
-installbin: xclip xclip-copyfile xclip-pastefile
+installbin: xclip xclip-copyfile xclip-pastefile xclip-cutfile
 	mkdir -p $(DESTDIR)$(bindir)
 	$(INSTALL) $^ $(DESTDIR)$(bindir)
 
@@ -60,6 +60,7 @@ xclip-$(VERSION).tar.gz:
 	xclip-$(VERSION)/bootstrap \
 	xclip-$(VERSION)/xclip-copyfile \
 	xclip-$(VERSION)/xclip-pastefile \
+	xclip-$(VERSION)/xclip-cutfile \
 	xclip-$(VERSION)/install-sh \
 	xclip-$(VERSION)/Makefile.in \
 	xclip-$(VERSION)/xclip.spec \

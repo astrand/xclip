@@ -33,6 +33,7 @@ make install DESTDIR=$RPM_BUILD_ROOT
 %{_bindir}/xclip
 %{_bindir}/xclip-copyfile
 %{_bindir}/xclip-pastefile
+%{_bindir}/xclip-cutfile
 %{_mandir}/man1/xclip.1*
 
 %post
