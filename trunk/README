@@ -41,8 +41,8 @@ USING XCLIP FOR MOVING FILES
 
 The programs xclip-copyfile, xclip-pastefile, and xclip-cutfile can be
 used for copying and moving files between different directories and
-even machines, assuming that you have a working X11 connection. Here's
-some examples:
+even machines, assuming that you have a working X11 connection. Here
+are some examples:
 
 # Copying a file to a remote host
 [maggie.lkpg.cendio.se ~]$ echo "A file created on ${HOSTNAME}" > file1
