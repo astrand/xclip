@@ -35,6 +35,53 @@ Here are some ideas for things you can do with xclip:
 	text to the primary X selection:
 	!xclip -f
 
+
+USING XCLIP FOR MOVING FILES
+============================
+
+The programs xclip-copyfile, xclip-pastefile, and xclip-cutfile can be
+used for copying and moving files between different directories and
+even machines, assuming that you have a working X11 connection. Here's
+some examples:
+
+# Copying a file to a remote host
+[maggie.lkpg.cendio.se ~]$ echo "A file created on ${HOSTNAME}" > file1
+[maggie.lkpg.cendio.se ~]$ xclip-copyfile file1
+[sofie.homeip.net ~/doc]$ xclip-pastefile
+file1
+[sofie.homeip.net ~/doc]$ cat file1
+A file created on maggie.lkpg.cendio.se
+
+
+# Copying an entire tree structure
+[sofie.homeip.net ~]$ xclip-copyfile doc
+[maggie.lkpg.cendio.se ~/tmp]$ xclip-pastefile
+doc/
+doc/letter-mom-april.txt
+doc/file1
+doc/letter-dad-march.txt
+
+
+# Copying files with preserved path information
+[maggie.lkpg.cendio.se ~]$ xclip-copyfile -p /etc/sysconfig/grub
+tar: Removing leading `/' from member names
+[sofie.homeip.net ~/tmp]$ xclip-pastefile
+etc/sysconfig/grub
+[sofie.homeip.net ~/tmp]$ ls etc/sysconfig/grub
+etc/sysconfig/grub
+
+
+# Moving files
+[sofie.homeip.net ~]$ ls letter-brother-may.txt
+letter-brother-may.txt
+[sofie.homeip.net ~]$ xclip-cutfile letter-brother-may.txt
+[sofie.homeip.net ~]$ ls letter-brother-may.txt
+ls: cannot access letter-brother-may.txt: No such file or directory
+[sofie.homeip.net ~]$ cd doc
+[sofie.homeip.net ~/doc]$ xclip-pastefile
+letter-brother-may.txt
+
+
 FEATURES
 ========
 
