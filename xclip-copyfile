@@ -10,10 +10,12 @@ trap 'rm -f "${archive}"' 1 2 3 15
 if [ "x$1" = "x-p" ]; then
     tar cf "${archive}" "$@"
 else
+    flags="cf"
     for file in "$@"; do
         filedir=`dirname "${file}"`
         filename=`basename "${file}"`
-        tar rf "${archive}" -C "${filedir}" "${filename}"
+        tar "${flags}" "${archive}" -C "${filedir}" "${filename}"
+        flags="rf"
     done
 fi
 gzip -c "${archive}" | xclip -selection secondary -loops 1 -i
