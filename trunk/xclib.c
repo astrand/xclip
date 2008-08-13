@@ -84,6 +84,8 @@ xcstrdup(const char *string)
  * 
  * The selection to return
  * 
+ * The target(UTF8_STRING or XA_STRING) to return 
+ *
  * A pointer to a char array to put the selection into.
  * 
  * A pointer to a long to record the length of the char array
@@ -96,12 +98,13 @@ xcstrdup(const char *string)
 int
 xcout(Display * dpy,
       Window win,
-      XEvent evt, Atom sel, unsigned char **txt, unsigned long *len, unsigned int *context)
+      XEvent evt, Atom sel, Atom target, unsigned char **txt, unsigned long *len, unsigned int *context)
 {
     /* a property for other windows to put their selection into */
     static Atom pty;
     static Atom inc;
     Atom pty_type;
+    Atom atomUTF8String;
     int pty_format;
 
     /* buffer for XGetWindowProperty to dump data into */
@@ -129,13 +132,20 @@ xcout(Display * dpy,
 	}
 
 	/* send a selection request */
-	XConvertSelection(dpy, sel, XA_STRING, pty, win, CurrentTime);
+	XConvertSelection(dpy, sel, target, pty, win, CurrentTime);
 	*context = XCLIB_XCOUT_SENTCONVSEL;
 	return (0);
 
     case XCLIB_XCOUT_SENTCONVSEL:
+	atomUTF8String = XInternAtom(dpy, "UTF8_STRING", False);
 	if (evt.type != SelectionNotify)
 	    return (0);
+
+	/* fallback to XA_STRING when UTF8_STRING failed */
+	if (target == atomUTF8String && evt.xselection.property == None) {
+		*context = XCLIB_XCOUT_FALLBACK;
+		return(0);
+	}
 
 	/* find the size and format of the data in property */
 	XGetWindowProperty(dpy,
@@ -295,6 +305,8 @@ xcout(Display * dpy,
  * app in it's SelectionRequest. Things are likely to break if you change the
  * value of this yourself.
  * 
+ * The target(UTF8_STRING or XA_STRING) to respond to
+ *
  * A pointer to an array of chars to read selection data from.
  * 
  * The length of the array of chars.
@@ -308,7 +320,7 @@ int
 xcin(Display * dpy,
      Window * win,
      XEvent evt,
-     Atom * pty, unsigned char *txt, unsigned long len, unsigned long *pos, unsigned int *context)
+     Atom * pty, Atom target, unsigned char *txt, unsigned long len, unsigned long *pos, unsigned int *context)
 {
     unsigned long chunk_len;	/* length of current chunk (for incr
 				 * transfers only)
@@ -349,14 +361,14 @@ xcin(Display * dpy,
 
 	/* put the data into an property */
 	if (evt.xselectionrequest.target == targets) {
-	    Atom types[2] = { targets, XA_STRING };
+	    Atom types[2] = { targets, target };
 
 	    /* send data all at once (not using INCR) */
 	    XChangeProperty(dpy,
 			    *win,
 			    *pty,
-			    targets,
-			    8, PropModeReplace, (unsigned char *) types, (int) sizeof(types)
+			    XA_ATOM,
+			    32, PropModeReplace, (unsigned char *) types, (int)(sizeof(types) / sizeof(Atom))
 		);
 	}
 	else if (len > chunk_size) {
@@ -375,7 +387,7 @@ xcin(Display * dpy,
 	    /* send data all at once (not using INCR) */
 	    XChangeProperty(dpy,
 			    *win,
-			    *pty, XA_STRING, 8, PropModeReplace, (unsigned char *) txt, (int) len);
+			    *pty, target, 8, PropModeReplace, (unsigned char *) txt, (int) len);
 	}
 
 	/* Perhaps FIXME: According to ICCCM section 2.5, we should
@@ -440,13 +452,13 @@ xcin(Display * dpy,
 	if (chunk_len) {
 	    /* put the chunk into the property */
 	    XChangeProperty(dpy,
-			    *win, *pty, XA_STRING, 8, PropModeReplace, &txt[*pos], (int) chunk_len);
+			    *win, *pty, target, 8, PropModeReplace, &txt[*pos], (int) chunk_len);
 	}
 	else {
 	    /* make an empty property to show we've
 	     * finished the transfer
 	     */
-	    XChangeProperty(dpy, *win, *pty, XA_STRING, 8, PropModeReplace, 0, 0);
+	    XChangeProperty(dpy, *win, *pty, target, 8, PropModeReplace, 0, 0);
 	}
 	XFlush(dpy);
 

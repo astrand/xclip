@@ -30,12 +30,13 @@
 #include "xclib.h"
 
 /* command line option table for XrmParseCommand() */
-XrmOptionDescRec opt_tab[11];
+XrmOptionDescRec opt_tab[12];
 
 /* Options that get set on the command line */
 int sloop = 0;			/* number of loops */
 char *sdisp = NULL;		/* X display to connect to */
 Atom sseln = XA_PRIMARY;	/* X selection to work with */
+Atom target = XA_STRING;
 
 /* Flags for command line options */
 static int fverb = OSILENT;	/* output level */
@@ -171,6 +172,29 @@ doOptSel(void)
     }
 }
 
+/* process noutf8 command line option */
+static void doOptNoUtf8 (void)
+{
+	/* check for -noutf8 */
+	if (
+		XrmGetResource(
+			opt_db,
+			"xclip.noutf8",
+			"Xclip.noutf8",
+			&rec_typ,
+			&rec_val
+		)
+	)
+	{
+		if (fverb == OVERBOSE)  /* print in verbose mode only */
+			fprintf(stderr, "Using old UNICODE instead of UTF8.\n", sloop);
+	} else {
+		target = XA_UTF8_STRING(dpy);
+		if (fverb == OVERBOSE)  /* print in verbose mode only */
+			fprintf(stderr, "Using UTF8_STRING.\n", sloop);
+	}
+}
+
 static void
 doIn(Window win, const char *progname)
 {
@@ -300,7 +324,7 @@ doIn(Window win, const char *progname)
 
 	    XNextEvent(dpy, &evt);
 
-	    finished = xcin(dpy, &cwin, evt, &pty, sel_buf, sel_len, &sel_pos, &context);
+	    finished = xcin(dpy, &cwin, evt, &pty, target, sel_buf, sel_len, &sel_pos, &context);
 
 	    if (evt.type == SelectionClear)
 		clear = 1;
@@ -333,7 +357,15 @@ doOut(Window win)
 		XNextEvent(dpy, &evt);
 
 	    /* fetch the selection, or part of it */
-	    xcout(dpy, win, evt, sseln, &sel_buf, &sel_len, &context);
+	    xcout(dpy, win, evt, sseln, target, &sel_buf, &sel_len, &context);
+
+	    /* fallback is needed. set XA_STRING to target and restart the loop. */
+	    if (context == XCLIB_XCOUT_FALLBACK)
+	    {
+		context = XCLIB_XCOUT_NONE;
+		target = XA_STRING;
+		continue;
+	    }
 
 	    /* only continue if xcout() is doing something */
 	    if (context == XCLIB_XCOUT_NONE)
@@ -433,6 +465,12 @@ main(int argc, char *argv[])
     opt_tab[10].argKind = XrmoptionNoArg;
     opt_tab[10].value = (XPointer) xcstrdup("V");
 
+    /* utf8 option entry */
+    opt_tab[11].option = xcstrdup("-noutf8");
+    opt_tab[11].specifier = xcstrdup(".noutf8");
+    opt_tab[11].argKind = XrmoptionNoArg;
+    opt_tab[11].value = (XPointer) xcstrdup("N");
+
     /* parse command line options */
     doOptMain(argc, argv);
 
@@ -449,6 +487,9 @@ main(int argc, char *argv[])
 
     /* parse selection command line option */
     doOptSel();
+
+    /* parse noutf8 command line option */
+    doOptNoUtf8();
 
     /* Create a window to trap events */
     win = XCreateSimpleWindow(dpy, DefaultRootWindow(dpy), 0, 0, 1, 1, 0, 0, 0);
