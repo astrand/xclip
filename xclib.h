@@ -24,6 +24,7 @@
 #define XCLIB_XCOUT_NONE	0	/* no context */
 #define XCLIB_XCOUT_SENTCONVSEL	1	/* sent a request */
 #define XCLIB_XCOUT_INCR	2	/* in an incr loop */
+#define XCLIB_XCOUT_FALLBACK	3	/* UTF8_STRING failed, need fallback to XA_STRING */
 
 /* xcin() contexts */
 #define XCLIB_XCIN_NONE		0
@@ -36,6 +37,7 @@ extern int xcout(
 	Window,
 	XEvent,
 	Atom,
+	Atom,
 	unsigned char**,
 	unsigned long*,
 	unsigned int*
@@ -45,6 +47,7 @@ extern int xcin(
 	Window*,
 	XEvent,
 	Atom*,
+	Atom,
 	unsigned char*,
 	unsigned long,
 	unsigned long*,

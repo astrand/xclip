@@ -45,6 +45,7 @@ prhelp(char *name)
 	    "  -h, -help        usage information\n"
 	    "      -selection   selection to access (\"primary\", "
 	    "\"secondary\", \"clipboard\" or \"buffer-cut\")\n"
+	    "      -noutf8      don't treat text as utf-8, use old unicode\n"
 	    "      -version     version information\n"
 	    "      -silent      errors only, run in background (default)\n"
 	    "      -quiet       run in foreground, show what's happening\n"
