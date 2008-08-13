@@ -187,11 +187,11 @@ static void doOptNoUtf8 (void)
 	)
 	{
 		if (fverb == OVERBOSE)  /* print in verbose mode only */
-			fprintf(stderr, "Using old UNICODE instead of UTF8.\n", sloop);
+			fprintf(stderr, "Using old UNICODE instead of UTF8.\n");
 	} else {
 		target = XA_UTF8_STRING(dpy);
 		if (fverb == OVERBOSE)  /* print in verbose mode only */
-			fprintf(stderr, "Using UTF8_STRING.\n", sloop);
+			fprintf(stderr, "Using UTF8_STRING.\n");
 	}
 }
 
