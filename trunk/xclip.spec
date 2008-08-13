@@ -1,11 +1,13 @@
-Summary: Command line interface to the X11 clipboard
-Name: xclip
-Version: 0.10
-Release: 1
-License: GPL; see COPYING
-Group: User Interface/X 
-Source: xclip-%{version}.tar.gz
-BuildRoot: %{_tmppath}/%{name}-buildroot
+Name:		xclip
+Version:	0.10
+Release:	1%{?dist}
+License:	GPLv2+
+Group:		Applications/System
+Summary:	Command line clipboard grabber
+URL:		http://sourceforge.net/projects/xclip
+Source0:	http://downloads.sourceforge.net/xclip/%{name}-%{version}.tar.gz
+BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+BuildRequires:  libXmu-devel, libICE-devel, libX11-devel, libXext-devel
 Packager: Peter Åstrand <astrand@lysator.liu.se>
 
 %description
@@ -17,29 +19,26 @@ an X selection to standard out, which can then be redirected to a file or
 another program.
 
 %prep
-rm -rf $RPM_BUILD_ROOT
+%setup -q
 
-%setup
-%build 
-./configure --prefix=%{_prefix} --bindir=%{_bindir} --mandir=%{_mandir}
-make
+%build
+%configure
+make CDEBUGFLAGS="$RPM_OPT_FLAGS" %{?_smp_mflags}
 
 %install
-make install DESTDIR=$RPM_BUILD_ROOT
-
-%files
-%defattr(-,root,root)
-%doc COPYING ChangeLog
-%{_bindir}/xclip
-%{_bindir}/xclip-copyfile
-%{_bindir}/xclip-pastefile
-%{_bindir}/xclip-cutfile
-%{_mandir}/man1/xclip.1*
-
-%post
-
-%postun
+rm -rf $RPM_BUILD_ROOT
+make DESTDIR=$RPM_BUILD_ROOT install
+make DESTDIR=$RPM_BUILD_ROOT install.man
 
 %clean
 rm -rf $RPM_BUILD_ROOT
+
+%files
+%defattr(-,root,root,-)
+%doc COPYING README ChangeLog
+%{_bindir}/xclip
+%{_bindir}/xclip-copyfile
+%{_bindir}/xclip-cutfile
+%{_bindir}/xclip-pastefile
+%{_mandir}/man1/xclip.1*
 
