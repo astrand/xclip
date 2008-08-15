@@ -1,3 +1,8 @@
+Version 0.11 (Peter Åstrand)
+	xclip-copyfile is now compatible with recent tar versions. 
+
+	The Fedora UTF-8 patch has been applied. 
+
 Version 0.10 (Peter Åstrand)
 	The performance has been greatly enhanced, especially over
 	slow networks. Two helper scripts, xclip-copyfile and
