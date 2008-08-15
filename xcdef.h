@@ -19,10 +19,6 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* xclip version and name */
-#define XC_VERS 0.08
-#define XC_NAME "xclip"
-
 /* output level constants */
 #define OSILENT  0
 #define OQUIET   1
