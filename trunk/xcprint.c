@@ -60,7 +60,7 @@ prhelp(char *name)
 void
 prversion(void)
 {
-    fprintf(stderr, "%s version %1.2f\n", XC_NAME, XC_VERS);
+    fprintf(stderr, "%s version %s\n", PACKAGE_NAME, PACKAGE_VERSION);
     fprintf(stderr, "Copyright (C) 2001-2008 Kim Saunders et al.\n");
     fprintf(stderr, "Distributed under the terms of the GNU GPL\n");
     exit(EXIT_SUCCESS);
