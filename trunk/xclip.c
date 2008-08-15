@@ -64,7 +64,8 @@ doOptMain(int argc, char *argv[])
 {
     /* Initialise resource manager and parse options into database */
     XrmInitialize();
-    XrmParseCommand(&opt_db, opt_tab, sizeof(opt_tab) / sizeof(opt_tab[0]), PACKAGE_NAME, &argc, argv);
+    XrmParseCommand(&opt_db, opt_tab, sizeof(opt_tab) / sizeof(opt_tab[0]), PACKAGE_NAME, &argc,
+		    argv);
 
     /* set output level */
     if (XrmGetResource(opt_db, "xclip.olevel", "Xclip.Olevel", &rec_typ, &rec_val)
@@ -174,26 +175,20 @@ doOptSel(void)
 }
 
 /* process noutf8 command line option */
-static void doOptNoUtf8 (void)
+static void
+doOptNoUtf8(void)
 {
-	/* check for -noutf8 */
-	if (
-		XrmGetResource(
-			opt_db,
-			"xclip.noutf8",
-			"Xclip.noutf8",
-			&rec_typ,
-			&rec_val
-		)
-	)
-	{
-		if (fverb == OVERBOSE)  /* print in verbose mode only */
-			fprintf(stderr, "Using old UNICODE instead of UTF8.\n");
-	} else {
-		target = XA_UTF8_STRING(dpy);
-		if (fverb == OVERBOSE)  /* print in verbose mode only */
-			fprintf(stderr, "Using UTF8_STRING.\n");
-	}
+    /* check for -noutf8 */
+    if (XrmGetResource(opt_db, "xclip.noutf8", "Xclip.noutf8", &rec_typ, &rec_val)
+	) {
+	if (fverb == OVERBOSE)	/* print in verbose mode only */
+	    fprintf(stderr, "Using old UNICODE instead of UTF8.\n");
+    }
+    else {
+	target = XA_UTF8_STRING(dpy);
+	if (fverb == OVERBOSE)	/* print in verbose mode only */
+	    fprintf(stderr, "Using UTF8_STRING.\n");
+    }
 }
 
 static void
@@ -361,8 +356,7 @@ doOut(Window win)
 	    xcout(dpy, win, evt, sseln, target, &sel_buf, &sel_len, &context);
 
 	    /* fallback is needed. set XA_STRING to target and restart the loop. */
-	    if (context == XCLIB_XCOUT_FALLBACK)
-	    {
+	    if (context == XCLIB_XCOUT_FALLBACK) {
 		context = XCLIB_XCOUT_NONE;
 		target = XA_STRING;
 		continue;

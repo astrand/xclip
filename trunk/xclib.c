@@ -99,7 +99,8 @@ xcstrdup(const char *string)
 int
 xcout(Display * dpy,
       Window win,
-      XEvent evt, Atom sel, Atom target, unsigned char **txt, unsigned long *len, unsigned int *context)
+      XEvent evt, Atom sel, Atom target, unsigned char **txt, unsigned long *len,
+      unsigned int *context)
 {
     /* a property for other windows to put their selection into */
     static Atom pty;
@@ -144,8 +145,8 @@ xcout(Display * dpy,
 
 	/* fallback to XA_STRING when UTF8_STRING failed */
 	if (target == atomUTF8String && evt.xselection.property == None) {
-		*context = XCLIB_XCOUT_FALLBACK;
-		return(0);
+	    *context = XCLIB_XCOUT_FALLBACK;
+	    return (0);
 	}
 
 	/* find the size and format of the data in property */
@@ -321,7 +322,8 @@ int
 xcin(Display * dpy,
      Window * win,
      XEvent evt,
-     Atom * pty, Atom target, unsigned char *txt, unsigned long len, unsigned long *pos, unsigned int *context)
+     Atom * pty, Atom target, unsigned char *txt, unsigned long len, unsigned long *pos,
+     unsigned int *context)
 {
     unsigned long chunk_len;	/* length of current chunk (for incr
 				 * transfers only)
@@ -369,7 +371,8 @@ xcin(Display * dpy,
 			    *win,
 			    *pty,
 			    XA_ATOM,
-			    32, PropModeReplace, (unsigned char *) types, (int)(sizeof(types) / sizeof(Atom))
+			    32, PropModeReplace, (unsigned char *) types,
+			    (int) (sizeof(types) / sizeof(Atom))
 		);
 	}
 	else if (len > chunk_size) {
