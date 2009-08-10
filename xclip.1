@@ -17,7 +17,7 @@
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 .\"
-.TH XCLIP 1x
+.TH XCLIP 1
 .SH NAME
 xclip \- command line interface to X selections (clipboard)
 .SH SYNOPSIS
@@ -62,7 +62,7 @@ provide a running commentary of what xclip is doing
 .PP
 xclip reads text from standard in or files and makes it available to other X applications for pasting as an X selection (traditionally with the middle mouse button). It reads from all files specified, or from standard in if no files are specified. xclip can also print the contents of a selection to standard out with the
 .B
--o
+\-o
 option.
 
 xclip was designed to allow tighter integration of X applications and command line programs. The default action is to silently wait in the background for X selection requests (pastes) until another X application places data in the clipboard, at which point xclip exits silently. You can use the \fB\-verbose\fR option to see if and when xclip actually receives selection requests from other X applications.
@@ -94,7 +94,7 @@ Put the contents of the selection into a file.
 \fBDISPLAY\fR
 X display to use if none is specified with the
 .B
--display
+\-display
 option.
 
 .SH REPORTING BUGS
