@@ -31,9 +31,9 @@ installbin: xclip xclip-copyfile xclip-pastefile xclip-cutfile
 
 
 .PHONY: install.man
-install.man: xclip.1
+install.man: xclip.1 xclip-copyfile.1
 	mkdir -p $(DESTDIR)$(mandir)/man1
-	$(INSTALL) -m 644 xclip.1 $(DESTDIR)$(mandir)/man1/xclip.1
+	$(INSTALL) -m 644 $^ $(DESTDIR)$(mandir)/man1
 
 .PHONY: clean
 clean:
@@ -66,6 +66,7 @@ xclip-$(VERSION).tar.gz:
 	xclip-$(VERSION)/xclip.spec \
 	xclip-$(VERSION)/*.c \
 	xclip-$(VERSION)/*.h \
+	xclip-$(VERSION)/xclip-copyfile.1 \
 	xclip-$(VERSION)/xclip.1 )
 	rm -rf /tmp/xclip-make-dist-dir
 

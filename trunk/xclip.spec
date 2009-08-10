@@ -41,4 +41,4 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/xclip-cutfile
 %{_bindir}/xclip-pastefile
 %{_mandir}/man1/xclip.1*
-
+%{_mandir}/man1/xclip-copyfile.1*
