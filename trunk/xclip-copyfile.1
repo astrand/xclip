@@ -1,0 +1,93 @@
+.\"·
+.\"
+.\" xclip-copyfile.1
+.\" Copyright (C) 2009 Maximilian Gass
+.\"
+.\" This program is free software; you can redistribute it and/or modify
+.\" it under the terms of the GNU General Public License as published by
+.\" the Free Software Foundation; either version 2 of the License, or
+.\" (at your option) any later version.
+.\"
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; if not, write to the Free Software
+.\" Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+.\"
+.TH XCLIP-COPYFILE 1
+.SH NAME
+xclip\-copyfile, xclip\-cutfile, xclip\-pastefile - copy and move files via the X clipboard
+.SH SYNOPSIS
+.B xclip\-copyfile
+[\-p] FILES...
+
+.B xclip\-cutfile
+[\-p] FILES...
+
+.B xclip\-pastefile
+.SH DESCRIPTION
+.B xclip\-copyfile
+copies files into the X clipboard, recursing into directories.
+
+.B xclip\-cutfile
+copies the files, but also deletes them afterwards.
+.TP
+\fB\-p\fR
+preserve path formation
+
+.PP
+.B xclip\-pastefile
+pastes the files out of the clipboard
+.SH EXAMPLES
+
+.B Copying a file to a remote host
+
+.nf
+[maggie.lkpg.cendio.se ~]$ echo "A file created on ${HOSTNAME}" > file1
+[maggie.lkpg.cendio.se ~]$ xclip-copyfile file1
+[sofie.homeip.net ~/doc]$ xclip-pastefile
+file1
+[sofie.homeip.net ~/doc]$ cat file1
+A file created on maggie.lkpg.cendio.se
+
+
+.B Copying an entire tree structure
+
+.nf
+[sofie.homeip.net ~]$ xclip-copyfile doc
+[maggie.lkpg.cendio.se ~/tmp]$ xclip-pastefile
+doc/
+doc/letter-mom-april.txt
+doc/file1
+doc/letter-dad-march.txt
+
+
+.B Copying files with preserved path information
+
+.nf
+[maggie.lkpg.cendio.se ~]$ xclip-copyfile \-p /etc/sysconfig/grub
+tar: Removing leading `/' from member names
+[sofie.homeip.net ~/tmp]$ xclip-pastefile
+etc/sysconfig/grub
+[sofie.homeip.net ~/tmp]$ ls etc/sysconfig/grub
+etc/sysconfig/grub
+
+
+.B Moving files
+
+.nf
+[sofie.homeip.net ~]$ ls letter-brother-may.txt
+letter-brother-may.txt
+[sofie.homeip.net ~]$ xclip-cutfile letter-brother-may.txt
+[sofie.homeip.net ~]$ ls letter-brother-may.txt
+ls: cannot access letter-brother-may.txt: No such file or directory
+[sofie.homeip.net ~]$ cd doc
+[sofie.homeip.net ~/doc]$ xclip-pastefile
+letter-brother-may.txt
+
+.SH AUTHORS
+
+This manual page was written by Maximilian Gass <mxey@cloudconnected.org> for
+the Debian project. It may be used for everything else, of course.
