@@ -1,5 +1,5 @@
 Name:		xclip
-Version:	0.11
+Version:	0.12
 Release:	1%{?dist}
 License:	GPLv2+
 Group:		Applications/System

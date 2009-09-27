@@ -1,4 +1,4 @@
-AC_INIT(xclip, 0.11)
+AC_INIT(xclip, 0.12)
 
 AC_CONFIG_SRCDIR([xclip.c])
 
