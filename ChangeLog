@@ -1,3 +1,10 @@
+Version 0.12 (Peter Åstrand)
+	Build fixes: Check for Xmu and Xt
+
+	The version number has been corrected. 
+
+	Man pages are now available. Contributed by Maximilian Gass.
+
 Version 0.11 (Peter Åstrand)
 	xclip-copyfile is now compatible with recent tar versions. 
 
