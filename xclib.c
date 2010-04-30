@@ -121,7 +121,6 @@ xcout(Display * dpy,
     /* a property for other windows to put their selection into */
     static Atom pty;
     static Atom inc;
-    Atom atomUTF8String;
     int pty_format;
 
     /* buffer for XGetWindowProperty to dump data into */
@@ -154,13 +153,12 @@ xcout(Display * dpy,
 	return (0);
 
     case XCLIB_XCOUT_SENTCONVSEL:
-	atomUTF8String = XInternAtom(dpy, "UTF8_STRING", False);
 	if (evt.type != SelectionNotify)
 	    return (0);
 
-	/* fallback to XA_STRING when UTF8_STRING failed */
-	if (target == atomUTF8String && evt.xselection.property == None) {
-	    *context = XCLIB_XCOUT_FALLBACK;
+	/* return failure when the current target failed */
+	if (evt.xselection.property == None) {
+	    *context = XCLIB_XCOUT_BAD_TARGET;
 	    return (0);
 	}
 

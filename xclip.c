@@ -195,7 +195,7 @@ doOptNoUtf8(void)
     }
 }
 
-static void
+static int
 doIn(Window win, const char *progname)
 {
     unsigned char *sel_buf;	/* buffer for selection data */
@@ -218,7 +218,7 @@ doIn(Window win, const char *progname)
 	    if ((fil_handle = fopen(fil_names[fil_current], "r")) == NULL) {
 		errperror(3, progname, ": ", fil_names[fil_current]
 		    );
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 	    }
 	    else {
 		/* file opened successfully. Print
@@ -259,7 +259,7 @@ doIn(Window win, const char *progname)
     /* Handle cut buffer if needed */
     if (sseln == XA_STRING) {
 	XStoreBuffer(dpy, (char *) sel_buf, (int) sel_len, 0);
-	return;
+	return EXIT_SUCCESS;
     }
 
     /* take control of the selection so that we receive
@@ -330,7 +330,7 @@ doIn(Window win, const char *progname)
 		clear = 1;
 
 	    if ((context == XCLIB_XCIN_NONE) && clear)
-		exit(EXIT_SUCCESS);
+		return EXIT_SUCCESS;
 
 	    if (finished)
 		break;
@@ -338,6 +338,8 @@ doIn(Window win, const char *progname)
 
 	dloop++;		/* increment loop counter */
     }
+
+    return EXIT_SUCCESS;
 }
 
 static void
@@ -410,7 +412,7 @@ printSelBuf(FILE *fout, Atom sel_type, unsigned char *sel_buf, size_t sel_len)
     fwrite(sel_buf, sizeof(char), sel_len, fout);
 }
 
-static void
+static int
 doOut(Window win)
 {
     Atom sel_type = None;
@@ -430,11 +432,20 @@ doOut(Window win)
 	    /* fetch the selection, or part of it */
 	    xcout(dpy, win, evt, sseln, target, &sel_type, &sel_buf, &sel_len, &context);
 
-	    /* fallback is needed. set XA_STRING to target and restart the loop. */
-	    if (context == XCLIB_XCOUT_FALLBACK) {
-		context = XCLIB_XCOUT_NONE;
-		target = XA_STRING;
-		continue;
+	    if (context == XCLIB_XCOUT_BAD_TARGET) {
+		if (target == XA_UTF8_STRING(dpy)) {
+		    /* fallback is needed. set XA_STRING to target and restart the loop. */
+		    context = XCLIB_XCOUT_NONE;
+		    target = XA_STRING;
+		    continue;
+		}
+		else {
+		    /* no fallback available, exit with failure */
+		    char *atom_name = XGetAtomName(dpy, target);
+		    fprintf(stderr, "Error: target %s not available\n", atom_name);
+		    XFree(atom_name);
+		    return EXIT_FAILURE;
+		}
 	    }
 
 	    /* only continue if xcout() is doing something */
@@ -453,6 +464,8 @@ doOut(Window win)
 	else
 	    free(sel_buf);
     }
+
+    return EXIT_SUCCESS;
 }
 
 int
@@ -460,6 +473,7 @@ main(int argc, char *argv[])
 {
     /* Declare variables */
     Window win;			/* Window */
+    int exit_code;
 
     /* set up option table. I can't figure out a better way than this to
      * do it while sticking to pure ANSI C. The option and specifier
@@ -568,13 +582,13 @@ main(int argc, char *argv[])
     XSelectInput(dpy, win, PropertyChangeMask);
 
     if (fdiri)
-	doIn(win, argv[0]);
+	exit_code = doIn(win, argv[0]);
     else
-	doOut(win);
+	exit_code = doOut(win);
 
     /* Disconnect from the X server */
     XCloseDisplay(dpy);
 
     /* exit */
-    return (EXIT_SUCCESS);
+    return exit_code;
 }
