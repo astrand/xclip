@@ -87,6 +87,8 @@ xcstrdup(const char *string)
  * 
  * The target(UTF8_STRING or XA_STRING) to return 
  *
+ * A pointer to an atom that receives the type of the data
+ *
  * A pointer to a char array to put the selection into.
  * 
  * A pointer to a long to record the length of the char array
@@ -99,13 +101,12 @@ xcstrdup(const char *string)
 int
 xcout(Display * dpy,
       Window win,
-      XEvent evt, Atom sel, Atom target, unsigned char **txt, unsigned long *len,
+      XEvent evt, Atom sel, Atom target, Atom *type, unsigned char **txt, unsigned long *len,
       unsigned int *context)
 {
     /* a property for other windows to put their selection into */
     static Atom pty;
     static Atom inc;
-    Atom pty_type;
     Atom atomUTF8String;
     int pty_format;
 
@@ -156,10 +157,10 @@ xcout(Display * dpy,
 			   0,
 			   0,
 			   False,
-			   AnyPropertyType, &pty_type, &pty_format, &pty_items, &pty_size, &buffer);
+			   AnyPropertyType, type, &pty_format, &pty_items, &pty_size, &buffer);
 	XFree(buffer);
 
-	if (pty_type == inc) {
+	if (*type == inc) {
 	    /* start INCR mechanism by deleting property */
 	    XDeleteProperty(dpy, win, pty);
 	    XFlush(dpy);
@@ -183,7 +184,7 @@ xcout(Display * dpy,
 			   0,
 			   (long) pty_size,
 			   False,
-			   AnyPropertyType, &pty_type, &pty_format, &pty_items, &pty_size, &buffer);
+			   AnyPropertyType, type, &pty_format, &pty_items, &pty_size, &buffer);
 
 	/* finished with property, delete it */
 	XDeleteProperty(dpy, win, pty);
@@ -227,7 +228,7 @@ xcout(Display * dpy,
 			   0,
 			   False,
 			   AnyPropertyType,
-			   &pty_type,
+			   type,
 			   &pty_format, &pty_items, &pty_size, (unsigned char **) &buffer);
 
 	if (pty_format != 8) {
@@ -264,7 +265,7 @@ xcout(Display * dpy,
 			   (long) pty_size,
 			   False,
 			   AnyPropertyType,
-			   &pty_type,
+			   type,
 			   &pty_format, &pty_items, &pty_size, (unsigned char **) &buffer);
 
 	/* allocate memory to accommodate data in *txt */

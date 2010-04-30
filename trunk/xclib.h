@@ -39,6 +39,7 @@ extern int xcout(
 	XEvent,
 	Atom,
 	Atom,
+	Atom*,
 	unsigned char**,
 	unsigned long*,
 	unsigned int*

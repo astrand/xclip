@@ -339,6 +339,7 @@ doIn(Window win, const char *progname)
 static void
 doOut(Window win)
 {
+    Atom sel_type = None;
     unsigned char *sel_buf;	/* buffer for selection data */
     unsigned long sel_len = 0;	/* length of sel_buf */
     XEvent evt;			/* X Event Structures */
@@ -353,7 +354,7 @@ doOut(Window win)
 		XNextEvent(dpy, &evt);
 
 	    /* fetch the selection, or part of it */
-	    xcout(dpy, win, evt, sseln, target, &sel_buf, &sel_len, &context);
+	    xcout(dpy, win, evt, sseln, target, &sel_type, &sel_buf, &sel_len, &context);
 
 	    /* fallback is needed. set XA_STRING to target and restart the loop. */
 	    if (context == XCLIB_XCOUT_FALLBACK) {
