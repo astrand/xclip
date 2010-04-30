@@ -38,6 +38,9 @@ when xclip is invoked in the in mode with output level set to silent (the defaul
 \fB\-l\fR, \fB\-loops\fR
 number of X selection requests (pastes into X applications) to wait for before exiting, with a value of 0 (default) causing xclip to wait for an unlimited number of requests until another application (possibly another invocation of xclip) takes ownership of the selection
 .TP
+\fB\-t\fR, \fB\-target\fR
+specify a particular data format using the given target atom.  With \fB\-o\fR the special target atom name "TARGETS" can be used to get a list of valid target atoms for this selection.  For more information about target atoms refer to ICCCM section 2.6.2
+.TP
 \fB\-d\fR, \fB\-display\fR
 X display to use (e.g. "localhost:0"), xclip defaults to the value in $\fBDISPLAY\fR if this option is omitted
 .TP
@@ -87,6 +90,10 @@ Exit after /etc/motd (message of the day) has been pasted 10 times. Show how man
 .B xclip -o > helloworld.c
 .PP
 Put the contents of the selection into a file.
+
+.B xclip -t text/html index.html
+.PP
+Middle click in an X application supporting HTML to paste the contents of the given file as HTML.
 
 .SH ENVIRONMENT
 .TP

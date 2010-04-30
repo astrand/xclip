@@ -35,7 +35,7 @@
 #include "xclib.h"
 
 /* command line option table for XrmParseCommand() */
-XrmOptionDescRec opt_tab[12];
+XrmOptionDescRec opt_tab[13];
 
 /* Options that get set on the command line */
 int sloop = 0;			/* number of loops */
@@ -178,15 +178,21 @@ doOptSel(void)
     }
 }
 
-/* process noutf8 command line option */
+/* process noutf8 and target command line options */
 static void
-doOptNoUtf8(void)
+doOptTarget(void)
 {
     /* check for -noutf8 */
     if (XrmGetResource(opt_db, "xclip.noutf8", "Xclip.noutf8", &rec_typ, &rec_val)
 	) {
 	if (fverb == OVERBOSE)	/* print in verbose mode only */
 	    fprintf(stderr, "Using old UNICODE instead of UTF8.\n");
+    }
+    else if (XrmGetResource(opt_db, "xclip.target", "Xclip.Target", &rec_typ, &rec_val)
+	) {
+	target = XInternAtom(dpy, rec_val.addr, False);
+	if (fverb == OVERBOSE)	/* print in verbose mode only */
+	    fprintf(stderr, "Using %s.\n", rec_val.addr);
     }
     else {
 	target = XA_UTF8_STRING(dpy);
@@ -555,6 +561,12 @@ main(int argc, char *argv[])
     opt_tab[11].argKind = XrmoptionNoArg;
     opt_tab[11].value = (XPointer) xcstrdup("N");
 
+    /* target option entry */
+    opt_tab[12].option = xcstrdup("-target");
+    opt_tab[12].specifier = xcstrdup(".target");
+    opt_tab[12].argKind = XrmoptionSepArg;
+    opt_tab[12].value = (XPointer) NULL;
+
     /* parse command line options */
     doOptMain(argc, argv);
 
@@ -572,8 +584,8 @@ main(int argc, char *argv[])
     /* parse selection command line option */
     doOptSel();
 
-    /* parse noutf8 command line option */
-    doOptNoUtf8();
+    /* parse noutf8 and target command line options */
+    doOptTarget();
 
     /* Create a window to trap events */
     win = XCreateSimpleWindow(dpy, DefaultRootWindow(dpy), 0, 0, 1, 1, 0, 0, 0);
