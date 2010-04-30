@@ -23,6 +23,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <ctype.h>
+#ifdef HAVE_ICONV
+#include <errno.h>
+#include <iconv.h>
+#endif
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xmu/Atoms.h>
@@ -337,6 +341,76 @@ doIn(Window win, const char *progname)
 }
 
 static void
+printSelBuf(FILE *fout, Atom sel_type, unsigned char *sel_buf, size_t sel_len)
+{
+    Atom html = XInternAtom(dpy, "text/html", True);
+
+    if (fverb == OVERBOSE) {	/* print in verbose mode only */
+	char *atom_name = XGetAtomName(dpy, sel_type);
+	fprintf(stderr, "Type is %s.\n", atom_name);
+	XFree(atom_name);
+    }
+
+    if (sel_type == XA_INTEGER) {
+	/* if the buffer contains integers, print them */
+	long *long_buf = (long *) sel_buf;
+	size_t long_len = sel_len / sizeof(long);
+	while (long_len--)
+	    fprintf(fout, "%ld\n", *long_buf++);
+	return;
+    }
+
+    if (sel_type == XA_ATOM) {
+	/* if the buffer contains atoms, print their names */
+	Atom *atom_buf = (Atom *) sel_buf;
+	size_t atom_len = sel_len / sizeof(Atom);
+	while (atom_len--) {
+	    char *atom_name = XGetAtomName(dpy, *atom_buf++);
+	    fprintf(fout, "%s\n", atom_name);
+	    XFree(atom_name);
+	}
+	return;
+    }
+
+#ifdef HAVE_ICONV
+    if (html != None && sel_type == html) {
+	/* if the buffer contains UCS-2 (UTF-16), convert to
+	 * UTF-8.  Mozilla-based browsers do this for the
+	 * text/html target.
+	 */
+	iconv_t cd;
+	char *sel_charset = NULL;
+	if (sel_buf[0] == 0xFF && sel_buf[1] == 0xFE)
+	    sel_charset = "UTF-16LE";
+	else if (sel_buf[0] == 0xFE && sel_buf[1] == 0xFF)
+	    sel_charset = "UTF-16BE";
+     
+	if (sel_charset != NULL &&
+	        (cd = iconv_open("UTF-8", sel_charset)) != (iconv_t) -1) {
+	    char *out_buf_start = malloc(sel_len), *in_buf = (char *) sel_buf+2,
+	         *out_buf = out_buf_start;
+	    size_t in_bytesleft = sel_len-2, out_bytesleft = sel_len;
+     
+	    while (iconv(cd, &in_buf, &in_bytesleft, &out_buf, &out_bytesleft) == -1 && errno == E2BIG) {
+		fwrite(out_buf_start, sizeof(char), sel_len-out_bytesleft, fout);
+		out_buf = out_buf_start;
+		out_bytesleft = sel_len;
+	    }
+	    if (out_buf != out_buf_start)
+		fwrite(out_buf_start, sizeof(char), sel_len-out_bytesleft, fout);
+     
+	    free(out_buf_start);
+	    iconv_close(cd);
+	    return;
+	}
+    }
+#endif
+
+    /* otherwise, print the raw buffer out */
+    fwrite(sel_buf, sizeof(char), sel_len, fout);
+}
+
+static void
 doOut(Window win)
 {
     Atom sel_type = None;
@@ -373,7 +447,7 @@ doOut(Window win)
 	/* only print the buffer out, and free it, if it's not
 	 * empty
 	 */
-	fwrite(sel_buf, sizeof(char), sel_len, stdout);
+	printSelBuf(stdout, sel_type, sel_buf, sel_len);
 	if (sseln == XA_STRING)
 	    XFree(sel_buf);
 	else
