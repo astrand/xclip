@@ -75,6 +75,20 @@ xcstrdup(const char *string)
     return (mem);
 }
 
+/* Returns the machine-specific number of bytes per data element
+ * returned by XGetWindowProperty */
+static size_t
+mach_itemsize(int format)
+{
+    if (format == 8)
+	return sizeof(char);
+    if (format == 16)
+	return sizeof(short);
+    if (format == 32)
+	return sizeof(long);
+    return 0;
+}
+
 /* Retrieves the contents of a selections. Arguments are:
  *
  * A display that has been opened.
@@ -112,7 +126,7 @@ xcout(Display * dpy,
 
     /* buffer for XGetWindowProperty to dump data into */
     unsigned char *buffer;
-    unsigned long pty_size, pty_items;
+    unsigned long pty_size, pty_items, pty_machsize;
 
     /* local buffer of text to return */
     unsigned char *ltxt = *txt;
@@ -168,15 +182,6 @@ xcout(Display * dpy,
 	    return (0);
 	}
 
-	/* if it's not incr, and not format == 8, then there's
-	 * nothing in the selection (that xclip understands,
-	 * anyway)
-	 */
-	if (pty_format != 8) {
-	    *context = XCLIB_XCOUT_NONE;
-	    return (0);
-	}
-
 	/* not using INCR mechanism, just read the property */
 	XGetWindowProperty(dpy,
 			   win,
@@ -189,12 +194,15 @@ xcout(Display * dpy,
 	/* finished with property, delete it */
 	XDeleteProperty(dpy, win, pty);
 
+	/* compute the size of the data buffer we received */
+	pty_machsize = pty_items * mach_itemsize(pty_format);
+
 	/* copy the buffer to the pointer for returned data */
-	ltxt = (unsigned char *) xcmalloc(pty_items);
-	memcpy(ltxt, buffer, pty_items);
+	ltxt = (unsigned char *) xcmalloc(pty_machsize);
+	memcpy(ltxt, buffer, pty_machsize);
 
 	/* set the length of the returned data */
-	*len = pty_items;
+	*len = pty_machsize;
 	*txt = ltxt;
 
 	/* free the buffer */
@@ -231,16 +239,6 @@ xcout(Display * dpy,
 			   type,
 			   &pty_format, &pty_items, &pty_size, (unsigned char **) &buffer);
 
-	if (pty_format != 8) {
-	    /* property does not contain text, delete it
-	     * to tell the other X client that we have read
-	     * it and to send the next property
-	     */
-	    XFree(buffer);
-	    XDeleteProperty(dpy, win, pty);
-	    return (0);
-	}
-
 	if (pty_size == 0) {
 	    /* no more data, exit from loop */
 	    XFree(buffer);
@@ -268,18 +266,21 @@ xcout(Display * dpy,
 			   type,
 			   &pty_format, &pty_items, &pty_size, (unsigned char **) &buffer);
 
+	/* compute the size of the data buffer we received */
+	pty_machsize = pty_items * mach_itemsize(pty_format);
+
 	/* allocate memory to accommodate data in *txt */
 	if (*len == 0) {
-	    *len = pty_items;
+	    *len = pty_machsize;
 	    ltxt = (unsigned char *) xcmalloc(*len);
 	}
 	else {
-	    *len += pty_items;
+	    *len += pty_machsize;
 	    ltxt = (unsigned char *) xcrealloc(ltxt, *len);
 	}
 
 	/* add data to ltxt */
-	memcpy(&ltxt[*len - pty_items], buffer, pty_items);
+	memcpy(&ltxt[*len - pty_machsize], buffer, pty_machsize);
 
 	*txt = ltxt;
 	XFree(buffer);
