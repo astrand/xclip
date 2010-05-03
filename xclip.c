@@ -351,7 +351,9 @@ doIn(Window win, const char *progname)
 static void
 printSelBuf(FILE * fout, Atom sel_type, unsigned char *sel_buf, size_t sel_len)
 {
+#ifdef HAVE_ICONV
     Atom html = XInternAtom(dpy, "text/html", True);
+#endif
 
     if (fverb == OVERBOSE) {	/* print in verbose mode only */
 	char *atom_name = XGetAtomName(dpy, sel_type);
