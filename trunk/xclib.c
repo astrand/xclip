@@ -115,7 +115,7 @@ mach_itemsize(int format)
 int
 xcout(Display * dpy,
       Window win,
-      XEvent evt, Atom sel, Atom target, Atom *type, unsigned char **txt, unsigned long *len,
+      XEvent evt, Atom sel, Atom target, Atom * type, unsigned char **txt, unsigned long *len,
       unsigned int *context)
 {
     /* a property for other windows to put their selection into */
@@ -234,8 +234,7 @@ xcout(Display * dpy,
 			   0,
 			   False,
 			   AnyPropertyType,
-			   type,
-			   &pty_format, &pty_items, &pty_size, (unsigned char **) &buffer);
+			   type, &pty_format, &pty_items, &pty_size, (unsigned char **) &buffer);
 
 	if (pty_size == 0) {
 	    /* no more data, exit from loop */
@@ -261,8 +260,7 @@ xcout(Display * dpy,
 			   (long) pty_size,
 			   False,
 			   AnyPropertyType,
-			   type,
-			   &pty_format, &pty_items, &pty_size, (unsigned char **) &buffer);
+			   type, &pty_format, &pty_items, &pty_size, (unsigned char **) &buffer);
 
 	/* compute the size of the data buffer we received */
 	pty_machsize = pty_items * mach_itemsize(pty_format);

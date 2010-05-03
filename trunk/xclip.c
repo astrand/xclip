@@ -349,7 +349,7 @@ doIn(Window win, const char *progname)
 }
 
 static void
-printSelBuf(FILE *fout, Atom sel_type, unsigned char *sel_buf, size_t sel_len)
+printSelBuf(FILE * fout, Atom sel_type, unsigned char *sel_buf, size_t sel_len)
 {
     Atom html = XInternAtom(dpy, "text/html", True);
 
@@ -392,21 +392,21 @@ printSelBuf(FILE *fout, Atom sel_type, unsigned char *sel_buf, size_t sel_len)
 	    sel_charset = "UTF-16LE";
 	else if (sel_buf[0] == 0xFE && sel_buf[1] == 0xFF)
 	    sel_charset = "UTF-16BE";
-     
-	if (sel_charset != NULL &&
-	        (cd = iconv_open("UTF-8", sel_charset)) != (iconv_t) -1) {
-	    char *out_buf_start = malloc(sel_len), *in_buf = (char *) sel_buf+2,
-	         *out_buf = out_buf_start;
-	    size_t in_bytesleft = sel_len-2, out_bytesleft = sel_len;
-     
-	    while (iconv(cd, &in_buf, &in_bytesleft, &out_buf, &out_bytesleft) == -1 && errno == E2BIG) {
-		fwrite(out_buf_start, sizeof(char), sel_len-out_bytesleft, fout);
+
+	if (sel_charset != NULL && (cd = iconv_open("UTF-8", sel_charset)) != (iconv_t) - 1) {
+	    char *out_buf_start = malloc(sel_len), *in_buf = (char *) sel_buf + 2,
+		*out_buf = out_buf_start;
+	    size_t in_bytesleft = sel_len - 2, out_bytesleft = sel_len;
+
+	    while (iconv(cd, &in_buf, &in_bytesleft, &out_buf, &out_bytesleft) == -1
+		   && errno == E2BIG) {
+		fwrite(out_buf_start, sizeof(char), sel_len - out_bytesleft, fout);
 		out_buf = out_buf_start;
 		out_bytesleft = sel_len;
 	    }
 	    if (out_buf != out_buf_start)
-		fwrite(out_buf_start, sizeof(char), sel_len-out_bytesleft, fout);
-     
+		fwrite(out_buf_start, sizeof(char), sel_len - out_bytesleft, fout);
+
 	    free(out_buf_start);
 	    iconv_close(cd);
 	    return;
