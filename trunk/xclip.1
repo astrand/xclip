@@ -30,7 +30,7 @@ Reads from standard in, or from one or more files, and makes the data available 
 read text into X selection from standard input or files (default)
 .TP
 \fB\-o\fR, \fB\-out\fR
-prints the selection to standard out (generally for piping to a file or program)
+print the selection to standard out (generally for piping to a file or program)
 .TP
 \fB\-f\fR, \fB\-filter\fR
 when xclip is invoked in the in mode with output level set to silent (the defaults), the filter option will cause xclip to print the text piped to standard in back to standard out unmodified
@@ -54,13 +54,17 @@ specify which X selection to use, options are "primary" to use XA_PRIMARY (defau
 show version information
 .TP
 \fB\-silent\fR
-forks into the background to wait for requests, no informational output, errors only (default)
+fork into the background to wait for requests, no informational output, errors only (default)
 .TP
 \fB\-quiet\fR
 show informational messages on the terminal and run in the foreground
 .TP
 \fB\-verbose\fR
 provide a running commentary of what xclip is doing
+.TP
+\fB\-noutf8\fR
+operate in legacy (i.e. non UTF-8) mode for backwards compatibility
+(Use this option only when really necessary, as the old behavior was broken)
 
 .PP
 xclip reads text from standard in or files and makes it available to other X applications for pasting as an X selection (traditionally with the middle mouse button). It reads from all files specified, or from standard in if no files are specified. xclip can also print the contents of a selection to standard out with the
