@@ -411,6 +411,10 @@ xcin(Display * dpy,
 	XSendEvent(dpy, evt.xselectionrequest.requestor, 0, 0, &res);
 	XFlush(dpy);
 
+	/* don't treat TARGETS request as contents request */
+	if (evt.xselectionrequest.target == targets)
+	    return 0;
+
 	/* if len < chunk_size, then the data was sent all at
 	 * once and the transfer is now complete, return 1
 	 */
