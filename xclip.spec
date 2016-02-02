@@ -4,8 +4,8 @@ Release:	1%{?dist}
 License:	GPLv2+
 Group:		Applications/System
 Summary:	Command line clipboard grabber
-URL:		http://sourceforge.net/projects/xclip
-Source0:	http://downloads.sourceforge.net/xclip/%{name}-%{version}.tar.gz
+URL:		https://github.com/astrand/xclip
+Source0:	https://github.com/astrand/xclip/archive/%{version}.tar.gz
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  libXmu-devel, libICE-devel, libX11-devel, libXext-devel
 Packager: Peter Åstrand <astrand@lysator.liu.se>
