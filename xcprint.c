@@ -48,6 +48,7 @@ prhelp(char *name)
 	    "\"secondary\", \"clipboard\" or \"buffer-cut\")\n"
 	    "      -noutf8      don't treat text as utf-8, use old unicode\n"
 	    "      -target      use the given target atom\n"
+	    "      -rmlastnl    remove the last newline charater if present\n"
 	    "      -version     version information\n"
 	    "      -silent      errors only, run in background (default)\n"
 	    "      -quiet       run in foreground, show what's happening\n"
