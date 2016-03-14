@@ -35,7 +35,7 @@
 #include "xclib.h"
 
 /* command line option table for XrmParseCommand() */
-XrmOptionDescRec opt_tab[13];
+XrmOptionDescRec opt_tab[14];
 
 /* Options that get set on the command line */
 int sloop = 0;			/* number of loops */
@@ -47,6 +47,7 @@ Atom target = XA_STRING;
 static int fverb = OSILENT;	/* output level */
 static int fdiri = T;		/* direction is in */
 static int ffilt = F;		/* filter mode */
+static int frmnl = F;		/* remove (single) newline character at the very end if present */
 
 Display *dpy;			/* connection to X11 display */
 XrmDatabase opt_db = NULL;	/* database for options */
@@ -98,6 +99,12 @@ doOptMain(int argc, char *argv[])
 	/* filter mode only allowed in silent mode */
 	if (fverb == OSILENT)
 	    ffilt = T;
+    }
+
+    /* set "remove last newline character if present" mode */
+    if (XrmGetResource(opt_db, "xclip.rmlastnl", "Xclip.RmLastNl", &rec_typ, &rec_val)
+	) {
+	frmnl = T;
     }
 
     /* check for -help and -version */
@@ -252,6 +259,11 @@ doIn(Window win, const char *progname)
 	    sel_len += fread(sel_buf + sel_len, sizeof(char), sel_all - sel_len, fil_handle);
 	}
     } while (fil_current < fil_number);
+
+    /* remove the last newline character if necessary */
+    if (frmnl && sel_len && sel_buf[sel_len - 1] == '\n') {
+	sel_len--;
+    }
 
     /* if there are no files being read from (i.e., input
      * is from stdin not files, and we are in filter mode,
@@ -465,6 +477,11 @@ doOut(Window win)
 	}
     }
 
+    /* remove the last newline character if necessary */
+    if (frmnl && sel_len && sel_buf[sel_len - 1] == '\n') {
+	sel_len--;
+    }
+
     if (sel_len) {
 	/* only print the buffer out, and free it, if it's not
 	 * empty
@@ -490,7 +507,7 @@ main(int argc, char *argv[])
      * do it while sticking to pure ANSI C. The option and specifier
      * members have a type of volatile char *, so they need to be allocated
      * by strdup or malloc, you can't set them to a string constant at
-     * declare time, this is note pure ANSI C apparently, although it does
+     * declare time, this is not pure ANSI C apparently, although it does
      * work with gcc
      */
 
@@ -571,6 +588,12 @@ main(int argc, char *argv[])
     opt_tab[12].specifier = xcstrdup(".target");
     opt_tab[12].argKind = XrmoptionSepArg;
     opt_tab[12].value = (XPointer) NULL;
+
+    /* "remove newline if it is the last character" entry */
+    opt_tab[13].option = xcstrdup("-rmlastnl");
+    opt_tab[13].specifier = xcstrdup(".rmlastnl");
+    opt_tab[13].argKind = XrmoptionNoArg;
+    opt_tab[13].value = (XPointer) xcstrdup(ST);
 
     /* parse command line options */
     doOptMain(argc, argv);
