@@ -299,7 +299,10 @@ doIn(Window win, const char *progname)
     }
 
     /* Avoid making the current directory in use, in case it will need to be umounted */
-    chdir("/");
+    if (chdir("/") == -1) {
+	errperror(3, progname, ": ", "chdir to \"/\"");
+	return EXIT_FAILURE;
+    }
 
     /* loop and wait for the expected number of
      * SelectionRequest events
