@@ -22,13 +22,11 @@ another program.
 %setup -q
 
 %build
-%configure
 make CDEBUGFLAGS="$RPM_OPT_FLAGS" %{?_smp_mflags}
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make DESTDIR=$RPM_BUILD_ROOT install
-make DESTDIR=$RPM_BUILD_ROOT install.man
+make DESTDIR=$RPM_BUILD_ROOT PREFIX=%{_prefix} install
 
 %clean
 rm -rf $RPM_BUILD_ROOT
