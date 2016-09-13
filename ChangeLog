@@ -1,3 +1,128 @@
+commit 0a1bbcc10d1a17969587d5995e4d47ca543a129c
+Merge: 1175740 aae47c9
+Author: astrand <astrand@cendio.se>
+Date:   Mon Mar 14 10:42:31 2016 +0100
+
+    Merge pull request #23 from hwangcc23/remove_last_newline
+    
+    Add the remove-last-newline option
+
+commit 1175740013bbc4f22c55b894a2367c07c8cf499a
+Merge: e2dd115 e0828ad
+Author: astrand <astrand@cendio.se>
+Date:   Mon Mar 14 10:40:14 2016 +0100
+
+    Merge pull request #22 from hwangcc23/fix-warning
+    
+    Fix the compile warning & build steps, and add .gitignore
+
+commit aae47c927a969d48009a7e372331ed17ecc7c80c
+Author: hwangcc23 <hwangcc@csie.nctu.edu.tw>
+Date:   Thu Mar 10 09:57:54 2016 +0800
+
+    Add the remove-last-newline option
+    
+    This is an option proposed by Philipp Spitzer.
+    See https://github.com/astrand/xclip/issues/7
+    
+    Use his patch (but only keep code related to the rmlastnl option).
+    An new option "-rmlastnl" is added to remove the last newline character if present.
+
+commit e0828ad502287394f1a9ea40f52b5deb013204ad
+Author: hwangcc23 <hwangcc@csie.nctu.edu.tw>
+Date:   Wed Mar 9 21:44:41 2016 +0800
+
+    Fix building steps in INSTALL
+    
+    Before running ./configure, autoreconf is required to generate configuration files.
+
+commit cde9c46b29216b9aae014dc4ef5b57c8426831b3
+Author: hwangcc23 <hwangcc@csie.nctu.edu.tw>
+Date:   Wed Mar 9 21:41:33 2016 +0800
+
+    Fix one compile warning
+    
+    Fix this compile warning:
+    xclip.c: In function 'doIn':
+    xclip.c:302:5: warning: ignoring return value of 'chdir', declared with attribute warn_unused_result [-Wunused-result]
+         chdir("/");
+         ^
+
+commit 650dc6278c7f5d1bb79ed284c6883ae2302fbbc5
+Author: hwangcc23 <hwangcc@csie.nctu.edu.tw>
+Date:   Wed Mar 9 21:41:13 2016 +0800
+
+    Add .gitignore
+
+commit e2dd115d66ecf5c772fd5359362990c17ee0defd
+Author: Peter Åstrand (astrand) <astrand@cendio.se>
+Date:   Tue Feb 2 09:03:12 2016 +0100
+
+    Changing Sourceforge URLs to GitHub.
+
+commit d1f416958743a2c121ea4fa7554b9b19646911fd
+Author: astrand <astrand@cendio.se>
+Date:   Sun Feb 9 14:36:26 2014 +0000
+
+    Applied patch from Marcin Szewczyk <Marcin.Szewczyk@wodny.org>:
+    
+     don't treat TARGETS request as contents request
+
+commit 23c15101a77a584b1ae6c996de8aac254135ae16
+Author: astrand <astrand@cendio.se>
+Date:   Sun Oct 17 16:53:38 2010 +0000
+
+    Applied patch from Alexia:
+    
+    * Document the -noutf8 option.
+    
+    * Minor lang corrections.
+
+commit c31ad0ac9bef4e4861f2af5cce6079213c787815
+Author: astrand <astrand@cendio.se>
+Date:   Mon May 3 18:39:33 2010 +0000
+
+    Avoid warnings about unused variable; only define html if HAVE_ICONV.
+
+commit b8adfb971b99ce8723059aaedd9ecd032561d151
+Author: astrand <astrand@cendio.se>
+Date:   Mon May 3 18:38:50 2010 +0000
+
+    Indented
+
+commit d7e6f233c24346b8a1a8a8ccde72fa0bc1cf2a68
+Author: astrand <astrand@cendio.se>
+Date:   Fri Apr 30 20:12:25 2010 +0000
+
+    Applied 2924602 - 0005-Added-a-target-command-line-option.patch
+
+commit 743b9d2181f08c9fbc5901e3c15c154ddd9d874e
+Author: astrand <astrand@cendio.se>
+Date:   Fri Apr 30 20:11:34 2010 +0000
+
+    Applied 2924602 - 0004-Improved-xclip-s-error-handling.patch
+
+commit 92eac7137a04da6673c92504a7ce75b50522b3a2
+Author: astrand <astrand@cendio.se>
+Date:   Fri Apr 30 20:10:29 2010 +0000
+
+    Applied 2924602 - 0003-Added-support-for-printing-more-data-types.patch
+
+commit 5eb998ddaf5f4454d6119466a0e41ded4011912e
+Author: astrand <astrand@cendio.se>
+Date:   Fri Apr 30 20:09:50 2010 +0000
+
+    Applied 2924602 - 0002-Added-support-in-xcout-for-receiving-16-and-32-bit-d.patch
+
+commit be7e3580bfca59f7c78140a80098ec2002538a12
+Author: astrand <astrand@cendio.se>
+Date:   Fri Apr 30 20:09:08 2010 +0000
+
+    Applied 2924602 - 0001-Added-a-parameter-to-xcout-which-receives-the-type-o.patch
+
+
+=== Old ChangeLog ===
+
 Version 0.12 (Peter Åstrand)
 	Build fixes: Check for Xmu and Xt
 
