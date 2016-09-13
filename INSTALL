@@ -18,9 +18,10 @@ configuration file:
 * `CC` - compiler, defauts to `gcc`
 * `CFLAGS` - compiler flags, default to `-Wall`
 * `LDFLAGS` - linker flags, empty by default
+* `PREFIX` - system prefix, defaults to `/usr`
 * `BINDIR` - location of binaries, defaults to `$PREFIX/bin`
 * `MANDIR` - location of manual pages, defaults to `$PREFIX/share/man`
-* `PREFIX` - system prefix, defaults to `/usr`
+* `DESTDIR` - temporary installation location, for packagers
 * `INSTALL` - `install` executable, defaults to `install`
 * `INSTALL_PROGRAM` - binary installation command
 * `INSTALL_DATA` - data installation command
