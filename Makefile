@@ -13,7 +13,7 @@ LDFLAGS		?=
 LIBS		+= -lX11 -lXmu
 
 STRIP			?= -s
-INSTALL			?= install-sh
+INSTALL			?= install
 INSTALL_MAN_DIR		?= $(INSTALL) -d -m 755
 INSTALL_PROGRAM_DIR	?= $(INSTALL) -d -m 755
 INSTALL_MAN		?= $(INSTALL) -m 644
