@@ -6,16 +6,26 @@ BUILDING
 You should be able to build and install xclip by running the following commands
 in the xclip source directory:
 
-autoreconf		# create configuration files
-./configure		# create the Makefile
 make			# build the binary
 su			# su to root to install
-make install		# install xclip
-make install.man	# install man page
+make install		# install binary and manual pages
 
-This should make and install xclip using the configuration (in terms of install
-directories, libraries, etc) used to build everything else in your X11
-distribution.
+This should make xclip and install it under `/usr` prefix using the most common
+configuration.  If you need more control over the process, the following
+variables may be provided either via environment or in `config.mk` user
+configuration file:
+
+* `CC` - compiler, defauts to `gcc`
+* `CFLAGS` - compiler flags, default to `-Wall`
+* `LDFLAGS` - linker flags, empty by default
+* `BINDIR` - location of binaries, defaults to `$PREFIX/bin`
+* `MANDIR` - location of manual pages, defaults to `$PREFIX/share/man`
+* `PREFIX` - system prefix, defaults to `/usr`
+* `INSTALL` - `install` executable, defaults to bundled script
+* `INSTALL_PROGRAM` - binary installation command
+* `INSTALL_DATA` - data installation command
+* `INSTALL_DIR` - directory installation command
+* `STRIP` - flag for `install` to strip binaries, defaults to `-s`
 
 REQUIREMENTS
 ============
