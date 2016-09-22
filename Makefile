@@ -25,12 +25,20 @@ BINS	:= xclip
 SCRIPTS	:= xclip-copyfile xclip-pastefile xclip-cutfile
 MANS	:= xclip.1 xclip-copyfile.1
 
+CHECK_HEADERS := X11/Xmu/Atoms.h X11/Intrinsic.h
+
 .SUFFIXES: .c .o
 
 .c.o:
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 all: xclip
+
+configure:
+	@(for h in $(CHECK_HEADERS); do echo "#include <$$h>"; done; \
+		echo "int main(void) {};") | $(CC) $(CFLAGS) -x c -o /dev/null -
+
+${OBJS}: configure
 
 xclip: $(X11OBJ) $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(X11OBJ) $(OBJS) $(LIBS)
@@ -49,4 +57,4 @@ install-man: $(MANS)
 clean:
 	rm -f *.o *~ xclip
 
-.PHONY: all install install-bin install-man clean
+.PHONY: all configure install install-bin install-man clean
