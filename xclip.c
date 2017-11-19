@@ -3,7 +3,7 @@
  *
  *  xclip.c - command line interface to X server selections
  *  Copyright (C) 2001 Kim Saunders
- *  Copyright (C) 2007-2022 Peter Åstrand
+ *  Copyright (C) 2007-2025 Peter Åstrand
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -186,7 +186,14 @@ doOptMain(int argc, char *argv[])
 {
     /* Initialise resource manager and parse options into database */
     XrmInitialize();
-    XrmParseCommand(&opt_db, opt_tab, opt_tab_size, PACKAGE_NAME, &argc,
+
+    if (!strcmp(argv[1], "--help"))
+    {
+	prhelp(argv[0]);
+	exit(0);
+    }
+
+    XrmParseCommand(&opt_db, opt_tab, sizeof(opt_tab) / sizeof(opt_tab[0]), PACKAGE_NAME, &argc,
 		    argv);
 
     /* set output level */
