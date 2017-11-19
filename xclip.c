@@ -69,6 +69,13 @@ doOptMain(int argc, char *argv[])
 {
     /* Initialise resource manager and parse options into database */
     XrmInitialize();
+
+    if (!strcmp(argv[1], "--help"))
+    {
+	prhelp(argv[0]);
+	exit(0);
+    }
+
     XrmParseCommand(&opt_db, opt_tab, sizeof(opt_tab) / sizeof(opt_tab[0]), PACKAGE_NAME, &argc,
 		    argv);
 
