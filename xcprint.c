@@ -80,7 +80,7 @@ errmalloc(void)
 void
 errxdisplay(char *display)
 {
-    /* if the display wasn't specified, read it from the enviroment
+    /* if the display wasn't specified, read it from the environment
      * just like XOpenDisplay would
      */
     if (display == NULL)

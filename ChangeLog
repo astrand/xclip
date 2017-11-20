@@ -169,7 +169,7 @@ Version 0.07:
 	Fixed a segfault problem with errperror in v0.06. Can't believe I
 	didn't notice it before I released it.
 
-	Cleaned up the code, hopefully for complete compatibilty with more C
+	Cleaned up the code, hopefully for complete compatibility with more C
 	compilers and platforms. xclip compiles without warning on my Debian
 	GNU/Linux development platform with gcc -Wall -W -pedantic -ansi
 	-Wtraditional -Wundef -Wshadow -Wpointer-arith -Wbad-function-cast
