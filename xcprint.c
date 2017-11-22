@@ -86,7 +86,7 @@ errxdisplay(char *display)
     if (display == NULL)
 	display = getenv("DISPLAY");
 
-    fprintf(stderr, "Error: Can't open display: %s\n", display);
+    fprintf(stderr, "Error: Can't open display: %s\n", display ? display : "(null)");
     exit(EXIT_FAILURE);
 }
 
