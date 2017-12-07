@@ -97,7 +97,7 @@ SELECTIONS
 ==========
 
 For a good overview of what selections are about, have a look at 
-<http://www.freedesktop.org/standards/clipboards.txt>. Short version:
+<https://specifications.freedesktop.org/clipboards-spec/clipboards-latest.txt>. Short version:
 
 * XA_PRIMARY contains the last text you highlighted
 * Middle click pastes XA_PRIMARY
