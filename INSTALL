@@ -28,6 +28,14 @@ This means you will need a C compiler, C development environment, xlib
 development environment, make, etc. All of these should be available as
 packages for most useful distributions.
 
+For example, in Ubuntu 16.04 LTS you will need to install the following
+packages before the installation will succeed.
+
+sudo apt install libx11-dev
+sudo apt install libxmu-headers
+sudo apt install libxt-dev
+sudo apt install libxmu-dev
+
 PLATFORMS
 =========
 
