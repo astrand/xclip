@@ -31,10 +31,10 @@ packages for most useful distributions.
 For example, in Ubuntu 16.04 LTS you will need to install the following
 packages before the installation will succeed.
 
-sudo apt install libx11-dev
-sudo apt install libxmu-headers
-sudo apt install libxt-dev
-sudo apt install libxmu-dev
+libx11-dev
+libxmu-headers
+libxt-dev
+libxmu-dev
 
 PLATFORMS
 =========
