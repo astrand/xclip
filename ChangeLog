@@ -26,7 +26,7 @@ Date:   Thu Mar 10 09:57:54 2016 +0800
     See https://github.com/astrand/xclip/issues/7
     
     Use his patch (but only keep code related to the rmlastnl option).
-    An new option "-rmlastnl" is added to remove the last newline character if present.
+    A new option "-rmlastnl" is added to remove the last newline character if present.
 
 commit e0828ad502287394f1a9ea40f52b5deb013204ad
 Author: hwangcc23 <hwangcc@csie.nctu.edu.tw>
@@ -155,7 +155,7 @@ Version 0.09: (Baruch Even)
 
 
 Version 0.08:
-	Remove all event loops from xclib fuctions, to allow xclib to be
+	Remove all event loops from xclib functions, to allow xclib to be
 	integrated into general-purpose event loops of other software more
 	easily.
 
@@ -213,7 +213,7 @@ Version 0.06:
 	perhaps it xclib.c would be allow people to integrate the code into
 	their own projects easily.
 
-	All in all, a general cleanup (as I am now semi-competant with C), and
+	All in all, a general cleanup (as I am now semi-competent with C), and
 	complete support for the INCR mechanism.
 
 
@@ -244,7 +244,7 @@ Version 0.03:
 	Changed use of getopt_long_only to getopt_long, which should work
 	better with non-GNU platforms.
 	
-	Fixed segfault when given a non-existant file to read.
+	Fixed segfault when given a non-existent file to read.
 
 	Made Imakefile for use with xmkmf. This means that xclip should build
 	and install fairly nicely on any system with an X Consortium derived

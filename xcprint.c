@@ -48,7 +48,7 @@ prhelp(char *name)
 	    "\"secondary\", \"clipboard\" or \"buffer-cut\")\n"
 	    "      -noutf8      don't treat text as utf-8, use old unicode\n"
 	    "      -target      use the given target atom\n"
-	    "      -rmlastnl    remove the last newline charater if present\n"
+	    "      -rmlastnl    remove the last newline character if present\n"
 	    "      -version     version information\n"
 	    "      -silent      errors only, run in background (default)\n"
 	    "      -quiet       run in foreground, show what's happening\n"
@@ -105,7 +105,7 @@ errperror(int prf_tot, ...)
     /* start off with an empty string */
     msg_all = xcstrdup("");
 
-    /* start looping through the viariable arguments */
+    /* start looping through the variable arguments */
     va_start(ap, prf_tot);
 
     /* loop through each of the arguments */
@@ -119,7 +119,7 @@ errperror(int prf_tot, ...)
 	msg_all = (char *) xcrealloc(msg_all, strlen(msg_all) + strlen(msg_cur) + sizeof(char)
 	    );
 
-	/* append the current message the the total message */
+	/* append the current message to the total message */
 	strcat(msg_all, msg_cur);
     }
     va_end(ap);
