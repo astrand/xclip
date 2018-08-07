@@ -58,5 +58,5 @@ primarily for my own benefit so that I can quickly test that all xclip features
 are working correctly after I make a change. However, I have included it to
 help out anyone who may be modifying the xclip code themselves.
 
-Basically, when you run xctest, you shouln't see any extra output from diff
-inbetween each test (because the input and output should be identical).
+Basically, when you run xctest, you shouldn't see any extra output from diff
+in between each test (because the input and output should be identical).

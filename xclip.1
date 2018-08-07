@@ -36,7 +36,7 @@ print the selection to standard out (generally for piping to a file or program)
 when xclip is invoked in the in mode with output level set to silent (the defaults), the filter option will cause xclip to print the text piped to standard in back to standard out unmodified
 .TP
 \fB\-r\fR, \fB\-rmlastnl\fR
-when the last character of the selection is a newline character, remove it. Newline characters that are not the last character in the selection are not affected. If the selection does not end with a newline character, this option has no effect. This option is useful for copying one-line output of programs like \fBpwd\fR to the clipboard to paste it again into the command prompt without executing the line immideately due to the newline character \fBpwd\fR appends.
+when the last character of the selection is a newline character, remove it. Newline characters that are not the last character in the selection are not affected. If the selection does not end with a newline character, this option has no effect. This option is useful for copying one-line output of programs like \fBpwd\fR to the clipboard to paste it again into the command prompt without executing the line immediately due to the newline character \fBpwd\fR appends.
 .TP
 \fB\-l\fR, \fB\-loops\fR
 number of X selection requests (pastes into X applications) to wait for before exiting, with a value of 0 (default) causing xclip to wait for an unlimited number of requests until another application (possibly another invocation of xclip) takes ownership of the selection

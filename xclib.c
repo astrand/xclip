@@ -28,7 +28,7 @@
 #include "xcprint.h"
 #include "xclib.h"
 
-/* check a pointer to allocater memory, print an error if it's null */
+/* check a pointer to allocated memory, print an error if it's null */
 void
 xcmemcheck(void *ptr)
 {
@@ -250,7 +250,7 @@ xcout(Display * dpy,
 
 	XFree(buffer);
 
-	/* if we have come this far, the propery contains
+	/* if we have come this far, the property contains
 	 * text, we know the size.
 	 */
 	XGetWindowProperty(dpy,
@@ -290,7 +290,7 @@ xcout(Display * dpy,
     return (0);
 }
 
-/* put data into a selection, in response to a SelecionRequest event from
+/* put data into a selection, in response to a SelectionRequest event from
  * another window (and any subsequent events relating to an INCR transfer).
  *
  * Arguments are:
@@ -360,7 +360,7 @@ xcin(Display * dpy,
 	/* reset position to 0 */
 	*pos = 0;
 
-	/* put the data into an property */
+	/* put the data into a property */
 	if (evt.xselectionrequest.target == targets) {
 	    Atom types[2] = { targets, target };
 
