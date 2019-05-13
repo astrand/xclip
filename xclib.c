@@ -321,7 +321,7 @@ xcin(Display * dpy,
      Window * win,
      XEvent evt,
      Atom * pty, Atom target, unsigned char *txt, unsigned long len, unsigned long *pos,
-     unsigned int *context)
+     unsigned int *context, long *chunk_size)
 {
     unsigned long chunk_len;	/* length of current chunk (for incr
 				 * transfers only)
@@ -329,7 +329,6 @@ xcin(Display * dpy,
     XEvent res;			/* response to event */
     static Atom inc;
     static Atom targets;
-    static long chunk_size;
 
     if (!targets) {
 	targets = XInternAtom(dpy, "TARGETS", False);
@@ -341,10 +340,10 @@ xcin(Display * dpy,
 
     /* We consider selections larger than a quarter of the maximum
        request size to be "large". See ICCCM section 2.5 */
-    if (!chunk_size) {
-	chunk_size = XExtendedMaxRequestSize(dpy) / 4;
-	if (!chunk_size) {
-	    chunk_size = XMaxRequestSize(dpy) / 4;
+    if (!(*chunk_size)) {
+	*chunk_size = XExtendedMaxRequestSize(dpy) / 4;
+	if (!(*chunk_size)) {
+	    *chunk_size = XMaxRequestSize(dpy) / 4;
 	}
     }
 
@@ -373,7 +372,7 @@ xcin(Display * dpy,
 			    (int) (sizeof(types) / sizeof(Atom))
 		);
 	}
-	else if (len > chunk_size) {
+	else if (len > *chunk_size) {
 	    /* send INCR response */
 	    XChangeProperty(dpy, *win, *pty, inc, 32, PropModeReplace, 0, 0);
 
@@ -418,7 +417,7 @@ xcin(Display * dpy,
 	/* if len < chunk_size, then the data was sent all at
 	 * once and the transfer is now complete, return 1
 	 */
-	if (len > chunk_size)
+	if (len > *chunk_size)
 	    return (0);
 	else
 	    return (1);
@@ -439,7 +438,7 @@ xcin(Display * dpy,
 	    return (0);
 
 	/* set the chunk length to the maximum size */
-	chunk_len = chunk_size;
+	chunk_len = *chunk_size;
 
 	/* if a chunk length of maximum size would extend
 	 * beyond the end ot txt, set the length to be the
@@ -472,7 +471,7 @@ xcin(Display * dpy,
 	if (!chunk_len)
 	    *context = XCLIB_XCIN_NONE;
 
-	*pos += chunk_size;
+	*pos += *chunk_size;
 
 	/* if chunk_len == 0, we just finished the transfer,
 	 * return 1
