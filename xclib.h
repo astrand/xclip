@@ -53,7 +53,8 @@ extern int xcin(
 	unsigned char*,
 	unsigned long,
 	unsigned long*,
-	unsigned int*
+	unsigned int*,
+	long*
 );
 extern void *xcmalloc(size_t);
 extern void *xcrealloc(void*, size_t);

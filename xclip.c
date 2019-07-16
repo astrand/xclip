@@ -63,6 +63,70 @@ char *rec_typ;
 
 int tempi = 0;
 
+struct requestor
+{
+	Window cwin;
+	Atom pty;
+	unsigned int context;
+	unsigned long sel_pos;
+	int finished;
+	long chunk_size;
+	struct requestor *next;
+};
+
+static struct requestor *requestors;
+
+static struct requestor *get_requestor(Window win)
+{
+	struct requestor *requestor;
+
+	if (requestors) {
+	    for (requestor = requestors; requestor != NULL; requestor = requestor->next) {
+	        if (requestor->cwin == win) {
+	            return requestor;
+	        }
+	    }
+	}
+
+	requestor = (struct requestor *)calloc(1, sizeof(struct requestor));
+	if (!requestor) {
+	    errmalloc();
+	} else {
+	    requestor->context = XCLIB_XCIN_NONE;
+	}
+
+	if (!requestors) {
+	    requestors = requestor;
+	} else {
+	    requestor->next = requestors;
+	    requestors = requestor;
+	}
+
+	return requestor;
+}
+
+static void del_requestor(struct requestor *requestor)
+{
+	struct requestor *reqitr;
+
+	if (!requestor) {
+	    return;
+	}
+
+	if (requestors == requestor) {
+	    requestors = requestors->next;
+	} else {
+	    for (reqitr = requestors; reqitr != NULL; reqitr = reqitr->next) {
+	        if (reqitr->next == requestor) {
+	            reqitr->next = reqitr->next->next;
+	            break;
+	        }
+	    }
+	}
+
+	free(requestor);
+}
+
 /* Use XrmParseCommand to parse command line options to option variable */
 static void
 doOptMain(int argc, char *argv[])
@@ -336,25 +400,35 @@ doIn(Window win, const char *progname)
 
 	/* wait for a SelectionRequest event */
 	while (1) {
-	    static unsigned int clear = 0;
-	    static unsigned int context = XCLIB_XCIN_NONE;
-	    static unsigned long sel_pos = 0;
-	    static Window cwin;
-	    static Atom pty;
+	    struct requestor *requestor;
 	    int finished;
 
 	    XNextEvent(dpy, &evt);
 
-	    finished = xcin(dpy, &cwin, evt, &pty, target, sel_buf, sel_len, &sel_pos, &context);
+	    if (evt.type == SelectionRequest) {
+	    requestor = get_requestor(evt.xselectionrequest.requestor);
+	    } else if (evt.type == PropertyNotify) {
+	    requestor = get_requestor(evt.xproperty.window);
+	    } else if (evt.type == SelectionClear) {
+	    /* If the client loses ownership(SelectionClear event) while it has a transfering progress,
+	       it must continue to service the ongoing transfer until it is completed.
+	       See ICCCM section 2.2.
+	       Set dloop to sloop for forcing exit after all transfers are completed. */
+	    dloop = sloop;
+	    continue;
+	    } else {
+	    continue;
+	    }
 
-	    if (evt.type == SelectionClear)
-		clear = 1;
+	    finished = xcin(dpy, &(requestor->cwin), evt, &(requestor->pty), target, sel_buf, sel_len, &(requestor->sel_pos), &(requestor->context), &(requestor->chunk_size));
 
-	    if ((context == XCLIB_XCIN_NONE) && clear)
-		return EXIT_SUCCESS;
+	    if (finished) {
+	    del_requestor(requestor);
+	    }
 
-	    if (finished)
-		break;
+	    if (!requestors) {
+	    break;
+	    }
 	}
 
 	dloop++;		/* increment loop counter */
