@@ -424,9 +424,6 @@ doIn(Window win, const char *progname)
 
 	    if (finished) {
 	    del_requestor(requestor);
-	    }
-
-	    if (!requestors) {
 	    break;
 	    }
 	}
