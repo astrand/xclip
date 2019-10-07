@@ -36,7 +36,7 @@ prhelp(char *name)
 	    "Access an X server selection for reading or writing.\n"
 	    "\n"
 	    "  -i, -in          read text into X selection from standard input or files\n"
-	    "                   (default)\n"
+	    "                   (default if stdin isn't a tty)\n"
 	    "  -o, -out         prints the selection to standard out (generally for\n"
 	    "                   piping to a file or program)\n"
 	    "  -l, -loops       number of selection requests to "
@@ -46,14 +46,16 @@ prhelp(char *name)
 	    "  -h, -help        usage information\n"
 	    "      -selection   selection to access (\"primary\", "
 	    "\"secondary\", \"clipboard\" or \"buffer-cut\")\n"
+	    "      -c           shortcut for \"-selection clipboard\"\n"
 	    "      -noutf8      don't treat text as utf-8, use old unicode\n"
 	    "      -target      use the given target atom\n"
+	    "      -T           show all available targets\n"
 	    "      -rmlastnl    remove the last newline character if present\n"
 	    "      -version     version information\n"
 	    "      -silent      errors only, run in background (default)\n"
 	    "      -quiet       run in foreground, show what's happening\n"
 	    "      -verbose     running commentary\n"
-	    "\n" "Report bugs to <astrand@lysator.liu.se>\n", name);
+	    "\n" "Report bugs to https://github.com/astrand/xclip\n", name);
     exit(EXIT_SUCCESS);
 }
 
