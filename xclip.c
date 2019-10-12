@@ -35,7 +35,7 @@
 #include "xclib.h"
 
 /* command line option table for XrmParseCommand() */
-XrmOptionDescRec opt_tab[17];
+XrmOptionDescRec opt_tab[14];
 
 /* Options that get set on the command line */
 int sloop = 0;			/* number of loops */
@@ -208,15 +208,6 @@ doOptMain(int argc, char *argv[])
 	fil_names[fil_number] = argv[fil_number + 1];
 	fil_number++;
     }
-
-    /* If filenames were given on the command line, 
-     * default to reading input (unless -o was used).
-     */
-    if (fil_number > 0) {
-      if (!XrmGetResource(opt_db, "xclip.direction", "Xclip.Direction", &rec_typ, &rec_val)) {
-	  fdiri = T;		/* Direction is input */
-      }
-    }
 }
 
 /* process selection command line option */
@@ -273,11 +264,6 @@ doOptTarget(void)
 	target = XInternAtom(dpy, rec_val.addr, False);
 	if (fverb == OVERBOSE)	/* print in verbose mode only */
 	    fprintf(stderr, "Using %s.\n", rec_val.addr);
-    }
-    else if (XrmGetResource(opt_db, "xclip.TARGETS", "", &rec_typ, &rec_val) ) {
-	target = XInternAtom(dpy, "TARGETS", False);
-	if (fverb == OVERBOSE)	/* print in verbose mode only */
-	    fprintf(stderr, "Using TARGETS.\n");
     }
     else {
 	target = XA_UTF8_STRING(dpy);
@@ -588,14 +574,6 @@ main(int argc, char *argv[])
     Window win;			/* Window */
     int exit_code;
 
-     /* As a convenience to command-line users, default to -o if stdin
-     * is a tty. Will be overriden by -i or if user specifies a
-     * filename as input.
-     */
-    if (isatty(0)) {
-      fdiri = F;		/* direction is out */
-    }
-
     /* set up option table. I can't figure out a better way than this to
      * do it while sticking to pure ANSI C. The option and specifier
      * members have a type of volatile char *, so they need to be allocated
@@ -687,24 +665,6 @@ main(int argc, char *argv[])
     opt_tab[13].specifier = xcstrdup(".rmlastnl");
     opt_tab[13].argKind = XrmoptionNoArg;
     opt_tab[13].value = (XPointer) xcstrdup(ST);
-
-    /* -T is shorthand for "-target TARGETS" */
-    opt_tab[14].option = xcstrdup("-TARGETS");
-    opt_tab[14].specifier = xcstrdup(".TARGETS");
-    opt_tab[14].argKind = XrmoptionNoArg;
-    opt_tab[14].value = (XPointer) xcstrdup("T");
-
-    /* -c is shorthand for "-selection clipboard" */
-    opt_tab[15].option = xcstrdup("-clipboard");
-    opt_tab[15].specifier = xcstrdup(".selection");
-    opt_tab[15].argKind = XrmoptionNoArg;
-    opt_tab[15].value = (XPointer) xcstrdup("clipboard");
-
-    /* Allow -b as synonym for -c for folks used to xsel */
-    opt_tab[16].option = xcstrdup("-board");
-    opt_tab[16].specifier = xcstrdup(".selection");
-    opt_tab[16].argKind = XrmoptionNoArg;
-    opt_tab[16].value = (XPointer) xcstrdup("clipboard");
 
     /* parse command line options */
     doOptMain(argc, argv);
