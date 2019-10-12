@@ -35,7 +35,7 @@
 #include "xclib.h"
 
 /* command line option table for XrmParseCommand() */
-XrmOptionDescRec opt_tab[17];
+XrmOptionDescRec opt_tab[14];
 
 /* Options that get set on the command line */
 int sloop = 0;			/* number of loops */
@@ -273,11 +273,6 @@ doOptTarget(void)
 	target = XInternAtom(dpy, rec_val.addr, False);
 	if (fverb == OVERBOSE)	/* print in verbose mode only */
 	    fprintf(stderr, "Using %s.\n", rec_val.addr);
-    }
-    else if (XrmGetResource(opt_db, "xclip.TARGETS", "", &rec_typ, &rec_val) ) {
-	target = XInternAtom(dpy, "TARGETS", False);
-	if (fverb == OVERBOSE)	/* print in verbose mode only */
-	    fprintf(stderr, "Using TARGETS.\n");
     }
     else {
 	target = XA_UTF8_STRING(dpy);
@@ -687,24 +682,6 @@ main(int argc, char *argv[])
     opt_tab[13].specifier = xcstrdup(".rmlastnl");
     opt_tab[13].argKind = XrmoptionNoArg;
     opt_tab[13].value = (XPointer) xcstrdup(ST);
-
-    /* -T is shorthand for "-target TARGETS" */
-    opt_tab[14].option = xcstrdup("-TARGETS");
-    opt_tab[14].specifier = xcstrdup(".TARGETS");
-    opt_tab[14].argKind = XrmoptionNoArg;
-    opt_tab[14].value = (XPointer) xcstrdup("T");
-
-    /* -c is shorthand for "-selection clipboard" */
-    opt_tab[15].option = xcstrdup("-clipboard");
-    opt_tab[15].specifier = xcstrdup(".selection");
-    opt_tab[15].argKind = XrmoptionNoArg;
-    opt_tab[15].value = (XPointer) xcstrdup("clipboard");
-
-    /* Allow -b as synonym for -c for folks used to xsel */
-    opt_tab[16].option = xcstrdup("-board");
-    opt_tab[16].specifier = xcstrdup(".selection");
-    opt_tab[16].argKind = XrmoptionNoArg;
-    opt_tab[16].value = (XPointer) xcstrdup("clipboard");
 
     /* parse command line options */
     doOptMain(argc, argv);
