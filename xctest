@@ -36,6 +36,20 @@ do
 	esac
 done
 
+# Check is xclip is quitting properly.
+echo "Testing whether xclip exits correctly when the selection is lost."
+echo hello | ./xclip -q -i 2>/dev/null &
+sleep 1
+echo goodbye | ./xclip -i
+sleep 1
+if ps $! >/dev/null; then 
+    echo "FAIL: Zombie xclip yet lives! Killing."
+    killall xclip
+    exit 1
+else
+    echo "PASS: xclip exited correctly after losing selection."
+fi
+
 # test xclip on different amounts of data to bring out any errors
 for lines in 2 16 128 1024 8192
 do
