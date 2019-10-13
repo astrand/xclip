@@ -44,7 +44,7 @@ echo goodbye | ./xclip -i
 sleep 1
 if ps $! >/dev/null; then 
     echo "FAIL: Zombie xclip yet lives! Killing."
-    pkill xclip
+    killall xclip
     exit 1
 else
     echo "PASS: xclip exited correctly after losing selection."
