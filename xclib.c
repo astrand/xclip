@@ -328,7 +328,7 @@ xcin(Display * dpy,
      Window * win,
      XEvent evt,
      Atom * pty, Atom target, unsigned char *txt, unsigned long len, unsigned long *pos,
-     unsigned int *context, long *chunk_size)
+     unsigned int *context, long *chunk_size, int *dloop)
 {
     unsigned long chunk_len;	/* length of current chunk (for incr
 				 * transfers only)
@@ -396,6 +396,7 @@ xcin(Display * dpy,
 	    XChangeProperty(dpy,
 			    *win,
 			    *pty, target, 8, PropModeReplace, (unsigned char *) txt, (int) len);
+        *dloop += 1;
 	}
 
 	/* Perhaps FIXME: According to ICCCM section 2.5, we should
@@ -471,6 +472,7 @@ xcin(Display * dpy,
 	     * finished the transfer
 	     */
 	    XChangeProperty(dpy, *win, *pty, target, 8, PropModeReplace, 0, 0);
+        *dloop += 1;
 	}
 	XFlush(dpy);
 

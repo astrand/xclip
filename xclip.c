@@ -291,7 +291,8 @@ doIn(Window win, const char *progname)
     unsigned long sel_len = 0;	/* length of sel_buf */
     unsigned long sel_all = 0;	/* allocated size of sel_buf */
     XEvent evt;			/* X Event Structures */
-    int dloop = 0;		/* done loops counter */
+    int dloop = 0;          /* done loops counter */
+
 
     /* in mode */
     sel_all = 16;		/* Reasonable ballpark figure */
@@ -433,20 +434,22 @@ doIn(Window win, const char *progname)
 	       See ICCCM section 2.2.
 	       Set dloop to sloop for forcing exit after all transfers are completed. */
 	    dloop = sloop;
+        /* if there is no more in-progress transfer, force exit */
+	    if (!requestors) {
+	        return EXIT_SUCCESS;
+	    }
 	    continue;
 	    } else {
 	    continue;
 	    }
 
-	    finished = xcin(dpy, &(requestor->cwin), evt, &(requestor->pty), target, sel_buf, sel_len, &(requestor->sel_pos), &(requestor->context), &(requestor->chunk_size));
+	    finished = xcin(dpy, &(requestor->cwin), evt, &(requestor->pty), target, sel_buf, sel_len, &(requestor->sel_pos), &(requestor->context), &(requestor->chunk_size), &dloop);
 
 	    if (finished) {
 	    del_requestor(requestor);
 	    break;
 	    }
 	}
-
-	dloop++;		/* increment loop counter */
     }
     
     if (fsecm)
