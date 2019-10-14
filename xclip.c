@@ -35,7 +35,7 @@
 #include "xclib.h"
 
 /* command line option table for XrmParseCommand() */
-XrmOptionDescRec opt_tab[14];
+XrmOptionDescRec opt_tab[15];
 
 /* Options that get set on the command line */
 int sloop = 0;			/* number of loops */
@@ -48,6 +48,7 @@ static int fverb = OSILENT;	/* output level */
 static int fdiri = T;		/* direction is in */
 static int ffilt = F;		/* filter mode */
 static int frmnl = F;		/* remove (single) newline character at the very end if present */
+static int fsecm = F;		/* zero out selection buffer before exiting */
 
 Display *dpy;			/* connection to X11 display */
 XrmDatabase opt_db = NULL;	/* database for options */
@@ -186,6 +187,17 @@ doOptMain(int argc, char *argv[])
 	sdisp = rec_val.addr;
 	if (fverb == OVERBOSE)	/* print in verbose mode only */
 	    fprintf(stderr, "Display: %s\n", sdisp);
+    }
+    
+    /* check for -secure */
+    if (XrmGetResource(opt_db, "xclip.secure", "Xclip.Secure", &rec_typ, &rec_val)
+	) {
+	sloop = 1;
+	fsecm = T;
+	if (fverb == OVERBOSE) {	/* print in verbose mode only */
+	    fprintf(stderr, "Secure Mode Implies Loops: %i\n", sloop);
+        fprintf(stderr, "Sensitive Buffers Will Be Zeroed At Exit\n");
+        }
     }
 
     /* check for -loops */
@@ -341,6 +353,8 @@ doIn(Window win, const char *progname)
     /* Handle cut buffer if needed */
     if (sseln == XA_STRING) {
 	XStoreBuffer(dpy, (char *) sel_buf, (int) sel_len, 0);
+	if (fsecm)
+        xcmemzero(sel_buf,sel_len);
 	return EXIT_SUCCESS;
     }
 
@@ -358,8 +372,11 @@ doIn(Window win, const char *progname)
 
 	pid = fork();
 	/* exit the parent process; */
-	if (pid)
+	if (pid) {
+        if (fsecm)
+            xcmemzero(sel_buf,sel_len);
 	    exit(EXIT_SUCCESS);
+        }
     }
 
     /* print a message saying what we're waiting for */
@@ -430,6 +447,9 @@ doIn(Window win, const char *progname)
 
 	dloop++;		/* increment loop counter */
     }
+    
+    if (fsecm)
+        xcmemzero(sel_buf,sel_len);
 
     return EXIT_SUCCESS;
 }
@@ -538,6 +558,9 @@ doOut(Window win)
 		    char *atom_name = XGetAtomName(dpy, target);
 		    fprintf(stderr, "Error: target %s not available\n", atom_name);
 		    XFree(atom_name);
+            if (fsecm)
+                xcmemzero(sel_buf,sel_len);
+            free(sel_buf);
 		    return EXIT_FAILURE;
 		}
 	    }
@@ -558,10 +581,16 @@ doOut(Window win)
 	 * empty
 	 */
 	printSelBuf(stdout, sel_type, sel_buf, sel_len);
-	if (sseln == XA_STRING)
+	if (sseln == XA_STRING) {
+        if (fsecm)
+            xcmemzero(sel_buf,sel_len);
 	    XFree(sel_buf);
-	else
+	}
+	else {
+        if (fsecm)
+            xcmemzero(sel_buf,sel_len);
 	    free(sel_buf);
+	}
     }
 
     return EXIT_SUCCESS;
@@ -665,6 +694,12 @@ main(int argc, char *argv[])
     opt_tab[13].specifier = xcstrdup(".rmlastnl");
     opt_tab[13].argKind = XrmoptionNoArg;
     opt_tab[13].value = (XPointer) xcstrdup(ST);
+    
+    /* secure mode for pasting passwords */
+    opt_tab[14].option = xcstrdup("-secure");
+    opt_tab[14].specifier = xcstrdup(".secure");
+    opt_tab[14].argKind = XrmoptionNoArg;
+    opt_tab[14].value = (XPointer) xcstrdup("s");
 
     /* parse command line options */
     doOptMain(argc, argv);
