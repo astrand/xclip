@@ -420,15 +420,13 @@ doIn(Window win, const char *progname)
 	    continue;
 	    }
 
-	    finished = xcin(dpy, &(requestor->cwin), evt, &(requestor->pty), target, sel_buf, sel_len, &(requestor->sel_pos), &(requestor->context), &(requestor->chunk_size));
+	    finished = xcin(dpy, &(requestor->cwin), evt, &(requestor->pty), target, sel_buf, sel_len, &(requestor->sel_pos), &(requestor->context), &(requestor->chunk_size), &dloop);
 
 	    if (finished) {
 	    del_requestor(requestor);
 	    break;
 	    }
 	}
-
-	dloop++;		/* increment loop counter */
     }
 
     return EXIT_SUCCESS;
