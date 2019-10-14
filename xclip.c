@@ -373,8 +373,9 @@ doIn(Window win, const char *progname)
 	pid = fork();
 	/* exit the parent process; */
 	if (pid) {
-        if (fsecm)
+        if (fsecm) {
             xcmemzero(sel_buf,sel_len);
+        }
 	    exit(EXIT_SUCCESS);
         }
     }
@@ -582,13 +583,15 @@ doOut(Window win)
 	 */
 	printSelBuf(stdout, sel_type, sel_buf, sel_len);
 	if (sseln == XA_STRING) {
-        if (fsecm)
+        if (fsecm) {
             xcmemzero(sel_buf,sel_len);
+        }
 	    XFree(sel_buf);
 	}
 	else {
-        if (fsecm)
+        if (fsecm) {
             xcmemzero(sel_buf,sel_len);
+        }
 	    free(sel_buf);
 	}
     }

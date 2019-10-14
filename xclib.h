@@ -64,3 +64,4 @@ extern void xcmemcheck(void*);
 /* volatile prevents compiler from causing dead-store elimination with optimization enabled */
 typedef void *(*memset_t)(void *, int, size_t);
 static volatile memset_t memset_func = memset;
+void xcmemzero(void *ptr, size_t len);
