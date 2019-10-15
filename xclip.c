@@ -429,6 +429,10 @@ doIn(Window win, const char *progname)
 	       See ICCCM section 2.2.
 	       Set dloop to sloop for forcing exit after all transfers are completed. */
 	    dloop = sloop;
+	    /* if there is no more in-progress transfer, force exit */
+	    if (!requestors) {
+	        return EXIT_SUCCESS;
+	    }
 	    continue;
 	    } else {
 	    continue;
