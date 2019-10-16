@@ -477,13 +477,14 @@ start:
 	    continue;
 	    }
 
-	    finished = xcin(dpy, &(requestor->cwin), evt, &(requestor->pty), target, sel_buf, sel_len, &(requestor->sel_pos), &(requestor->context), &(requestor->chunk_size), &dloop);
+	    finished = xcin(dpy, &(requestor->cwin), evt, &(requestor->pty), target, sel_buf, sel_len, &(requestor->sel_pos), &(requestor->context), &(requestor->chunk_size));
 
 	    if (finished) {
 	    del_requestor(requestor);
 	    break;
 	    }
-	}
+        }
+    dloop++;		/* increment loop counter */
     }
     
     if (fsecm)
