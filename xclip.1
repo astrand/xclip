@@ -70,8 +70,10 @@ operate in legacy (i.e. non UTF-8) mode for backwards compatibility
 (Use this option only when really necessary, as the old behavior was broken)
 .TP
 \fB\-secure\fR
-zero selection buffer if if it contains sensitive informaiton and imply -loops 1 to clear selection after one paste (-loops will override)
-(Use this option only when really necessary, as the old behavior was broken)
+zero selection buffer if if it contains sensitive informaiton and imply -wait 1 (-wait will override if set)
+.TP
+\fB\-wait\fR
+number of milliseconds to wait after the first paste event before exiting
 
 .PP
 xclip reads text from standard in or files and makes it available to other X applications for pasting as an X selection (traditionally with the middle mouse button). It reads from all files specified, or from standard in if no files are specified. xclip can also print the contents of a selection to standard out with the
