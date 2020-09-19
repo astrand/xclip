@@ -70,7 +70,8 @@ operate in legacy (i.e. non UTF-8) mode for backwards compatibility
 (Use this option only when really necessary, as the old behavior was broken)
 .TP
 \fB\-secure\fR
-zero selection buffer if if it contains sensitive informaiton and imply -wait 1 (-wait will override if set)
+only allow pasting once and overwrite memory with zeros before exiting.
+This implies -wait 1 (-wait will override if set).
 .TP
 \fB\-wait\fR
 number of milliseconds to wait after the first paste event before exiting
