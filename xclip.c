@@ -35,19 +35,23 @@
 #include "xclib.h"
 
 /* command line option table for XrmParseCommand() */
-XrmOptionDescRec opt_tab[14];
+XrmOptionDescRec opt_tab[16];
 
 /* Options that get set on the command line */
 int sloop = 0;			/* number of loops */
 char *sdisp = NULL;		/* X display to connect to */
 Atom sseln = XA_PRIMARY;	/* X selection to work with */
 Atom target = XA_STRING;
+int wait = 0;              /* wait: stop xclip after wait msec
+                            after last 'paste event', start counting
+                            after first 'paste event' */
 
 /* Flags for command line options */
 static int fverb = OSILENT;	/* output level */
 static int fdiri = T;		/* direction is in */
 static int ffilt = F;		/* filter mode */
 static int frmnl = F;		/* remove (single) newline character at the very end if present */
+static int fsecm = F;		/* zero out selection buffer before exiting */
 
 Display *dpy;			/* connection to X11 display */
 XrmDatabase opt_db = NULL;	/* database for options */
@@ -195,6 +199,24 @@ doOptMain(int argc, char *argv[])
 	if (fverb == OVERBOSE)	/* print in verbose mode only */
 	    fprintf(stderr, "Loops: %i\n", sloop);
     }
+    
+    /* check for -secure */
+    if (XrmGetResource(opt_db, "xclip.secure", "Xclip.Secure", &rec_typ, &rec_val)
+	) {
+	wait = 1;
+	fsecm = T;
+	if (fverb == OVERBOSE) {	/* print in verbose mode only */
+	    fprintf(stderr, "Secure Mode Implies -wait 1\n");
+        fprintf(stderr, "Sensitive Buffers Will Be Zeroed At Exit\n");
+        }
+    }
+    
+    if (XrmGetResource(opt_db, "xclip.wait", "Xclip.Wait", &rec_typ, &rec_val)
+        ) {
+	wait = atoi(rec_val.addr);
+	if (fverb == OVERBOSE)	/* print in verbose mode only */
+	    fprintf(stderr, "Timeout: %i msec\n", wait);
+    }
 
     /* Read remaining options (filenames) */
     while ((fil_number + 1) < argc) {
@@ -279,7 +301,14 @@ doIn(Window win, const char *progname)
     unsigned long sel_len = 0;	/* length of sel_buf */
     unsigned long sel_all = 0;	/* allocated size of sel_buf */
     XEvent evt;			/* X Event Structures */
-    int dloop = 0;		/* done loops counter */
+    int dloop = 0;          /* done loops counter */
+    int x11_fd;                 /* fd on which XEvents appear */
+    fd_set in_fds;
+    struct timeval tv;
+
+    /* ConnectionNumber is a macro, it can't fail */
+    x11_fd = ConnectionNumber(dpy);
+
 
     /* in mode */
     sel_all = 16;		/* Reasonable ballpark figure */
@@ -341,6 +370,8 @@ doIn(Window win, const char *progname)
     /* Handle cut buffer if needed */
     if (sseln == XA_STRING) {
 	XStoreBuffer(dpy, (char *) sel_buf, (int) sel_len, 0);
+	if (fsecm)
+        xcmemzero(sel_buf,sel_len);
 	return EXIT_SUCCESS;
     }
 
@@ -358,8 +389,12 @@ doIn(Window win, const char *progname)
 
 	pid = fork();
 	/* exit the parent process; */
-	if (pid)
+	if (pid) {
+        if (fsecm) {
+            xcmemzero(sel_buf,sel_len);
+        }
 	    exit(EXIT_SUCCESS);
+        }
     }
 
     /* print a message saying what we're waiting for */
@@ -379,6 +414,8 @@ doIn(Window win, const char *progname)
 	errperror(3, progname, ": ", "chdir to \"/\"");
 	return EXIT_FAILURE;
     }
+    
+    goto start;
 
     /* loop and wait for the expected number of
      * SelectionRequest events
@@ -402,6 +439,22 @@ doIn(Window win, const char *progname)
 	while (1) {
 	    struct requestor *requestor;
 	    int finished;
+        
+        if (!XPending(dpy) && wait > 0) {
+            tv.tv_sec = wait/1000;
+            tv.tv_usec = (wait%1000)*1000;
+
+            /* build fd_set */
+            FD_ZERO(&in_fds);
+            FD_SET(x11_fd, &in_fds);
+            if (!select(x11_fd + 1, &in_fds, 0, 0, &tv)) {
+                if(fsecm)
+                    xcmemzero(sel_buf,sel_len);
+                return EXIT_SUCCESS;
+            }
+        }
+
+start:
 
 	    XNextEvent(dpy, &evt);
 
@@ -430,10 +483,12 @@ doIn(Window win, const char *progname)
 	    del_requestor(requestor);
 	    break;
 	    }
-	}
-
-	dloop++;		/* increment loop counter */
+        }
+    dloop++;		/* increment loop counter */
     }
+    
+    if (fsecm)
+        xcmemzero(sel_buf,sel_len);
 
     return EXIT_SUCCESS;
 }
@@ -542,6 +597,9 @@ doOut(Window win)
 		    char *atom_name = XGetAtomName(dpy, target);
 		    fprintf(stderr, "Error: target %s not available\n", atom_name);
 		    XFree(atom_name);
+            if (fsecm)
+                xcmemzero(sel_buf,sel_len);
+            free(sel_buf);
 		    return EXIT_FAILURE;
 		}
 	    }
@@ -562,10 +620,18 @@ doOut(Window win)
 	 * empty
 	 */
 	printSelBuf(stdout, sel_type, sel_buf, sel_len);
-	if (sseln == XA_STRING)
+	if (sseln == XA_STRING) {
+        if (fsecm) {
+            xcmemzero(sel_buf,sel_len);
+        }
 	    XFree(sel_buf);
-	else
+	}
+	else {
+        if (fsecm) {
+            xcmemzero(sel_buf,sel_len);
+        }
 	    free(sel_buf);
+	}
     }
 
     return EXIT_SUCCESS;
@@ -669,6 +735,18 @@ main(int argc, char *argv[])
     opt_tab[13].specifier = xcstrdup(".rmlastnl");
     opt_tab[13].argKind = XrmoptionNoArg;
     opt_tab[13].value = (XPointer) xcstrdup(ST);
+    
+    /* secure mode for pasting passwords */
+    opt_tab[14].option = xcstrdup("-secure");
+    opt_tab[14].specifier = xcstrdup(".secure");
+    opt_tab[14].argKind = XrmoptionNoArg;
+    opt_tab[14].value = (XPointer) xcstrdup("s");
+    
+    /* wait option entry */
+    opt_tab[15].option = xcstrdup("-wait");
+    opt_tab[15].specifier = xcstrdup(".wait");
+    opt_tab[15].argKind = XrmoptionSepArg;
+    opt_tab[15].value = (XPointer) NULL;
 
     /* parse command line options */
     doOptMain(argc, argv);

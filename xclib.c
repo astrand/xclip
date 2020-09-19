@@ -28,6 +28,13 @@
 #include "xcprint.h"
 #include "xclib.h"
 
+/* a memset function that won't be optimized away by compler */
+void 
+xcmemzero(void *ptr, size_t len)
+{
+    memset_func(ptr, 0, len);
+}
+
 /* check a pointer to allocated memory, print an error if it's null */
 void
 xcmemcheck(void *ptr)
