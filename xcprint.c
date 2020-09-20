@@ -73,7 +73,7 @@ prversion(void)
 void
 errmalloc(void)
 {
-    fprintf(stderr, "Error: Could not allocate memory.\n");
+    fprintf(stderr, "xclip: Error: Could not allocate memory.\n");
     exit(EXIT_FAILURE);
 }
 
@@ -87,7 +87,7 @@ errxdisplay(char *display)
     if (display == NULL)
 	display = getenv("DISPLAY");
 
-    fprintf(stderr, "Error: Can't open display: %s\n", display ? display : "(null)");
+    fprintf(stderr, "xclip: Error: Can't open display: %s\n", display ? display : "(null)");
     exit(EXIT_FAILURE);
 }
 
@@ -129,4 +129,18 @@ errperror(int prf_tot, ...)
 
     /* free the complete string */
     free(msg_all);
+}
+
+/* failure to convert selection */
+void
+errconvsel(Display *display, Atom target, Atom selection)
+{
+    char *atom_name = XGetAtomName(display, target);
+
+    fprintf(stderr, "xclip: Error: Cannot performance ConvertSelection to target %s\n", atom_name);
+    fprintf(stderr, "xclip: Error: Onwer of selection: 0x%lx\n", XGetSelectionOwner(display, selection));
+
+    XFree(atom_name);
+
+    exit(EXIT_FAILURE);
 }
