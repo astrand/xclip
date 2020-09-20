@@ -594,13 +594,11 @@ doOut(Window win)
 		}
 		else {
 		    /* no fallback available, exit with failure */
-		    char *atom_name = XGetAtomName(dpy, target);
-		    fprintf(stderr, "Error: target %s not available\n", atom_name);
-		    XFree(atom_name);
 		    if (fsecm)
 			xcmemzero(sel_buf,sel_len);
 		    free(sel_buf);
-		    return EXIT_FAILURE;
+		    errconvsel(dpy, target, sseln);
+		    // errconvsel does not return but exits with EXIT_FAILURE
 		}
 	    }
 
