@@ -594,15 +594,11 @@ doOut(Window win)
 		}
 		else {
 		    /* no fallback available, exit with failure */
-		    char *atom_name = XGetAtomName(dpy, target);
-		    fprintf(stderr, "Error: target %s not available\n", atom_name);
-		    fprintf(stderr, "xclip: Error: Owner of selection: 0x%lx\n", XGetSelectionOwner(display, selection));
-		    XFree(atom_name);
 		    if (fsecm)
 			xcmemzero(sel_buf,sel_len);
 		    free(sel_buf);
 		    errconvsel(dpy, target, sseln);
-		    return EXIT_FAILURE;
+		    // errconvsel does not return but exits with EXIT_FAILURE
 		}
 	    }
 
