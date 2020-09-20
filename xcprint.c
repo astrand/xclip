@@ -131,16 +131,79 @@ errperror(int prf_tot, ...)
     free(msg_all);
 }
 
+/* a utility for finding the name of the X window that owns the selection. 
+ * Sets namep to point to the string of the name (must be freed with XFree). 
+ * Sets wp to point to the Window (an integer id).
+ * Returns 0 if it works. Not 0, otherwise. 
+ */ 
+int
+fetchname(Display *display, Atom selection, char **namep, Window *wp) {
+    *namep = NULL;
+    *wp = XGetSelectionOwner(display, selection);
+    if (*wp == None)
+	return 1;		/* Nobody has the selection. */
+
+    XFetchName(display, *wp, namep);
+    if (*namep)
+	return 0; 		/* Hurrah! It worked on the first try. */
+	
+    /* Otherwise, recursively try the parent windows */
+    Window p = *wp;
+    Window dummy, *dummyp;
+    unsigned int n;
+    while (!*namep  &&  p != None) {
+	if (!XQueryTree(display, p, &dummy, &p, &dummyp, &n))
+	    break;
+	if (p != None) {
+	    XFetchName(display, p, namep);
+	}
+    }
+    return (*namep == NULL);
+}
+
+
 /* failure to convert selection */
 void
 errconvsel(Display *display, Atom target, Atom selection)
 {
-    char *atom_name = XGetAtomName(display, target);
+    Window w = None;
+    char *window_name;
+    char *selection_name = XGetAtomName(display, selection); /* E.g., "PRIMARY" */
 
-    fprintf(stderr, "xclip: Error: Cannot performance ConvertSelection to target %s\n", atom_name);
-    fprintf(stderr, "xclip: Error: Onwer of selection: 0x%lx\n", XGetSelectionOwner(display, selection));
+    if (!selection_name)
+	return 1;		/* Invalid selection Atom  */
 
-    XFree(atom_name);
+    /* Find the name of the window that holds the selection */
+    fetchname(display, selection, &window_name, &w);
+
+    if (w == None) {
+	fprintf(stderr, "xclip: Error: There is no owner for the %s selection\n",
+		selection_name);
+    }
+    else {
+	if (window_name && window_name[0]) {
+	    fprintf(stderr, "xclip: Error: '%s'", window_name);
+	}
+	else {
+	    fprintf(stderr, "xclip: Error: window id 0x%lx", w);
+	}
+	char *atom_name = XGetAtomName(display, target);
+	if (atom_name) {
+	    fprintf(stderr, " cannot convert %s selection to target '%s'\n",
+		    selection_name, atom_name);
+	    XFree(atom_name);
+	}
+	else {
+	    /* Should never happen. */
+	    fprintf(stderr, " cannot convert to NULL target.\n"); 
+	}    
+    }
+
+    if (selection_name)
+	XFree(selection_name);
+
+    if (window_name)
+	XFree(window_name);
 
     exit(EXIT_FAILURE);
 }
