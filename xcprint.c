@@ -164,7 +164,7 @@ fetchname(Display *display, Atom selection, char **namep, Window *wp) {
 
 
 /* failure to convert selection */
-int
+void
 errconvsel(Display *display, Atom target, Atom selection)
 {
     Window w = None;
@@ -172,7 +172,7 @@ errconvsel(Display *display, Atom target, Atom selection)
     char *selection_name = XGetAtomName(display, selection); /* E.g., "PRIMARY" */
 
     if (!selection_name)
-	return 1;		/* Invalid selection Atom  */
+	exit(EXIT_FAILURE);		/* Invalid selection Atom  */
 
     /* Find the name of the window that holds the selection */
     fetchname(display, selection, &window_name, &w);

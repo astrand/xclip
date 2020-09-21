@@ -24,4 +24,4 @@ extern void prversion(void);
 extern void errmalloc(void);
 extern void errxdisplay(char *);
 extern void errperror(int, ...);
-extern int errconvsel(Display *display, Atom target, Atom selection);
+extern void errconvsel(Display *display, Atom target, Atom selection);

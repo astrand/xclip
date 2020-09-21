@@ -599,7 +599,8 @@ doOut(Window win)
 		    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
 			xcmemzero(sel_buf,sel_len);
 		    free(sel_buf);
-		    return EXIT_FAILURE;
+		    errconvsel(dpy, target, sseln);
+		    // errconvsel does not return but exits with EXIT_FAILURE
 		}
 	    }
 
