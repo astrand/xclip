@@ -164,7 +164,7 @@ fetchname(Display *display, Atom selection, char **namep, Window *wp) {
 
 
 /* failure to convert selection */
-void
+int
 errconvsel(Display *display, Atom target, Atom selection)
 {
     Window w = None;
