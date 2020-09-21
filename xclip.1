@@ -69,12 +69,12 @@ provide a running commentary of what xclip is doing
 operate in legacy (i.e. non UTF-8) mode for backwards compatibility
 (Use this option only when really necessary, as the old behavior was broken)
 .TP
-\fB\-secure\fR
-only allow pasting once and overwrite memory with zeros before exiting.
-This implies -wait 1 (-wait will override if set).
+\fB\-sensitive\fR
+clear sensitive data from seleciton buffer immediately upon being pasted.
+This implies -wait 50 (-wait will override if set). See \fBNOTES\fR
 .TP
 \fB\-wait\fR
-number of milliseconds to wait after the first paste event before exiting
+milliseconds after last paste before selection is cleared. This timer will start after the first paste, and reset with each subsequent paste, until allowed to expire and the selection buffer to be cleared.
 
 .PP
 xclip reads text from standard in or files and makes it available to other X applications for pasting as an X selection (traditionally with the middle mouse button). It reads from all files specified, or from standard in if no files are specified. xclip can also print the contents of a selection to standard out with the
@@ -117,6 +117,10 @@ X display to use if none is specified with the
 .B
 \-display
 option.
+
+.SH NOTES
+
+Using the \fB-sensitive\fR option will clear the selection buffer of the sensitive information 50 milliseconds after it has been pasted, effectively only allowing the selection to be pasted once. In some instances this may be too low and will prevent pasting. If this is the case, or if the user needs to be able to past more than once for some other reason, they can adjust the time to wait before clearing the selection with the \fB-wait\fR option.
 
 .SH REPORTING BUGS
 Please report any bugs, problems, queries, experiences, etc. directly to the author.
