@@ -593,9 +593,6 @@ doOut(Window win)
 		}
 		else {
 		    /* no fallback available, exit with failure */
-		    char *atom_name = XGetAtomName(dpy, target);
-		    fprintf(stderr, "Error: target %s not available\n", atom_name);
-		    XFree(atom_name);
 		    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
 			xcmemzero(sel_buf,sel_len);
 		    free(sel_buf);
