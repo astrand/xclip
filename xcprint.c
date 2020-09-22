@@ -51,6 +51,7 @@ prhelp(char *name)
 	    "      -rmlastnl    remove the last newline character if present\n"
 	    "      -version     version information\n"
 	    "      -silent      errors only, run in background (default)\n"
+	    "      -filter      print the text piped to standard in back to standard out unmodified\n"
 	    "      -quiet       run in foreground, show what's happening\n"
 	    "      -verbose     running commentary\n"
 	    "      -sensitive   only allow copied data to be pasted once\n"
