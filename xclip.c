@@ -434,7 +434,7 @@ doIn(Window win, const char *progname)
 		fprintf(stderr, "  Waiting for selection request number %i\n", dloop + 1);
 	}
 
-	/* wait for a SelectionRequest event */
+	/* wait for a SelectionRequest (paste) event */
 	while (1) {
 	    struct requestor *requestor;
 	    int finished;
@@ -617,14 +617,18 @@ doOut(Window win)
 	 * empty
 	 */
 	printSelBuf(stdout, sel_type, sel_buf, sel_len);
-	if (sseln == XA_STRING) {
+
+	if (fsecm) {
+	    /* If user requested -sensitive, then prevent further pastes */
 	    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+	    /* Clear memory buffer */
 	    xcmemzero(sel_buf,sel_len);
+	}
+
+	if (sseln == XA_STRING) {
 	    XFree(sel_buf);
 	}
 	else {
-		XSetSelectionOwner(dpy, sseln, None, CurrentTime);
-		xcmemzero(sel_buf,sel_len);
 	    free(sel_buf);
 	}
     }
