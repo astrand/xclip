@@ -200,13 +200,13 @@ doOptMain(int argc, char *argv[])
 	    fprintf(stderr, "Loops: %i\n", sloop);
     }
 
-    /* check for -secure */
-    if (XrmGetResource(opt_db, "xclip.secure", "Xclip.Secure", &rec_typ, &rec_val)
+    /* check for -sensitive */
+    if (XrmGetResource(opt_db, "xclip.sensitive", "Xclip.Sensitive", &rec_typ, &rec_val)
 	) {
-	wait = 1;
+	wait = 50;
 	fsecm = T;
 	if (fverb == OVERBOSE) {	/* print in verbose mode only */
-	    fprintf(stderr, "Secure Mode Implies -wait 1\n");
+	    fprintf(stderr, "Sensitive Mode Implies -wait 1\n");
 	    fprintf(stderr, "Sensitive Buffers Will Be Zeroed At Exit\n");
         }
     }
@@ -215,7 +215,7 @@ doOptMain(int argc, char *argv[])
         ) {
 	wait = atoi(rec_val.addr);
 	if (fverb == OVERBOSE)	/* print in verbose mode only */
-	    fprintf(stderr, "Timeout: %i msec\n", wait);
+	    fprintf(stderr, "wait: %i msec\n", wait);
     }
 
     /* Read remaining options (filenames) */
@@ -370,8 +370,8 @@ doIn(Window win, const char *progname)
     /* Handle cut buffer if needed */
     if (sseln == XA_STRING) {
 	XStoreBuffer(dpy, (char *) sel_buf, (int) sel_len, 0);
-	if (fsecm)		/* -secure-ish (XStoreBuffer made a copy) */
-	    xcmemzero(sel_buf,sel_len);
+	XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+	xcmemzero(sel_buf,sel_len);
 	return EXIT_SUCCESS;
     }
 
@@ -390,9 +390,8 @@ doIn(Window win, const char *progname)
 	pid = fork();
 	/* exit the parent process; */
 	if (pid) {
-	    if (fsecm) {
-		xcmemzero(sel_buf,sel_len);
-	    }
+	    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+	    xcmemzero(sel_buf,sel_len);
 	    exit(EXIT_SUCCESS);
 	}
     }
@@ -440,19 +439,19 @@ doIn(Window win, const char *progname)
 	    struct requestor *requestor;
 	    int finished;
 
-        if (!XPending(dpy) && wait > 0) {
-            tv.tv_sec = wait/1000;
-            tv.tv_usec = (wait%1000)*1000;
+	    if (!XPending(dpy) && wait > 0) {
+		tv.tv_sec = wait/1000;
+		tv.tv_usec = (wait%1000)*1000;
 
-            /* build fd_set */
-            FD_ZERO(&in_fds);
-            FD_SET(x11_fd, &in_fds);
-            if (!select(x11_fd + 1, &in_fds, 0, 0, &tv)) {
-                if(fsecm)
-                    xcmemzero(sel_buf,sel_len);
-                return EXIT_SUCCESS;
-            }
-        }
+		/* build fd_set */
+		FD_ZERO(&in_fds);
+		FD_SET(x11_fd, &in_fds);
+		if (!select(x11_fd + 1, &in_fds, 0, 0, &tv)) {
+		    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+		    xcmemzero(sel_buf,sel_len);
+		    return EXIT_SUCCESS;
+		}
+	    }
 
 start:
 
@@ -470,7 +469,7 @@ start:
 	    dloop = sloop;
 	    /* if there is no more in-progress transfer, force exit */
 	    if (!requestors) {
-	        return EXIT_SUCCESS;
+		return EXIT_SUCCESS;
 	    }
 	    continue;
 	    } else {
@@ -483,12 +482,12 @@ start:
 	    del_requestor(requestor);
 	    break;
 	    }
-        }
+	}
     dloop++;		/* increment loop counter */
     }
 
-    if (fsecm)
-	xcmemzero(sel_buf,sel_len);
+    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+    xcmemzero(sel_buf,sel_len);
 
     return EXIT_SUCCESS;
 }
@@ -594,8 +593,8 @@ doOut(Window win)
 		}
 		else {
 		    /* no fallback available, exit with failure */
-		    if (fsecm)
-			xcmemzero(sel_buf,sel_len);
+		    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+		    xcmemzero(sel_buf,sel_len);
 		    free(sel_buf);
 		    errconvsel(dpy, target, sseln);
 		    // errconvsel does not return but exits with EXIT_FAILURE
@@ -619,15 +618,13 @@ doOut(Window win)
 	 */
 	printSelBuf(stdout, sel_type, sel_buf, sel_len);
 	if (sseln == XA_STRING) {
-	    if (fsecm) {
-		xcmemzero(sel_buf,sel_len);
-		}
+	    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+	    xcmemzero(sel_buf,sel_len);
 	    XFree(sel_buf);
 	}
 	else {
-	    if (fsecm) {
+		XSetSelectionOwner(dpy, sseln, None, CurrentTime);
 		xcmemzero(sel_buf,sel_len);
-	    }
 	    free(sel_buf);
 	}
     }
@@ -734,9 +731,9 @@ main(int argc, char *argv[])
     opt_tab[13].argKind = XrmoptionNoArg;
     opt_tab[13].value = (XPointer) xcstrdup(ST);
 
-    /* secure mode for pasting passwords */
-    opt_tab[14].option = xcstrdup("-secure");
-    opt_tab[14].specifier = xcstrdup(".secure");
+    /* sensitive mode for pasting passwords */
+    opt_tab[14].option = xcstrdup("-sensitive");
+    opt_tab[14].specifier = xcstrdup(".sensitive");
     opt_tab[14].argKind = XrmoptionNoArg;
     opt_tab[14].value = (XPointer) xcstrdup("s");
 

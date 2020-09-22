@@ -53,7 +53,8 @@ prhelp(char *name)
 	    "      -silent      errors only, run in background (default)\n"
 	    "      -quiet       run in foreground, show what's happening\n"
 	    "      -verbose     running commentary\n"
-	    "      -secure      after first paste, clear memory and exit\n"
+	    "      -sensitive   only allow copied data to be pasted once\n"
+	    "      -wait n      exit n milliseconds pasting, timer restarts on each paste\n"
 	    "\n" "Report bugs to <astrand@lysator.liu.se>\n", name);
     exit(EXIT_SUCCESS);
 }
@@ -171,7 +172,7 @@ errconvsel(Display *display, Atom target, Atom selection)
     char *selection_name = XGetAtomName(display, selection); /* E.g., "PRIMARY" */
 
     if (!selection_name)
-	return 1;		/* Invalid selection Atom  */
+	exit(EXIT_FAILURE);	/* Invalid selection Atom  */
 
     /* Find the name of the window that holds the selection */
     fetchname(display, selection, &window_name, &w);
