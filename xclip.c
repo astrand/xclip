@@ -458,22 +458,43 @@ start:
 	    XNextEvent(dpy, &evt);
 
 	    if (evt.type == SelectionRequest) {
-	    requestor = get_requestor(evt.xselectionrequest.requestor);
+		requestor = get_requestor(evt.xselectionrequest.requestor);
 	    } else if (evt.type == PropertyNotify) {
-	    requestor = get_requestor(evt.xproperty.window);
+		requestor = get_requestor(evt.xproperty.window);
 	    } else if (evt.type == SelectionClear) {
-	    /* If the client loses ownership(SelectionClear event) while it has a transfering progress,
-	       it must continue to service the ongoing transfer until it is completed.
-	       See ICCCM section 2.2.
-	       Set dloop to sloop for forcing exit after all transfers are completed. */
-	    dloop = sloop;
-	    /* if there is no more in-progress transfer, force exit */
-	    if (!requestors) {
-		return EXIT_SUCCESS;
-	    }
-	    continue;
+		if (fverb == OVERBOSE) {
+		    fprintf(stderr, "Lost selection. ");
+		    fprintf(stderr, "(Some other process did a 'copy').\n");
+		}
+		/* If the client loses ownership(SelectionClear event)
+		 * while it has a transfer in progress, it must continue to
+		 * service the ongoing transfer until it is completed.
+		 * See ICCCM section 2.2.
+		 */
+		/* Set dloop to force exit after all transfers finish. */
+		dloop = sloop;
+		/* if there are no more in-progress transfers, force exit */
+		if (!requestors) {
+		    if (fverb == OVERBOSE) {
+			fprintf(stderr, "No transfers in progress to wait for.\n");
+		    }
+		    return EXIT_SUCCESS;
+		}
+		else {
+		    if (fverb == OVERBOSE) {
+			struct requestor *r = requestors;
+			int i=1;
+			while ( (r = r->next) )
+			    i++;
+			fprintf(stderr,
+				"Still transfering data to %d requestor%s.\n",
+				i, (i==1)?"":"s");
+		    }
+		}
+		continue;
 	    } else {
-	    continue;
+		/* Ignore all other event types */
+		continue;
 	    }
 
 	    finished = xcin(dpy, &(requestor->cwin), evt, &(requestor->pty), target, sel_buf, sel_len, &(requestor->sel_pos), &(requestor->context), &(requestor->chunk_size));
