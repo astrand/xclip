@@ -390,8 +390,8 @@ doIn(Window win, const char *progname)
 	pid = fork();
 	/* exit the parent process; */
 	if (pid) {
-		XSetSelectionOwner(dpy, sseln, None, CurrentTime);
-		xcmemzero(sel_buf,sel_len);
+	    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+	    xcmemzero(sel_buf,sel_len);
 	    exit(EXIT_SUCCESS);
 	}
     }
@@ -439,19 +439,19 @@ doIn(Window win, const char *progname)
 	    struct requestor *requestor;
 	    int finished;
 
-        if (!XPending(dpy) && wait > 0) {
-            tv.tv_sec = wait/1000;
-            tv.tv_usec = (wait%1000)*1000;
+	    if (!XPending(dpy) && wait > 0) {
+		tv.tv_sec = wait/1000;
+		tv.tv_usec = (wait%1000)*1000;
 
-            /* build fd_set */
-            FD_ZERO(&in_fds);
-            FD_SET(x11_fd, &in_fds);
-            if (!select(x11_fd + 1, &in_fds, 0, 0, &tv)) {
-				XSetSelectionOwner(dpy, sseln, None, CurrentTime);
-                xcmemzero(sel_buf,sel_len);
-                return EXIT_SUCCESS;
-            }
-        }
+		/* build fd_set */
+		FD_ZERO(&in_fds);
+		FD_SET(x11_fd, &in_fds);
+		if (!select(x11_fd + 1, &in_fds, 0, 0, &tv)) {
+		    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+		    xcmemzero(sel_buf,sel_len);
+		    return EXIT_SUCCESS;
+		}
+	    }
 
 start:
 
@@ -469,7 +469,7 @@ start:
 	    dloop = sloop;
 	    /* if there is no more in-progress transfer, force exit */
 	    if (!requestors) {
-	        return EXIT_SUCCESS;
+		return EXIT_SUCCESS;
 	    }
 	    continue;
 	    } else {
@@ -482,12 +482,12 @@ start:
 	    del_requestor(requestor);
 	    break;
 	    }
-        }
+	}
     dloop++;		/* increment loop counter */
     }
 
-	XSetSelectionOwner(dpy, sseln, None, CurrentTime);
-	xcmemzero(sel_buf,sel_len);
+    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+    xcmemzero(sel_buf,sel_len);
 
     return EXIT_SUCCESS;
 }
@@ -594,7 +594,7 @@ doOut(Window win)
 		else {
 		    /* no fallback available, exit with failure */
 		    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
-			xcmemzero(sel_buf,sel_len);
+		    xcmemzero(sel_buf,sel_len);
 		    free(sel_buf);
 		    errconvsel(dpy, target, sseln);
 		    // errconvsel does not return but exits with EXIT_FAILURE
@@ -618,8 +618,8 @@ doOut(Window win)
 	 */
 	printSelBuf(stdout, sel_type, sel_buf, sel_len);
 	if (sseln == XA_STRING) {
-		XSetSelectionOwner(dpy, sseln, None, CurrentTime);
-		xcmemzero(sel_buf,sel_len);
+	    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+	    xcmemzero(sel_buf,sel_len);
 	    XFree(sel_buf);
 	}
 	else {
