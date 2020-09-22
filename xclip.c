@@ -353,11 +353,6 @@ doIn(Window win, const char *progname)
 	}
     } while (fil_current < fil_number);
 
-    /* remove the last newline character if necessary */
-    if (frmnl && sel_len && sel_buf[sel_len - 1] == '\n') {
-	sel_len--;
-    }
-
     /* if there are no files being read from (i.e., input
      * is from stdin not files, and we are in filter mode,
      * spit all the input back out to stdout
@@ -365,6 +360,11 @@ doIn(Window win, const char *progname)
     if ((fil_number == 0) && ffilt) {
 	fwrite(sel_buf, sizeof(char), sel_len, stdout);
 	fclose(stdout);
+    }
+
+    /* remove the last newline character if necessary */
+    if (frmnl && sel_len && sel_buf[sel_len - 1] == '\n') {
+	sel_len--;
     }
 
     /* Handle cut buffer if needed */
