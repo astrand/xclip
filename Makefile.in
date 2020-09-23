@@ -37,7 +37,7 @@ install.man: xclip.1 xclip-copyfile.1
 
 .PHONY: clean
 clean:
-	rm -f *.o *~ xclip xclip-$(VERSION).tar.gz
+	rm -f *.o *~ xclip xclip-$(VERSION).tar.gz borked
 
 .PHONY: distclean
 distclean: clean
@@ -75,6 +75,8 @@ Makefile: Makefile.in configure
 
 configure: configure.ac
 	./bootstrap
+
+borked: borked.c xclib.o xcprint.o
 
 .SUFFIXES:
 .SUFFIXES: .c .o
