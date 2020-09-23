@@ -184,7 +184,7 @@ outReadAndHang(Window win)
 	/* but since we're intentionally borken, we'll hang forever! */
 	printf("Selection now hanging forever. Hit ^C to cancel.\n"); 
 	while (1)
-	    ;
+	    sleep(1);	   
     }
 
     return EXIT_SUCCESS;
@@ -218,12 +218,15 @@ main(int argc, char *argv[])
 
     switch (mode) {
     case 0:
+	printf("Mode 0: start reading X selection for paste but then exit suddenly.\n");
 	outReadAndDie(win);
 	break;
     case 1:
+	printf("Mode 1: start reading X selection (paste), but then steal selection (copy).\n");
 	outReadAndSteal(win);
 	break;
     case 2:
+	printf("Mode 2: start reading X selection (paste), but then just hang forever.\n");
 	outReadAndHang(win);
 	break;
     default:
