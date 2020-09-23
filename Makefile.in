@@ -11,7 +11,7 @@ VERSION     = @PACKAGE_VERSION@
 CC          = @CC@
 INSTALL     = @INSTALL@
 CFLAGS      = @CFLAGS@ @X_CFLAGS@ @DEFS@
-LDFLAGS     = @LDFLAGS@ @LIBS@ @X_LIBS@ @X_EXTRA_LIBS@
+LDFLAGS     = @LDFLAGS@ @LIBS@ @X_LIBS@ @X_EXTRA_LIBS@ -lX11 -lXmu
 STRIP       = @STRIP@
 
 OBJS = xclib.o xcprint.o xclip.o
@@ -20,7 +20,7 @@ OBJS = xclib.o xcprint.o xclip.o
 all: xclip
 
 xclip: $(X11OBJ) $(OBJS)
-	$(CC) $(OBJS) $(CFLAGS) -o $@ $(X11OBJ) $(LDFLAGS) -lX11 -lXmu
+	$(CC) $(OBJS) $(CFLAGS) -o $@ $(X11OBJ) $(LDFLAGS)
 
 install: installbin install.man
 
