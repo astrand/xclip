@@ -372,7 +372,7 @@ xcin(Display * dpy,
 	if (evt.type != SelectionRequest) {
 	    if ( xcverb >= ODEBUG )
 		fprintf(stderr,
-			"xclib: debug: ignoring event type %ld\n", evt.type);
+			"xclib: debug: ignoring event type %d\n", evt.type);
 	    return (0);
 	}
 	/* set the window and property that is being used */
