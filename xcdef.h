@@ -19,12 +19,6 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* output level constants */
-#define OSILENT  0
-#define OQUIET   1
-#define OVERBOSE 2
-#define ODEBUG   9
-
 /* generic true/false constants for stuff */
 #define F 0     /* false... */
 #define T 1     /* true...  */

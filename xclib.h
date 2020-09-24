@@ -21,6 +21,15 @@
 
 #include <X11/Xlib.h>
 
+/* global verbosity output level */
+extern int xcverb;
+
+/* output level constants for xcverb */
+#define OSILENT  0
+#define OQUIET   1
+#define OVERBOSE 2
+#define ODEBUG   9
+
 /* xcout() contexts */
 #define XCLIB_XCOUT_NONE	0	/* no context */
 #define XCLIB_XCOUT_SENTCONVSEL	1	/* sent a request */
