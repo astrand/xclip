@@ -23,6 +23,7 @@
 #define OSILENT  0
 #define OQUIET   1
 #define OVERBOSE 2
+#define ODEBUG   9
 
 /* generic true/false constants for stuff */
 #define F 0     /* false... */
