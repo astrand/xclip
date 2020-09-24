@@ -35,6 +35,9 @@ int xcverb = OSILENT;
 void 
 xcmemzero(void *ptr, size_t len)
 {
+    if (xcverb >= ODEBUG) {
+	fprintf(stderr, "xclip: debug: Zeroing memory buffer\n");
+    }
     memset_func(ptr, 0, len);
 }
 
@@ -362,17 +365,19 @@ xcin(Display * dpy,
 	if (!(*chunk_size)) {
 	    *chunk_size = XMaxRequestSize(dpy) / 4;
 	}
-	if ( xcverb >= ODEBUG )
+	if ( xcverb >= ODEBUG ) {
 	    fprintf(stderr,
 		    "xclib: debug: INCR chunk size is %ld\n", (*chunk_size));
+	}
     }
 
     switch (*context) {
     case XCLIB_XCIN_NONE:
 	if (evt.type != SelectionRequest) {
-	    if ( xcverb >= ODEBUG )
+	    if ( xcverb >= ODEBUG ) {
 		fprintf(stderr,
 			"xclib: debug: ignoring event type %d\n", evt.type);
+	    }
 	    return (0);
 	}
 	/* set the window and property that is being used */
