@@ -336,8 +336,7 @@ doIn(Window win, const char *progname)
 		/* file opened successfully.
 		 */
 		if (xcverb >= ODEBUG)
-		    fprintf(stderr, "Reading %s...\n", fil_names[fil_current]
-			);
+		    fprintf(stderr, "Reading %s...\n", fil_names[fil_current]);
 	    }
 	}
 
@@ -515,14 +514,16 @@ start:
 		continue;
 	    }
 
-	    finished = xcin(dpy, &(requestor->cwin), evt, &(requestor->pty), target, sel_buf, sel_len, &(requestor->sel_pos), &(requestor->context), &(requestor->chunk_size));
+	    finished = xcin(dpy, &(requestor->cwin), evt, &(requestor->pty),
+			    target, sel_buf, sel_len, &(requestor->sel_pos),
+			    &(requestor->context), &(requestor->chunk_size));
 
 	    if (finished) {
-	    del_requestor(requestor);
-	    break;
+		del_requestor(requestor);
+		break;
 	    }
 	}
-    dloop++;		/* increment loop counter */
+	dloop++;		/* increment loop counter */
     }
 
     XSetSelectionOwner(dpy, sseln, None, CurrentTime);
