@@ -188,7 +188,7 @@ doOptMain(int argc, char *argv[])
     if (XrmGetResource(opt_db, "xclip.display", "Xclip.Display", &rec_typ, &rec_val)
 	) {
 	sdisp = rec_val.addr;
-	if (fverb == OVERBOSE)	/* print in verbose mode only */
+	if (fverb >= OVERBOSE)	/* print in verbose mode only */
 	    fprintf(stderr, "Display: %s\n", sdisp);
     }
 
@@ -196,7 +196,7 @@ doOptMain(int argc, char *argv[])
     if (XrmGetResource(opt_db, "xclip.loops", "Xclip.Loops", &rec_typ, &rec_val)
 	) {
 	sloop = atoi(rec_val.addr);
-	if (fverb == OVERBOSE)	/* print in verbose mode only */
+	if (fverb >= OVERBOSE)	/* print in verbose mode only */
 	    fprintf(stderr, "Loops: %i\n", sloop);
     }
 
@@ -205,7 +205,7 @@ doOptMain(int argc, char *argv[])
 	) {
 	wait = 50;
 	fsecm = T;
-	if (fverb == OVERBOSE) {	/* print in verbose mode only */
+	if (fverb >= OVERBOSE) {	/* print in verbose mode only */
 	    fprintf(stderr, "Sensitive Mode Implies -wait 1\n");
 	    fprintf(stderr, "Sensitive Buffers Will Be Zeroed At Exit\n");
         }
@@ -214,7 +214,7 @@ doOptMain(int argc, char *argv[])
     if (XrmGetResource(opt_db, "xclip.wait", "Xclip.Wait", &rec_typ, &rec_val)
         ) {
 	wait = atoi(rec_val.addr);
-	if (fverb == OVERBOSE)	/* print in verbose mode only */
+	if (fverb >= OVERBOSE)	/* print in verbose mode only */
 	    fprintf(stderr, "wait: %i msec\n", wait);
     }
 
@@ -254,7 +254,7 @@ doOptSel(void)
 	    break;
 	}
 
-	if (fverb == OVERBOSE) {
+	if (fverb >= OVERBOSE) {
 	    fprintf(stderr, "Using selection: ");
 
 	    if (sseln == XA_PRIMARY)
@@ -278,18 +278,18 @@ doOptTarget(void)
     /* check for -noutf8 */
     if (XrmGetResource(opt_db, "xclip.noutf8", "Xclip.noutf8", &rec_typ, &rec_val)
 	) {
-	if (fverb == OVERBOSE)	/* print in verbose mode only */
+	if (fverb >= OVERBOSE)	/* print in verbose mode only */
 	    fprintf(stderr, "Using old UNICODE instead of UTF8.\n");
     }
     else if (XrmGetResource(opt_db, "xclip.target", "Xclip.Target", &rec_typ, &rec_val)
 	) {
 	target = XInternAtom(dpy, rec_val.addr, False);
-	if (fverb == OVERBOSE)	/* print in verbose mode only */
+	if (fverb >= OVERBOSE)	/* print in verbose mode only */
 	    fprintf(stderr, "Using %s.\n", rec_val.addr);
     }
     else {
 	target = XA_UTF8_STRING(dpy);
-	if (fverb == OVERBOSE)	/* print in verbose mode only */
+	if (fverb >= OVERBOSE)	/* print in verbose mode only */
 	    fprintf(stderr, "Using UTF8_STRING.\n");
     }
 }
@@ -330,7 +330,7 @@ doIn(Window win, const char *progname)
 		/* file opened successfully. Print
 		 * message (verbose mode only).
 		 */
-		if (fverb == OVERBOSE)
+		if (fverb >= OVERBOSE)
 		    fprintf(stderr, "Reading %s...\n", fil_names[fil_current]
 			);
 	    }
@@ -462,7 +462,7 @@ start:
 	    } else if (evt.type == PropertyNotify) {
 		requestor = get_requestor(evt.xproperty.window);
 	    } else if (evt.type == SelectionClear) {
-		if (fverb == OVERBOSE) {
+		if (fverb >= OVERBOSE) {
 		    fprintf(stderr, "Lost selection. ");
 		    fprintf(stderr, "(Some other process did a 'copy').\n");
 		}
@@ -475,13 +475,13 @@ start:
 		dloop = sloop;
 		/* if there are no more in-progress transfers, force exit */
 		if (!requestors) {
-		    if (fverb == OVERBOSE) {
+		    if (fverb >= OVERBOSE) {
 			fprintf(stderr, "No transfers in progress to wait for.\n");
 		    }
 		    return EXIT_SUCCESS;
 		}
 		else {
-		    if (fverb == OVERBOSE) {
+		    if (fverb >= OVERBOSE) {
 			struct requestor *r = requestors;
 			int i=1;
 			while ( (r = r->next) )
@@ -520,7 +520,7 @@ printSelBuf(FILE * fout, Atom sel_type, unsigned char *sel_buf, size_t sel_len)
     Atom html = XInternAtom(dpy, "text/html", True);
 #endif
 
-    if (fverb == OVERBOSE) {	/* print in verbose mode only */
+    if (fverb >= OVERBOSE) {	/* print in verbose mode only */
 	char *atom_name = XGetAtomName(dpy, sel_type);
 	fprintf(stderr, "Type is %s.\n", atom_name);
 	XFree(atom_name);
@@ -774,7 +774,7 @@ main(int argc, char *argv[])
     /* Connect to the X server. */
     if ((dpy = XOpenDisplay(sdisp))) {
 	/* successful */
-	if (fverb == OVERBOSE)
+	if (fverb >= OVERBOSE)
 	    fprintf(stderr, "Connected to X server.\n");
     }
     else {
