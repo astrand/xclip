@@ -28,6 +28,9 @@
 #include "xcprint.h"
 #include "xclib.h"
 
+/* global verbosity output level, defaults to OSILENT */
+int xcverb = OSILENT;
+
 /* a memset function that won't be optimized away by compler */
 void 
 xcmemzero(void *ptr, size_t len)
@@ -181,6 +184,10 @@ xcout(Display * dpy,
 
 	if (*type == inc) {
 	    /* start INCR mechanism by deleting property */
+	    if (xcverb >= OVERBOSE) {
+		fprintf(stderr,
+			"xclib: debug: Starting INCR by deleting property\n");
+	    }
 	    XDeleteProperty(dpy, win, pty);
 	    XFlush(dpy);
 	    *context = XCLIB_XCOUT_INCR;
@@ -245,6 +252,9 @@ xcout(Display * dpy,
 
 	if (pty_size == 0) {
 	    /* no more data, exit from loop */
+	    if (xcverb >= ODEBUG) {
+		fprintf(stderr, "INCR transfer complete\n");
+	    }
 	    XFree(buffer);
 	    XDeleteProperty(dpy, win, pty);
 	    *context = XCLIB_XCOUT_NONE;
@@ -353,6 +363,8 @@ xcin(Display * dpy,
 	    *chunk_size = XMaxRequestSize(dpy) / 4;
 	}
     }
+    if ( xcverb >= ODEBUG )
+	fprintf(stderr, "xclib: debug: INCR chunk size is %ld\n", (*chunk_size));
 
     switch (*context) {
     case XCLIB_XCIN_NONE:
@@ -381,6 +393,9 @@ xcin(Display * dpy,
 	}
 	else if (len > *chunk_size) {
 	    /* send INCR response */
+	    if ( xcverb >= ODEBUG ) {
+		fprintf (stderr, "xclib: debug: sending INCR response\n");
+	    }
 	    XChangeProperty(dpy, *win, *pty, inc, 32, PropModeReplace, 0, 0);
 
 	    /* With the INCR mechanism, we need to know
@@ -475,8 +490,12 @@ xcin(Display * dpy,
 	XFlush(dpy);
 
 	/* all data has been sent, break out of the loop */
-	if (!chunk_len)
+	if (!chunk_len) {
+	    if (xcverb >= ODEBUG) {
+		fprintf(stderr, "INCR transfer complete\n");
+	    }
 	    *context = XCLIB_XCIN_NONE;
+	}
 
 	*pos += *chunk_size;
 
@@ -485,7 +504,7 @@ xcin(Display * dpy,
 	 */
 	if (chunk_len > 0)
 	    return (0);
-	else
+	else 
 	    return (1);
 	break;
     }
