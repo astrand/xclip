@@ -155,7 +155,8 @@ doOptMain(int argc, char *argv[])
 	    xcverb = ODEBUG;	break;
 	}
     }
-    if (xcverb == ODEBUG) fprintf(stderr, "xclip: Debugging enabled.");
+    if (xcverb == ODEBUG)
+	fprintf(stderr, "xclip: debug: Debugging enabled.\n");
 
     /* set direction flag (in or out) */
     if (XrmGetResource(opt_db, "xclip.direction", "Xclip.Direction", &rec_typ, &rec_val)
@@ -290,12 +291,12 @@ doOptTarget(void)
 	) {
 	target = XInternAtom(dpy, rec_val.addr, False);
 	if (xcverb >= OVERBOSE)
-	    fprintf(stderr, "Using %s.\n", rec_val.addr);
+	    fprintf(stderr, "Using target: %s\n", rec_val.addr);
     }
     else {
 	target = XA_UTF8_STRING(dpy);
 	if (xcverb >= OVERBOSE)
-	    fprintf(stderr, "Using UTF8_STRING.\n");
+	    fprintf(stderr, "Using target: UTF8_STRING.\n");
     }
 }
 
@@ -306,7 +307,7 @@ doIn(Window win, const char *progname)
     unsigned long sel_len = 0;	/* length of sel_buf */
     unsigned long sel_all = 0;	/* allocated size of sel_buf */
     XEvent evt;			/* X Event Structures */
-    int dloop = 0;          /* done loops counter */
+    int dloop = 0;		/* done loops counter */
     int x11_fd;                 /* fd on which XEvents appear */
     fd_set in_fds;
     struct timeval tv;
@@ -334,7 +335,7 @@ doIn(Window win, const char *progname)
 	    else {
 		/* file opened successfully.
 		 */
-		if (xcverb >= OVERBOSE)
+		if (xcverb >= ODEBUG)
 		    fprintf(stderr, "Reading %s...\n", fil_names[fil_current]
 			);
 	    }
@@ -350,8 +351,10 @@ doIn(Window win, const char *progname)
 		 * allocated elements
 		 */
 		sel_all *= 2;
-		sel_buf = (unsigned char *) xcrealloc(sel_buf, sel_all * sizeof(char)
-		    );
+		sel_buf = (unsigned char *) xcrealloc(sel_buf, sel_all * sizeof(char) );
+		if (xcverb >= ODEBUG) {
+		    fprintf(stderr, "xclip: debug: Increased buffersize to %ld\n", sel_all);
+		}
 	    }
 	    sel_len += fread(sel_buf + sel_len, sizeof(char), sel_all - sel_len, fil_handle);
 	}
@@ -462,12 +465,18 @@ start:
 	    XNextEvent(dpy, &evt);
 
 	    if (evt.type == SelectionRequest) {
+		if (xcverb >= ODEBUG) {
+		    fprintf(stderr, "xclip: debug: Received SelectionRequest\n");
+		}
 		requestor = get_requestor(evt.xselectionrequest.requestor);
 	    } else if (evt.type == PropertyNotify) {
+		if (xcverb >= ODEBUG) {
+		    fprintf(stderr, "xclip: debug: Received PropertyNotify\n");
+		}
 		requestor = get_requestor(evt.xproperty.window);
 	    } else if (evt.type == SelectionClear) {
 		if (xcverb >= OVERBOSE) {
-		    fprintf(stderr, "Lost selection. ");
+		    fprintf(stderr, "Lost selection ownership. ");
 		    fprintf(stderr, "(Some other client did a 'copy').\n");
 		}
 		/* If the client loses ownership(SelectionClear event)
@@ -498,6 +507,11 @@ start:
 		continue;
 	    } else {
 		/* Ignore all other event types */
+		if (xcverb >= ODEBUG) {
+		    fprintf(stderr, "xclip: debug: Ignoring X event type %d\n",
+			    evt.type);
+		}
+
 		continue;
 	    }
 
@@ -812,7 +826,7 @@ main(int argc, char *argv[])
     /* Connect to the X server. */
     if ((dpy = XOpenDisplay(sdisp))) {
 	/* successful */
-	if (xcverb >= OVERBOSE)
+	if (xcverb >= ODEBUG)
 	    fprintf(stderr, "Connected to X server.\n");
     }
     else {
