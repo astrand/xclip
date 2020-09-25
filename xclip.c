@@ -465,7 +465,16 @@ start:
 
 	    if (evt.type == SelectionRequest) {
 		if (xcverb >= ODEBUG) {
-		    fprintf(stderr, "xclip: debug: Received SelectionRequest\n");
+		    char *window_name;
+		    fprintf(stderr,
+			    "xclip: debug: Received SelectionRequest from ");
+		    xcfetchname(dpy, evt.xproperty.window, &window_name);
+		    if (window_name && window_name[0]) {
+			fprintf(stderr, "'%s'\n", window_name);
+		    }
+		    else {
+			fprintf(stderr, "window id 0x%lx\n", evt.xproperty.window);
+		    }
 		}
 		requestor = get_requestor(evt.xselectionrequest.requestor);
 	    } else if (evt.type == PropertyNotify) {
@@ -633,8 +642,12 @@ doOut(Window win)
 		}
 		else {
 		    /* no fallback available, exit with failure */
-		    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
-		    xcmemzero(sel_buf,sel_len);
+		    if (fsecm) {
+			/* If user requested -sensitive, then prevent further pastes (even though we failed to paste) */
+			XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+			/* Clear memory buffer */
+			xcmemzero(sel_buf,sel_len);
+		    }
 		    free(sel_buf);
 		    errconvsel(dpy, target, sseln);
 		    // errconvsel does not return but exits with EXIT_FAILURE
