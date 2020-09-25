@@ -464,19 +464,19 @@ start:
 	    XNextEvent(dpy, &evt);
 
 	    if (evt.type == SelectionRequest) {
+		requestor = get_requestor(evt.xselectionrequest.requestor);
 		if (xcverb >= ODEBUG) {
 		    char *window_name;
 		    fprintf(stderr,
 			    "xclip: debug: Received SelectionRequest from ");
-		    xcfetchname(dpy, evt.xproperty.window, &window_name);
+		    xcfetchname(dpy, evt.xselectionrequest.requestor, &window_name);
 		    if (window_name && window_name[0]) {
 			fprintf(stderr, "'%s'\n", window_name);
 		    }
 		    else {
-			fprintf(stderr, "window id 0x%lx\n", evt.xproperty.window);
+			fprintf(stderr, "window id 0x%lx\n", evt.xselectionrequest.requestor);
 		    }
 		}
-		requestor = get_requestor(evt.xselectionrequest.requestor);
 	    } else if (evt.type == PropertyNotify) {
 		if (xcverb >= ODEBUG) {
 		    fprintf(stderr, "xclip: debug: Received PropertyNotify\n");
