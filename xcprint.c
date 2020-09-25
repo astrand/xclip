@@ -139,20 +139,20 @@ void
 errconvsel(Display *display, Atom target, Atom selection)
 {
     Window w = None;
-    char *window_name;
+    char *window_name = NULL;
     char *selection_name = XGetAtomName(display, selection); /* E.g., "PRIMARY" */
 
     if (!selection_name)
 	exit(EXIT_FAILURE);	/* Invalid selection Atom  */
 
-    /* Find the name of the window that holds the selection */
-    xcfetchname(display, selection, &window_name, &w);
-
+    w = XGetSelectionOwner(display, selection);
     if (w == None) {
 	fprintf(stderr, "xclip: Error: There is no owner for the %s selection\n",
 		selection_name);
     }
     else {
+	/* Find the name of the window that holds the selection */
+	xcfetchname(display, w, &window_name);
 	if (window_name && window_name[0]) {
 	    fprintf(stderr, "xclip: Error: '%s'", window_name);
 	}
