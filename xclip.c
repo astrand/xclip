@@ -92,6 +92,10 @@ static struct requestor *get_requestor(Window win)
 	    }
 	}
 
+	if (xcverb >= ODEBUG) {
+	    fprintf(stderr, "Creating new requestor for window id %ld\n", win);
+	}
+
 	requestor = (struct requestor *)calloc(1, sizeof(struct requestor));
 	if (!requestor) {
 	    errmalloc();
@@ -443,6 +447,7 @@ doIn(Window win, const char *progname)
 	/* wait for a SelectionRequest (paste) event */
 	while (1) {
 	    struct requestor *requestor;
+	    Window requestor_id;
 	    int finished;
 
 	    if (!XPending(dpy) && wait > 0) {
@@ -463,32 +468,24 @@ start:
 
 	    XNextEvent(dpy, &evt);
 
-	    if (evt.type == SelectionRequest) {
-		Window requestor_id = evt.xselectionrequest.requestor;
+	    switch (evt.type) {
+	    case SelectionRequest:
+		requestor_id = evt.xselectionrequest.requestor;
 		requestor = get_requestor(requestor_id);
-		if (xcverb >= ODEBUG) {
-		    char *window_name = NULL;
-		    fprintf(stderr,
-			    "xclip: debug: Received SelectionRequest from ");
-		    xcfetchname(dpy, requestor_id, &window_name);
-		    if (window_name && window_name[0]) {
-			fprintf(stderr, "'%s'\n", window_name);
-		    }
-		    else {
-			fprintf(stderr, "window id 0x%lx\n", requestor_id);
-		    }
-		    if (window_name)
-			XFree(window_name);
-		}
-	    } else if (evt.type == PropertyNotify) {
-		requestor = get_requestor(evt.xproperty.window);
+		break;
+	    case PropertyNotify:
+		requestor_id = evt.xproperty.window;
+		requestor = get_requestor(requestor_id);
 		if (xcverb >= ODEBUG) {
 		    fprintf(stderr, "xclip: debug: Received PropertyNotify\n");
 		}
-	    } else if (evt.type == SelectionClear) {
+		break;
+	    case SelectionClear:
 		if (xcverb >= OVERBOSE) {
 		    fprintf(stderr, "Lost selection ownership. ");
 		    fprintf(stderr, "(Some other client did a 'copy').\n");
+		    if (xcverb >= ODEBUG)
+			requestor_id = XGetSelectionOwner(dpy, sseln);
 		}
 		/* If the client loses ownership(SelectionClear event)
 		 * while it has a transfer in progress, it must continue to
@@ -515,15 +512,31 @@ start:
 				i, (i==1)?"":"s");
 		    }
 		}
-		continue;
-	    } else {
+		continue;	/* Wait for PropertyNotify events */
+	    default:
 		/* Ignore all other event types */
 		if (xcverb >= ODEBUG) {
-		    fprintf(stderr, "xclip: debug: Ignoring X event type %d\n",
+		    fprintf(stderr,
+			    "xclip: debug: Ignoring X event type %d\n",
 			    evt.type);
 		}
-
 		continue;
+	    }
+
+	    if (xcverb >= ODEBUG) {
+		char *window_name = NULL;
+		fprintf(stderr,
+			"xclip: debug: Received event from ");
+		xcfetchname(dpy, requestor_id, &window_name);
+		if (window_name && window_name[0]) {
+		    fprintf(stderr, "'%s'\n", window_name);
+		}
+		else {
+		    fprintf(stderr, "window id 0x%lx\n", requestor_id);
+		}
+		if (window_name)
+		    XFree(window_name);
+		requestor_id=0;
 	    }
 
 	    finished = xcin(dpy, &(requestor->cwin), evt, &(requestor->pty),
@@ -535,6 +548,7 @@ start:
 		break;
 	    }
 	}
+
 	dloop++;		/* increment loop counter */
     }
 
