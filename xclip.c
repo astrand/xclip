@@ -92,6 +92,10 @@ static struct requestor *get_requestor(Window win)
 	    }
 	}
 
+	if (xcverb >= ODEBUG) {
+	    fprintf(stderr, "Creating new requestor for window id %ld\n", win);
+	}
+
 	requestor = (struct requestor *)calloc(1, sizeof(struct requestor));
 	if (!requestor) {
 	    errmalloc();
@@ -468,20 +472,6 @@ start:
 	    case SelectionRequest:
 		requestor_id = evt.xselectionrequest.requestor;
 		requestor = get_requestor(requestor_id);
-		if (xcverb >= ODEBUG) {
-		    char *window_name = NULL;
-		    fprintf(stderr,
-			    "xclip: debug: Received SelectionRequest from ");
-		    xcfetchname(dpy, requestor_id, &window_name);
-		    if (window_name && window_name[0]) {
-			fprintf(stderr, "'%s'\n", window_name);
-		    }
-		    else {
-			fprintf(stderr, "window id 0x%lx\n", requestor_id);
-		    }
-		    if (window_name)
-			XFree(window_name);
-		}
 		break;
 	    case PropertyNotify:
 		requestor_id = evt.xproperty.window;
@@ -533,6 +523,22 @@ start:
 		continue;
 	    }
 
+	    if (xcverb >= ODEBUG) {
+		char *window_name = NULL;
+		fprintf(stderr,
+			"xclip: debug: Received event from ");
+		xcfetchname(dpy, requestor_id, &window_name);
+		if (window_name && window_name[0]) {
+		    fprintf(stderr, "'%s'\n", window_name);
+		}
+		else {
+		    fprintf(stderr, "window id 0x%lx\n", requestor_id);
+		}
+		if (window_name)
+		    XFree(window_name);
+		requestor_id=0;
+	    }
+
 	    finished = xcin(dpy, &(requestor->cwin), evt, &(requestor->pty),
 			    target, sel_buf, sel_len, &(requestor->sel_pos),
 			    &(requestor->context), &(requestor->chunk_size));
@@ -542,6 +548,7 @@ start:
 		break;
 	    }
 	}
+
 	dloop++;		/* increment loop counter */
     }
 
