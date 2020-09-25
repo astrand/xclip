@@ -133,36 +133,6 @@ errperror(int prf_tot, ...)
     free(msg_all);
 }
 
-/* a utility for finding the name of the X window that owns the selection. 
- * Sets namep to point to the string of the name (must be freed with XFree). 
- * Sets wp to point to the Window (an integer id).
- * Returns 0 if it works. Not 0, otherwise. 
- */ 
-int
-fetchname(Display *display, Atom selection, char **namep, Window *wp) {
-    *namep = NULL;
-    *wp = XGetSelectionOwner(display, selection);
-    if (*wp == None)
-	return 1;		/* Nobody has the selection. */
-
-    XFetchName(display, *wp, namep);
-    if (*namep)
-	return 0; 		/* Hurrah! It worked on the first try. */
-	
-    /* Otherwise, recursively try the parent windows */
-    Window p = *wp;
-    Window dummy, *dummyp;
-    unsigned int n;
-    while (!*namep  &&  p != None) {
-	if (!XQueryTree(display, p, &dummy, &p, &dummyp, &n))
-	    break;
-	if (p != None) {
-	    XFetchName(display, p, namep);
-	}
-    }
-    return (*namep == NULL);
-}
-
 
 /* failure to convert selection */
 void
@@ -176,7 +146,7 @@ errconvsel(Display *display, Atom target, Atom selection)
 	exit(EXIT_FAILURE);	/* Invalid selection Atom  */
 
     /* Find the name of the window that holds the selection */
-    fetchname(display, selection, &window_name, &w);
+    xcfetchname(display, selection, &window_name, &w);
 
     if (w == None) {
 	fprintf(stderr, "xclip: Error: There is no owner for the %s selection\n",

@@ -521,3 +521,35 @@ xcin(Display * dpy,
     }
     return (0);
 }
+
+
+
+/* a utility for finding the name of the X window that owns the selection.
+ * Sets namep to point to the string of the name (must be freed with XFree).
+ * Sets wp to point to the Window (an integer id).
+ * Returns 0 if it works. Not 0, otherwise. 
+ */ 
+int
+xcfetchname(Display *display, Atom selection, char **namep, Window *wp) {
+    *namep = NULL;
+    *wp = XGetSelectionOwner(display, selection);
+    if (*wp == None)
+	return 1;		/* Nobody has the selection. */
+
+    XFetchName(display, *wp, namep);
+    if (*namep)
+	return 0; 		/* Hurrah! It worked on the first try. */
+	
+    /* Otherwise, recursively try the parent windows */
+    Window p = *wp;
+    Window dummy, *dummyp;
+    unsigned int n;
+    while (!*namep  &&  p != None) {
+	if (!XQueryTree(display, p, &dummy, &p, &dummyp, &n))
+	    break;
+	if (p != None) {
+	    XFetchName(display, p, namep);
+	}
+    }
+    return (*namep == NULL);
+}
