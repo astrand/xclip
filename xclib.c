@@ -523,25 +523,23 @@ xcin(Display * dpy,
 }
 
 
-
-/* a utility for finding the name of the X window that owns the selection.
+/* xcfetchname(): a utility for finding the name of a given X window. 
+ * (Like XFetchName but recursively walks up tree of parent windows.)
  * Sets namep to point to the string of the name (must be freed with XFree).
- * Sets wp to point to the Window (an integer id).
  * Returns 0 if it works. Not 0, otherwise. 
  */ 
 int
-xcfetchname(Display *display, Atom selection, char **namep, Window *wp) {
+xcfetchname(Display *display, Window w, char **namep) {
     *namep = NULL;
-    *wp = XGetSelectionOwner(display, selection);
-    if (*wp == None)
-	return 1;		/* Nobody has the selection. */
+    if (w == None)
+	return 1;		/* No window, no name. */
 
-    XFetchName(display, *wp, namep);
+    XFetchName(display, w, namep);
     if (*namep)
 	return 0; 		/* Hurrah! It worked on the first try. */
 	
     /* Otherwise, recursively try the parent windows */
-    Window p = *wp;
+    Window p = w;
     Window dummy, *dummyp;
     unsigned int n;
     while (!*namep  &&  p != None) {
