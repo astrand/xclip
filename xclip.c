@@ -464,24 +464,27 @@ start:
 	    XNextEvent(dpy, &evt);
 
 	    if (evt.type == SelectionRequest) {
-		requestor = get_requestor(evt.xselectionrequest.requestor);
+		Window requestor_id = evt.xselectionrequest.requestor;
+		requestor = get_requestor(requestor_id);
 		if (xcverb >= ODEBUG) {
-		    char *window_name;
+		    char *window_name = NULL;
 		    fprintf(stderr,
 			    "xclip: debug: Received SelectionRequest from ");
-		    xcfetchname(dpy, evt.xselectionrequest.requestor, &window_name);
+		    xcfetchname(dpy, requestor_id, &window_name);
 		    if (window_name && window_name[0]) {
 			fprintf(stderr, "'%s'\n", window_name);
 		    }
 		    else {
-			fprintf(stderr, "window id 0x%lx\n", evt.xselectionrequest.requestor);
+			fprintf(stderr, "window id 0x%lx\n", requestor_id);
 		    }
+		    if (window_name)
+			XFree(window_name);
 		}
 	    } else if (evt.type == PropertyNotify) {
+		requestor = get_requestor(evt.xproperty.window);
 		if (xcverb >= ODEBUG) {
 		    fprintf(stderr, "xclip: debug: Received PropertyNotify\n");
 		}
-		requestor = get_requestor(evt.xproperty.window);
 	    } else if (evt.type == SelectionClear) {
 		if (xcverb >= OVERBOSE) {
 		    fprintf(stderr, "Lost selection ownership. ");
