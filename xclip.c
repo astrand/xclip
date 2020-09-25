@@ -443,6 +443,7 @@ doIn(Window win, const char *progname)
 	/* wait for a SelectionRequest (paste) event */
 	while (1) {
 	    struct requestor *requestor;
+	    Window requestor_id;
 	    int finished;
 
 	    if (!XPending(dpy) && wait > 0) {
@@ -463,8 +464,9 @@ start:
 
 	    XNextEvent(dpy, &evt);
 
-	    if (evt.type == SelectionRequest) {
-		Window requestor_id = evt.xselectionrequest.requestor;
+	    switch (evt.type) {
+	    case SelectionRequest:
+		requestor_id = evt.xselectionrequest.requestor;
 		requestor = get_requestor(requestor_id);
 		if (xcverb >= ODEBUG) {
 		    char *window_name = NULL;
@@ -480,15 +482,20 @@ start:
 		    if (window_name)
 			XFree(window_name);
 		}
-	    } else if (evt.type == PropertyNotify) {
-		requestor = get_requestor(evt.xproperty.window);
+		break;
+	    case PropertyNotify:
+		requestor_id = evt.xproperty.window;
+		requestor = get_requestor(requestor_id);
 		if (xcverb >= ODEBUG) {
 		    fprintf(stderr, "xclip: debug: Received PropertyNotify\n");
 		}
-	    } else if (evt.type == SelectionClear) {
+		break;
+	    case SelectionClear:
 		if (xcverb >= OVERBOSE) {
 		    fprintf(stderr, "Lost selection ownership. ");
 		    fprintf(stderr, "(Some other client did a 'copy').\n");
+		    if (xcverb >= ODEBUG)
+			requestor_id = XGetSelectionOwner(dpy, sseln);
 		}
 		/* If the client loses ownership(SelectionClear event)
 		 * while it has a transfer in progress, it must continue to
@@ -515,14 +522,14 @@ start:
 				i, (i==1)?"":"s");
 		    }
 		}
-		continue;
-	    } else {
+		continue;	/* Wait for PropertyNotify events */
+	    default:
 		/* Ignore all other event types */
 		if (xcverb >= ODEBUG) {
-		    fprintf(stderr, "xclip: debug: Ignoring X event type %d\n",
+		    fprintf(stderr,
+			    "xclip: debug: Ignoring X event type %d\n",
 			    evt.type);
 		}
-
 		continue;
 	    }
 
