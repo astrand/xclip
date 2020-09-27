@@ -468,6 +468,11 @@ start:
 
 	    XNextEvent(dpy, &evt);
 
+	    if (xcverb >= ODEBUG) {
+		fprintf(stderr, "xclip: debug: Received %s event\n",
+		    evtstr[evt.type]);
+	    }
+
 	    switch (evt.type) {
 	    case SelectionRequest:
 		requestor_id = evt.xselectionrequest.requestor;
@@ -476,9 +481,6 @@ start:
 	    case PropertyNotify:
 		requestor_id = evt.xproperty.window;
 		requestor = get_requestor(requestor_id);
-		if (xcverb >= ODEBUG) {
-		    fprintf(stderr, "xclip: debug: Received PropertyNotify\n");
-		}
 		break;
 	    case SelectionClear:
 		if (xcverb >= OVERBOSE) {
@@ -517,8 +519,8 @@ start:
 		/* Ignore all other event types */
 		if (xcverb >= ODEBUG) {
 		    fprintf(stderr,
-			    "xclip: debug: Ignoring X event type %d\n",
-			    evt.type);
+			    "xclip: debug: Ignoring X event type %d (%s)\n",
+			    evt.type, evtstr[evt.type]);
 		}
 		continue;
 	    }
@@ -526,7 +528,7 @@ start:
 	    if (xcverb >= ODEBUG) {
 		char *window_name = NULL;
 		fprintf(stderr,
-			"xclip: debug: Received event from ");
+			"xclip: debug: Event received from ");
 		xcfetchname(dpy, requestor_id, &window_name);
 		if (window_name && window_name[0]) {
 		    fprintf(stderr, "'%s'\n", window_name);
