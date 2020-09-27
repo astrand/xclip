@@ -76,3 +76,5 @@ typedef void *(*memset_t)(void *, int, size_t);
 static volatile memset_t memset_func = memset;
 void xcmemzero(void *ptr, size_t len);
 
+/* Table of event names from event numbers */
+extern const char *evtstr[LASTEvent];
