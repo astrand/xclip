@@ -31,6 +31,19 @@
 /* global verbosity output level, defaults to OSILENT */
 int xcverb = OSILENT;
 
+/* Table of event names from event numbers */
+const char *evtstr[LASTEvent] = {
+    "ProtocolError", "ProtocolReply", "KeyPress", "KeyRelease",
+    "ButtonPress", "ButtonRelease", "MotionNotify", "EnterNotify",
+    "LeaveNotify", "FocusIn", "FocusOut", "KeymapNotify", "Expose",
+    "GraphicsExpose", "NoExpose", "VisibilityNotify", "CreateNotify",
+    "DestroyNotify", "UnmapNotify", "MapNotify", "MapRequest",
+    "ReparentNotify", "ConfigureNotify", "ConfigureRequest",
+    "GravityNotify", "ResizeRequest", "CirculateNotify",
+    "CirculateRequest", "PropertyNotify", "SelectionClear",
+    "SelectionRequest", "SelectionNotify", "ColormapNotify",
+    "ClientMessage", "MappingNotify", "GenericEvent", };
+
 /* a memset function that won't be optimized away by compler */
 void 
 xcmemzero(void *ptr, size_t len)
@@ -376,7 +389,8 @@ xcin(Display * dpy,
 	if (evt.type != SelectionRequest) {
 	    if ( xcverb >= ODEBUG ) {
 		fprintf(stderr,
-			"xclib: debug: ignoring event type %d\n", evt.type);
+			"xclib: debug: ignoring %s event\n",
+			evtstr[evt.type]);
 	    }
 	    return (0);
 	}
