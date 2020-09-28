@@ -93,7 +93,8 @@ static struct requestor *get_requestor(Window win)
 	}
 
 	if (xcverb >= ODEBUG) {
-	    fprintf(stderr, "Creating new requestor for window id %ld\n", win);
+	    fprintf(stderr, "xclip: debug: Creating new requestor for window id %lx\n",
+		    win);
 	}
 
 	requestor = (struct requestor *)calloc(1, sizeof(struct requestor));
@@ -123,7 +124,7 @@ static void del_requestor(struct requestor *requestor)
 
 	if (xcverb >= ODEBUG) {
 	    fprintf(stderr,
-		    "xclip: debug: Deleting requestor for window id %ld\n",
+		    "xclip: debug: Deleting requestor for window id %lx\n",
 		    requestor->cwin);
 	}
 
