@@ -433,12 +433,16 @@ doIn(Window win, const char *progname)
 	return EXIT_FAILURE;
     }
 
+    /* Jump into the middle of two while loops */
     goto start;
 
     /* loop and wait for the expected number of
      * SelectionRequest events
      */
     while (dloop < sloop || sloop < 1) {
+	if (xcverb >= ODEBUG)
+	    fprintf(stderr, "\n========\n");
+
 	/* print messages about what we're waiting for
 	 * if not in silent mode
 	 */
@@ -476,6 +480,9 @@ doIn(Window win, const char *progname)
 start:
 
 	    XNextEvent(dpy, &evt);
+
+	    if (xcverb >= ODEBUG)
+		fprintf(stderr, "\n");
 
 	    if (xcverb >= ODEBUG) {
 		fprintf(stderr, "xclip: debug: Received %s event\n",
