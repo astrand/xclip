@@ -121,6 +121,12 @@ static void del_requestor(struct requestor *requestor)
 	    return;
 	}
 
+	if (xcverb >= ODEBUG) {
+	    fprintf(stderr,
+		    "xclip: debug: Deleting requestor for window id %ld\n",
+		    requestor->cwin);
+	}
+
 	if (requestors == requestor) {
 	    requestors = requestors->next;
 	} else {
@@ -412,10 +418,13 @@ doIn(Window win, const char *progname)
 	    fprintf(stderr, "Waiting for one selection request.\n");
 
 	if (sloop < 1)
-	    fprintf(stderr, "Waiting for selection requests, Control-C to quit\n");
+	    fprintf(stderr,
+		    "Waiting for selection requests, Control-C to quit\n");
 
 	if (sloop > 1)
-	    fprintf(stderr, "Waiting for %i selection requests, Control-C to quit\n", sloop);
+	    fprintf(stderr,
+		    "Waiting for %i selection request%s, Control-C to quit\n",
+		    sloop,  (sloop==1)?"":"s");
     }
 
     /* Avoid making the current directory in use, in case it will need to be umounted */
@@ -514,7 +523,7 @@ start:
 				i, (i==1)?"":"s");
 		    }
 		}
-		continue;	/* Wait for PropertyNotify events */
+		continue;	/* Wait for INCR PropertyNotify events */
 	    default:
 		/* Ignore all other event types */
 		if (xcverb >= ODEBUG) {
