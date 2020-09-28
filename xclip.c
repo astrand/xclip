@@ -93,7 +93,8 @@ static struct requestor *get_requestor(Window win)
 	}
 
 	if (xcverb >= ODEBUG) {
-	    fprintf(stderr, "Creating new requestor for window id %ld\n", win);
+	    fprintf(stderr, "xclip: debug: Creating new requestor for window id %lx\n",
+		    win);
 	}
 
 	requestor = (struct requestor *)calloc(1, sizeof(struct requestor));
@@ -119,6 +120,12 @@ static void del_requestor(struct requestor *requestor)
 
 	if (!requestor) {
 	    return;
+	}
+
+	if (xcverb >= ODEBUG) {
+	    fprintf(stderr,
+		    "xclip: debug: Deleting requestor for window id %lx\n",
+		    requestor->cwin);
 	}
 
 	if (requestors == requestor) {
@@ -412,10 +419,13 @@ doIn(Window win, const char *progname)
 	    fprintf(stderr, "Waiting for one selection request.\n");
 
 	if (sloop < 1)
-	    fprintf(stderr, "Waiting for selection requests, Control-C to quit\n");
+	    fprintf(stderr,
+		    "Waiting for selection requests, Control-C to quit\n");
 
 	if (sloop > 1)
-	    fprintf(stderr, "Waiting for %i selection requests, Control-C to quit\n", sloop);
+	    fprintf(stderr,
+		    "Waiting for %i selection request%s, Control-C to quit\n",
+		    sloop,  (sloop==1)?"":"s");
     }
 
     /* Avoid making the current directory in use, in case it will need to be umounted */
@@ -424,12 +434,16 @@ doIn(Window win, const char *progname)
 	return EXIT_FAILURE;
     }
 
+    /* Jump into the middle of two while loops */
     goto start;
 
     /* loop and wait for the expected number of
      * SelectionRequest events
      */
     while (dloop < sloop || sloop < 1) {
+	if (xcverb >= ODEBUG)
+	    fprintf(stderr, "\n========\n");
+
 	/* print messages about what we're waiting for
 	 * if not in silent mode
 	 */
@@ -467,6 +481,9 @@ doIn(Window win, const char *progname)
 start:
 
 	    XNextEvent(dpy, &evt);
+
+	    if (xcverb >= ODEBUG)
+		fprintf(stderr, "\n");
 
 	    if (xcverb >= ODEBUG) {
 		fprintf(stderr, "xclip: debug: Received %s event\n",
@@ -514,7 +531,7 @@ start:
 				i, (i==1)?"":"s");
 		    }
 		}
-		continue;	/* Wait for PropertyNotify events */
+		continue;	/* Wait for INCR PropertyNotify events */
 	    default:
 		/* Ignore all other event types */
 		if (xcverb >= ODEBUG) {
