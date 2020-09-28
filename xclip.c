@@ -725,6 +725,15 @@ doOut(Window win)
     return EXIT_SUCCESS;
 }
 
+int xchandler(Display *dpy, XErrorEvent *evt) {
+    int len=256;
+    char buf[len];
+    XGetErrorText(dpy, evt->error_code, buf, len);
+    fprintf(stderr, "XErrorHandler: Ignore XError type %d, %s\n", evt->type, buf);
+    return 0;
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -895,6 +904,9 @@ main(int argc, char *argv[])
 
     /* get events about property changes */
     XSelectInput(dpy, win, PropertyChangeMask);
+
+    /* If we get an X error, catch it instead of barfing */
+    XSetErrorHandler(xchandler);
 
     if (fdiri)
 	exit_code = doIn(win, argv[0]);
