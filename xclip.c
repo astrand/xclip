@@ -726,10 +726,27 @@ doOut(Window win)
 }
 
 int xchandler(Display *dpy, XErrorEvent *evt) {
-    int len=256;
-    char buf[len];
+    int len=255;
+    char buf[len+1];
     XGetErrorText(dpy, evt->error_code, buf, len);
-    fprintf(stderr, "XErrorHandler: Ignore XError type %d, %s\n", evt->type, buf);
+    if (xcverb >= ODEBUG) {
+	fprintf(stderr, "XErrorHandler:\n"
+		"\tEvent Type: %d\n"
+		"\tResource ID: %ld\n"
+		"\tSerial Num: %lu\n"
+		"\tError code: %u\n"
+		"\tRequest op code: %u major, %u minor\n",
+		evt->type, 
+		evt->resourceid, 
+		evt->serial, 
+		evt->error_code, 
+		evt->request_code, 
+		evt->minor_code);
+    }
+    if (xcverb >= OVERBOSE) {
+	fprintf(stderr, "XErrorHandler: Ignoring XError (type %d): %s\n",
+		evt->type, buf);
+    }
     return 0;
 }
 
