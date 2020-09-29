@@ -142,6 +142,20 @@ static void del_requestor(struct requestor *requestor)
 	free(requestor);
 }
 
+int cleanUpRequestors() {
+    /* Remove any requestors for which the X window has disappeared */
+    if (xcverb >= OVERBOSE) {
+	fprintf(stderr, "cleanUpRequestors: Removing requestors that have disappred\n");
+    }
+    struct requestor *r = requestors;
+    while (r) {
+	fprintf(stderr, "cwin is %ld\n", r->cwin);
+	// xxx to do: implement checking if window is correct and alive.
+	r = r -> next;
+    }
+    return 0;
+}
+
 /* Use XrmParseCommand to parse command line options to option variable */
 static void
 doOptMain(int argc, char *argv[])
@@ -747,6 +761,7 @@ int xchandler(Display *dpy, XErrorEvent *evt) {
 	fprintf(stderr, "XErrorHandler: Ignoring XError (type %d): %s\n",
 		evt->type, buf);
     }
+    cleanUpRequestors();
     return 0;
 }
 
