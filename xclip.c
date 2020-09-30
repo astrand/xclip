@@ -162,6 +162,7 @@ int clean_requestors() {
 	win = r->cwin;
 
 	// check if window exists by seeing if XGetWindowAttributes works.
+	// note: this triggers X's BadWindow error and runs xchandler().
 	if ( !XGetWindowAttributes(dpy, win, &dummy) ) {
 	    if (xcverb >= OVERBOSE) {
 		fprintf(stderr, "    !Found obsolete requestor 0x%lx\n", win);
