@@ -25,7 +25,7 @@ else
 fi    
 
 # test to make sure ./xclip exists
-if [ ! -f xclip ];
+if [ ! -x xclip ];
 then
 	echo "Error: xclip doesn't exist in the current directory."
 	exit
