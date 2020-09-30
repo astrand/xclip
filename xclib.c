@@ -389,6 +389,11 @@ xcin(Display * dpy,
 	if ( xcverb >= ODEBUG )
 	    fprintf(stderr, "xclib: debug: context: XCLIB_XCIN_NONE\n");
 
+	if ( xcverb >= ODEBUG ) {
+	    fprintf(stderr, "xclib: debug: target: %s\n",
+		    XGetAtomName(dpy, evt.xselectionrequest.target));
+	}
+
 	if (evt.type != SelectionRequest) {
 	    if ( xcverb >= ODEBUG ) {
 		fprintf(stderr,
