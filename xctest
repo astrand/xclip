@@ -42,9 +42,9 @@ done
 
 echo "Testing whether xclip exits correctly when the selection is lost"
 echo hello | ./xclip -q -i 2>/dev/null &
-sleep $between
+sleep $delay
 echo goodbye | ./xclip -i
-sleep $between
+sleep $delay
 if ps $! > /dev/null; then
 	echo "FAIL: Zombie xclip yet lives! Killing."
 	killall xclip
@@ -108,6 +108,24 @@ do
 	# quietly remove temp files
 	rm $tempi $tempo 2> /dev/null
 done
+
+# test xclip on files >1MB to force INCR mode
+dd if=/dev/zero bs=1024 count=4096 of=$tempi >/dev/null 2>&1
+echo Binary file large enough to force INCR mode
+for sel in primary secondary clipboard buffer
+do
+	echo -n "  Using the $sel selection	"
+	$checker ./xclip -sel $sel -i -t image/jpeg < $tempi
+	sleep $delay
+	$checker ./xclip -sel $sel -o -t image/jpeg > $tempo
+	if diff $tempi $tempo; then
+		echo "PASS"
+	else
+		echo "FAIL"
+		exit 1
+	fi
+done
+
 
 # Kill any remain xclip processes
 killall xclip
