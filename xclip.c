@@ -93,7 +93,7 @@ static struct requestor *get_requestor(Window win)
 	    for (requestor = requestors; requestor != NULL; requestor = requestor->next) {
 	        if (requestor->cwin == win) {
 		    if (xcverb >= OVERBOSE) {
-			fprintf(stderr, "    =Reusing requestor for window id %lx\n", win);
+			fprintf(stderr, "    =Reusing requestor for window id 0x%lx\n", win);
 		    }
 
 	            return requestor;
@@ -102,7 +102,7 @@ static struct requestor *get_requestor(Window win)
 	}
 
 	if (xcverb >= OVERBOSE) {
-	    fprintf(stderr, "    +Creating new requestor for window id %lx\n", win);
+	    fprintf(stderr, "    +Creating new requestor for window id 0x%lx\n", win);
 	}
 
 	requestor = (struct requestor *)calloc(1, sizeof(struct requestor));
@@ -132,7 +132,7 @@ static void del_requestor(struct requestor *requestor)
 
 	if (xcverb >= OVERBOSE) {
 	    fprintf(stderr,
-		    "    -Deleting requestor for window id %lx\n",
+		    "    -Deleting requestor for window id 0x%lx\n",
 		    requestor->cwin);
 	}
 
@@ -164,7 +164,7 @@ int clean_requestors() {
 	// check if window exists by seeing if XGetWindowAttributes works.
 	if ( !XGetWindowAttributes(dpy, win, &dummy) ) {
 	    if (xcverb >= OVERBOSE) {
-		fprintf(stderr, "    !Found obsolete requestor %lx\n", win);
+		fprintf(stderr, "    !Found obsolete requestor 0x%lx\n", win);
 	    }
 	    del_requestor(r);
 	}
@@ -559,7 +559,7 @@ start:
 			int i=0;
 			fprintf(stderr, "Requestors: ");
 			while (r) {
-			    fprintf(stderr, "%lx\t", r->cwin);
+			    fprintf(stderr, "0x%lx\t", r->cwin);
 			    r = r->next;
 			    i++;
 			}
