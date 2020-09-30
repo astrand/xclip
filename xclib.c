@@ -607,6 +607,38 @@ xcfetchname(Display *display, Window w, char **namep) {
 }
 
 
+/* A convenience wrapper for xcfetchname() that returns a string so it can be
+ * used within printf calls with no need to later XFree anything.
+ * It also smoothes over problems by returning the ID number if no name exists.
+ *
+ * Given a Window ID number, e.g., 0xfa1afe1, return
+ * either the window name followed by the ID in parens, IFF it can be found,
+ * otherwise, the string "window id 0xfa1afe1". 
+ *
+ * Example output:  "'Falafel' (0xfa1afe1)"
+ * Example output:  "window id 0xfa1afe1"
+ *
+ * String is statically allocated and is updated at each call.
+ */
+char xcname[4096];
+char *
+xcnamestr(Display *display, Window w) {
+    char *window_name;
+    xcfetchname(display, w, &window_name);
+    if (window_name && window_name[0]) {
+	snprintf( xcname, sizeof(xcname)-1, "'%s' (0x%lx)", window_name, w);
+    }
+    else {
+	snprintf( xcname, sizeof(xcname)-1, "window id 0x%lx", w );
+    }
+    if (window_name)
+	XFree(window_name);
+
+    xcname[sizeof(xcname) - 1] = '\0'; /* Ensure NULL termination */
+    return xcname;
+}
+
+
 /* Xlib Error handler that saves last error event */
 /* Usage: XSetErrorHandler(xchandler); */
 int xcerrflag = False;
