@@ -583,14 +583,16 @@ start:
 
 	    if (xcverb >= ODEBUG) {
 		char *window_name = NULL;
-		fprintf(stderr,
-			"xclip: debug: Event received from ");
 		xcfetchname(dpy, requestor_id, &window_name);
 		if (window_name && window_name[0]) {
-		    fprintf(stderr, "'%s'\n", window_name);
+		    fprintf(stderr,
+			    "xclip: debug: Event received from "
+			    "'%s'\n", window_name);
 		}
 		else {
-		    fprintf(stderr, "window id 0x%lx\n", requestor_id);
+		    fprintf(stderr,
+			    "xclip: debug: Event received from "
+			    "window id 0x%lx\n", requestor_id);
 		}
 		if (window_name)
 		    XFree(window_name);
