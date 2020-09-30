@@ -164,7 +164,7 @@ int clean_requestors() {
 	// check if window exists by seeing if XGetWindowAttributes works.
 	if ( !XGetWindowAttributes(dpy, win, &dummy) ) {
 	    if (xcverb >= OVERBOSE) {
-		fprintf(stderr, "    !Found obsolete requestor %ld\n", win);
+		fprintf(stderr, "    !Found obsolete requestor %lx\n", win);
 	    }
 	    del_requestor(r);
 	}
@@ -559,7 +559,7 @@ start:
 			int i=0;
 			fprintf(stderr, "Requestors: ");
 			while (r) {
-			    fprintf(stderr, "%ld\t", r->cwin);
+			    fprintf(stderr, "%lx\t", r->cwin);
 			    r = r->next;
 			    i++;
 			}
