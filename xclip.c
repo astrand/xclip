@@ -84,17 +84,25 @@ static struct requestor *get_requestor(Window win)
 {
 	struct requestor *requestor;
 
+	if (win==0)
+	    fprintf(stderr,
+		    "\n*** Gadzooks! We've been requested by window zero!\n"
+		    "*** This should never happen!\n\n");
+
 	if (requestors) {
 	    for (requestor = requestors; requestor != NULL; requestor = requestor->next) {
 	        if (requestor->cwin == win) {
+		    if (xcverb >= OVERBOSE) {
+			fprintf(stderr, "=Reusing requestor for window id %lx\n", win);
+		    }
+
 	            return requestor;
 	        }
 	    }
 	}
 
-	if (xcverb >= ODEBUG) {
-	    fprintf(stderr, "xclip: debug: Creating new requestor for window id %lx\n",
-		    win);
+	if (xcverb >= OVERBOSE) {
+	    fprintf(stderr, "+Creating new requestor for window id %lx\n", win);
 	}
 
 	requestor = (struct requestor *)calloc(1, sizeof(struct requestor));
@@ -122,9 +130,9 @@ static void del_requestor(struct requestor *requestor)
 	    return;
 	}
 
-	if (xcverb >= ODEBUG) {
+	if (xcverb >= OVERBOSE) {
 	    fprintf(stderr,
-		    "xclip: debug: Deleting requestor for window id %lx\n",
+		    "-Deleting requestor for window id %lx\n",
 		    requestor->cwin);
 	}
 
@@ -142,15 +150,24 @@ static void del_requestor(struct requestor *requestor)
 	free(requestor);
 }
 
-int cleanUpRequestors() {
+int clean_requestors() {
     /* Remove any requestors for which the X window has disappeared */
     if (xcverb >= OVERBOSE) {
-	fprintf(stderr, "cleanUpRequestors: Removing requestors that have disappred\n");
+	fprintf(stderr, "clean_requestors: Removing requestors that have disappeared\n");
     }
     struct requestor *r = requestors;
+    Window win;
+    XWindowAttributes dummy;
     while (r) {
-	fprintf(stderr, "cwin is %ld\n", r->cwin);
-	// xxx to do: implement checking if window is correct and alive.
+	win = r->cwin;
+
+	// check if window exists by seeing if XGetWindowAttributes works.
+	if ( !XGetWindowAttributes(dpy, win, &dummy) ) {
+	    if (xcverb >= ODEBUG) {
+		fprintf(stderr, "!Found obsolete requestor %ld\n", win);
+	    }
+	    del_requestor(r);
+	}
 	r = r -> next;
     }
     return 0;
@@ -527,6 +544,8 @@ start:
 		 */
 		/* Set dloop to force exit after all transfers finish. */
 		dloop = sloop;
+		/* remove requestors for dead windows */
+		clean_requestors();
 		/* if there are no more in-progress transfers, force exit */
 		if (!requestors) {
 		    if (xcverb >= OVERBOSE) {
@@ -537,9 +556,14 @@ start:
 		else {
 		    if (xcverb >= OVERBOSE) {
 			struct requestor *r = requestors;
-			int i=1;
-			while ( (r = r->next) )
+			int i=0;
+			fprintf(stderr, "Requestors: ");
+			while (r) {
+			    fprintf(stderr, "%ld\t", r->cwin);
+			    r = r->next;
 			    i++;
+			}
+			fprintf(stderr, "\n");
 			fprintf(stderr,
 				"Still transfering data to %d requestor%s.\n",
 				i, (i==1)?"":"s");
@@ -577,6 +601,10 @@ start:
 			    &(requestor->context), &(requestor->chunk_size));
 
 	    if (finished) {
+		del_requestor(requestor);
+		break;
+	    }
+	    if (requestor->cwin == 0) {
 		del_requestor(requestor);
 		break;
 	    }
@@ -739,10 +767,20 @@ doOut(Window win)
     return EXIT_SUCCESS;
 }
 
+/* Xlib Error handling can pass info from handler to flag errors to main code. */
+int xcerrflag = False;
+XErrorEvent xcerrevt;
 int xchandler(Display *dpy, XErrorEvent *evt) {
+    xcerrflag = True;
+    xcerrevt = *evt;
+
     int len=255;
     char buf[len+1];
     XGetErrorText(dpy, evt->error_code, buf, len);
+    if (xcverb >= OVERBOSE) {
+	fprintf(stderr, "XErrorHandler: XError (type %d): %s\n",
+		evt->type, buf);
+    }
     if (xcverb >= ODEBUG) {
 	fprintf(stderr, "XErrorHandler:\n"
 		"\tEvent Type: %d\n"
@@ -757,11 +795,7 @@ int xchandler(Display *dpy, XErrorEvent *evt) {
 		evt->request_code, 
 		evt->minor_code);
     }
-    if (xcverb >= OVERBOSE) {
-	fprintf(stderr, "XErrorHandler: Ignoring XError (type %d): %s\n",
-		evt->type, buf);
-    }
-    cleanUpRequestors();
+
     return 0;
 }
 
