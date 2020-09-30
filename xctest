@@ -18,6 +18,16 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+cleanup() {
+	# quietly remove temp files
+	rm $tempi $tempo 2> /dev/null
+	# Kill any remain xclip processes
+	killall xclip 2> /dev/null
+}
+trap cleanup EXIT HUP INT
+
+
+
 if  sleep 0.1  2>/dev/null; then
     delay=0.1   # seconds to wait before running xclip -o
 else
