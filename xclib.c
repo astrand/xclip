@@ -599,3 +599,39 @@ xcfetchname(Display *display, Window w, char **namep) {
     }
     return (*namep == NULL);
 }
+
+
+/* Xlib Error handler that saves last error event */
+/* Usage: XSetErrorHandler(xchandler); */
+int xcerrflag = False;
+XErrorEvent xcerrevt;
+int xchandler(Display *dpy, XErrorEvent *evt) {
+    xcerrflag = True;
+    xcerrevt = *evt;
+
+    int len=255;
+    char buf[len+1];
+    XGetErrorText(dpy, evt->error_code, buf, len);
+    if (xcverb >= OVERBOSE) {
+	fprintf(stderr, "XErrorHandler: XError (type %d): %s\n",
+		evt->type, buf);
+    }
+    if (xcverb >= ODEBUG) {
+	fprintf(stderr, "XErrorHandler:\n"
+		"\tEvent Type: %d\n"
+		"\tResource ID: %ld\n"
+		"\tSerial Num: %lu\n"
+		"\tError code: %u\n"
+		"\tRequest op code: %u major, %u minor\n",
+		evt->type, 
+		evt->resourceid, 
+		evt->serial, 
+		evt->error_code, 
+		evt->request_code, 
+		evt->minor_code);
+    }
+
+    return 0;
+}
+
+
