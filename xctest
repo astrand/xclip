@@ -18,7 +18,11 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-delay=1 # seconds to wait before running xclip -o
+if  sleep 0.1  2>/dev/null; then
+    delay=0.1   # seconds to wait before running xclip -o
+else
+    delay=1
+fi    
 
 # test to make sure ./xclip exists
 if [ ! -f xclip ];
@@ -38,9 +42,9 @@ done
 
 echo "Testing whether xclip exits correctly when the selection is lost"
 echo hello | ./xclip -q -i 2>/dev/null &
-sleep 1
+sleep $between
 echo goodbye | ./xclip -i
-sleep 1
+sleep $between
 if ps $! > /dev/null; then
 	echo "FAIL: Zombie xclip yet lives! Killing."
 	killall xclip
