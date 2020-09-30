@@ -84,17 +84,25 @@ static struct requestor *get_requestor(Window win)
 {
 	struct requestor *requestor;
 
+	if (win==0)
+	    fprintf(stderr,
+		    "\n*** Gadzooks! We've been requested by window zero!\n"
+		    "*** This should never happen!\n\n");
+
 	if (requestors) {
 	    for (requestor = requestors; requestor != NULL; requestor = requestor->next) {
 	        if (requestor->cwin == win) {
+		    if (xcverb >= OVERBOSE) {
+			fprintf(stderr, "    =Reusing requestor for window id 0x%lx\n", win);
+		    }
+
 	            return requestor;
 	        }
 	    }
 	}
 
-	if (xcverb >= ODEBUG) {
-	    fprintf(stderr, "xclip: debug: Creating new requestor for window id %lx\n",
-		    win);
+	if (xcverb >= OVERBOSE) {
+	    fprintf(stderr, "    +Creating new requestor for window id 0x%lx\n", win);
 	}
 
 	requestor = (struct requestor *)calloc(1, sizeof(struct requestor));
@@ -122,9 +130,9 @@ static void del_requestor(struct requestor *requestor)
 	    return;
 	}
 
-	if (xcverb >= ODEBUG) {
+	if (xcverb >= OVERBOSE) {
 	    fprintf(stderr,
-		    "xclip: debug: Deleting requestor for window id %lx\n",
+		    "    -Deleting requestor for window id 0x%lx\n",
 		    requestor->cwin);
 	}
 
@@ -140,6 +148,30 @@ static void del_requestor(struct requestor *requestor)
 	}
 
 	free(requestor);
+}
+
+int clean_requestors() {
+    /* Remove any requestors for which the X window has disappeared */
+    if (xcverb >= ODEBUG) {
+	fprintf(stderr, "xclip: debug: cleaning up requestors that have disappeared\n");
+    }
+    struct requestor *r = requestors;
+    Window win;
+    XWindowAttributes dummy;
+    while (r) {
+	win = r->cwin;
+
+	// check if window exists by seeing if XGetWindowAttributes works.
+	// note: this triggers X's BadWindow error and runs xchandler().
+	if ( !XGetWindowAttributes(dpy, win, &dummy) ) {
+	    if (xcverb >= OVERBOSE) {
+		fprintf(stderr, "    !Found obsolete requestor 0x%lx\n", win);
+	    }
+	    del_requestor(r);
+	}
+	r = r -> next;
+    }
+    return 0;
 }
 
 /* Use XrmParseCommand to parse command line options to option variable */
@@ -513,6 +545,8 @@ start:
 		 */
 		/* Set dloop to force exit after all transfers finish. */
 		dloop = sloop;
+		/* remove requestors for dead windows */
+		clean_requestors();
 		/* if there are no more in-progress transfers, force exit */
 		if (!requestors) {
 		    if (xcverb >= OVERBOSE) {
@@ -523,9 +557,14 @@ start:
 		else {
 		    if (xcverb >= OVERBOSE) {
 			struct requestor *r = requestors;
-			int i=1;
-			while ( (r = r->next) )
+			int i=0;
+			fprintf(stderr, "Requestors: ");
+			while (r) {
+			    fprintf(stderr, "0x%lx\t", r->cwin);
+			    r = r->next;
 			    i++;
+			}
+			fprintf(stderr, "\n");
 			fprintf(stderr,
 				"Still transfering data to %d requestor%s.\n",
 				i, (i==1)?"":"s");
@@ -544,14 +583,16 @@ start:
 
 	    if (xcverb >= ODEBUG) {
 		char *window_name = NULL;
-		fprintf(stderr,
-			"xclip: debug: Event received from ");
 		xcfetchname(dpy, requestor_id, &window_name);
 		if (window_name && window_name[0]) {
-		    fprintf(stderr, "'%s'\n", window_name);
+		    fprintf(stderr,
+			    "xclip: debug: Event received from "
+			    "'%s'\n", window_name);
 		}
 		else {
-		    fprintf(stderr, "window id 0x%lx\n", requestor_id);
+		    fprintf(stderr,
+			    "xclip: debug: Event received from "
+			    "window id 0x%lx\n", requestor_id);
 		}
 		if (window_name)
 		    XFree(window_name);
@@ -563,6 +604,10 @@ start:
 			    &(requestor->context), &(requestor->chunk_size));
 
 	    if (finished) {
+		del_requestor(requestor);
+		break;
+	    }
+	    if (requestor->cwin == 0) {
 		del_requestor(requestor);
 		break;
 	    }
@@ -895,6 +940,9 @@ main(int argc, char *argv[])
 
     /* get events about property changes */
     XSelectInput(dpy, win, PropertyChangeMask);
+
+    /* If we get an X error, catch it instead of barfing */
+    XSetErrorHandler(xchandler);
 
     if (fdiri)
 	exit_code = doIn(win, argv[0]);
