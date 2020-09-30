@@ -478,7 +478,7 @@ xcin(Display * dpy,
 
 	/* don't treat TARGETS request as contents request */
 	if (evt.xselectionrequest.target == targets)
-	    return 0;
+	    return 1;
 
 	/* if len <= chunk_size, then the data was sent all at
 	 * once and the transfer is now complete, return 1
