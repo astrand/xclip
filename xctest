@@ -53,13 +53,13 @@ else
 	echo "PASS: xclip exited correctly after losing selection"
 fi
 
+# temp file names (in and out)
+tempi=`mktemp` || exit 1
+tempo=`mktemp` || exit 1
+
 # test xclip on different amounts of data to bring out any errors
 for lines in 2 16 128 1024 8192
 do
-	# temp file names (in and out)
-	tempi=`mktemp` || exit 1
-	tempo=`mktemp` || exit 1
-
 	linec=0	# current line of file in while loop
 
 	# append lines two at a time to input temp file
