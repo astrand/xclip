@@ -389,7 +389,7 @@ xcin(Display * dpy,
 	if ( xcverb >= ODEBUG )
 	    fprintf(stderr, "xclib: debug: context: XCLIB_XCIN_NONE\n");
 
-	if ( xcverb >= ODEBUG ) {
+	if ( xcverb >= ODEBUG  &&  evt.xselectionrequest.target) {
 	    char *tempstr = XGetAtomName(dpy, evt.xselectionrequest.target);
 	    fprintf(stderr, "xclib: debug: target: %s\n", tempstr);
 	    XFree(tempstr);
@@ -619,16 +619,16 @@ int xchandler(Display *dpy, XErrorEvent *evt) {
     char buf[len+1];
     XGetErrorText(dpy, evt->error_code, buf, len);
     if (xcverb >= OVERBOSE) {
-	fprintf(stderr, "XErrorHandler: XError (type %d): %s\n",
+	fprintf(stderr, "\tXErrorHandler: XError (type %d): %s\n",
 		evt->type, buf);
     }
     if (xcverb >= ODEBUG) {
-	fprintf(stderr, "XErrorHandler:\n"
-		"\tEvent Type: %d\n"
-		"\tResource ID: %ld\n"
-		"\tSerial Num: %lu\n"
-		"\tError code: %u\n"
-		"\tRequest op code: %u major, %u minor\n",
+	fprintf(stderr, 
+		"\t\tEvent Type: %d\n"
+		"\t\tResource ID: %ld\n"
+		"\t\tSerial Num: %lu\n"
+		"\t\tError code: %u\n"
+		"\t\tRequest op code: %u major, %u minor\n",
 		evt->type, 
 		evt->resourceid, 
 		evt->serial, 
