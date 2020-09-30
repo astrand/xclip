@@ -57,17 +57,19 @@ fi
 tempi=`mktemp` || exit 1
 tempo=`mktemp` || exit 1
 
-# test xclip on different amounts of data to bring out any errors
-for lines in 2 16 128 1024 8192
+# test xclip on different amounts of data (2^fold) to bring out any errors
+c=0			# Number of folds completed.
+lines=1			# Current file size (2 to the c power).
+echo -n -e "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_ "  > $tempi
+echo -n -e "abcdefghijklmnopqrstuvwzyz!@#$%^&*()\n" >> $tempi
+for fold in 1 4 7 10 13
 do
-	linec=0	# current line of file in while loop
-
-	# append lines two at a time to input temp file
-	while [ $linec -lt `expr $lines / 2` ]
+	# double size of file by two
+	while [ $c -lt $fold ]
 	do
-		echo -n -e "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890\n" >> $tempi
-		echo -n -e "abcdefghijklmnopqrstuvwzyz!@#$%^&*()\n" >> $tempi
-		linec=$(($linec+1))
+		cat $tempi $tempi > $tempo  &&  mv $tempo $tempi
+		lines=$(( 2 * lines ))
+		c=$(( c + 1 ))
 	done
 
 	# test piping the file to xclip, using all selections
@@ -105,8 +107,6 @@ do
 	done
 	echo
 
-	# quietly remove temp files
-	rm $tempi $tempo 2> /dev/null
 done
 
 # test xclip on files >1MB to force INCR mode
@@ -129,3 +129,7 @@ done
 
 # Kill any remain xclip processes
 killall xclip
+
+# quietly remove temp files
+rm $tempi $tempo 2> /dev/null
+
