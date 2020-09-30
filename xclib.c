@@ -390,8 +390,9 @@ xcin(Display * dpy,
 	    fprintf(stderr, "xclib: debug: context: XCLIB_XCIN_NONE\n");
 
 	if ( xcverb >= ODEBUG ) {
-	    fprintf(stderr, "xclib: debug: target: %s\n",
-		    XGetAtomName(dpy, evt.xselectionrequest.target));
+	    char *tempstr = XGetAtomName(dpy, evt.xselectionrequest.target);
+	    fprintf(stderr, "xclib: debug: target: %s\n", tempstr);
+	    XFree(tempstr);
 	}
 
 	if (evt.type != SelectionRequest) {
