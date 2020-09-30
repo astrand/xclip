@@ -76,7 +76,8 @@ Makefile: Makefile.in configure
 configure: configure.ac
 	./bootstrap
 
-borked: borked.c xclib.o xcprint.o
+borked: borked.c xclib.o xcprint.o 
+	$(CC) $^ $(CFLAGS) -o $@ $(X11OBJ) $(LDFLAGS)
 
 .SUFFIXES:
 .SUFFIXES: .c .o

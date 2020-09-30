@@ -24,6 +24,10 @@
 /* global verbosity output level */
 extern int xcverb;
 
+/* global error flags from xchandler() */
+extern int xcerrflag;
+extern XErrorEvent xcerrevt;
+
 /* output level constants for xcverb */
 #define OSILENT  0
 #define OQUIET   1
@@ -75,6 +79,7 @@ extern int xcfetchname(Display *, Window, char **);
 typedef void *(*memset_t)(void *, int, size_t);
 static volatile memset_t memset_func = memset;
 void xcmemzero(void *ptr, size_t len);
+int xchandler(Display *, XErrorEvent *);
 
 /* Table of event names from event numbers */
 extern const char *evtstr[LASTEvent];

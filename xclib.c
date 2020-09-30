@@ -389,6 +389,12 @@ xcin(Display * dpy,
 	if ( xcverb >= ODEBUG )
 	    fprintf(stderr, "xclib: debug: context: XCLIB_XCIN_NONE\n");
 
+	if ( xcverb >= ODEBUG  &&  evt.xselectionrequest.target) {
+	    char *tempstr = XGetAtomName(dpy, evt.xselectionrequest.target);
+	    fprintf(stderr, "xclib: debug: target: %s\n", tempstr);
+	    XFree(tempstr);
+	}
+
 	if (evt.type != SelectionRequest) {
 	    if ( xcverb >= ODEBUG ) {
 		fprintf(stderr,
@@ -472,7 +478,7 @@ xcin(Display * dpy,
 
 	/* don't treat TARGETS request as contents request */
 	if (evt.xselectionrequest.target == targets)
-	    return 0;
+	    return 1;
 
 	/* if len <= chunk_size, then the data was sent all at
 	 * once and the transfer is now complete, return 1
@@ -599,3 +605,39 @@ xcfetchname(Display *display, Window w, char **namep) {
     }
     return (*namep == NULL);
 }
+
+
+/* Xlib Error handler that saves last error event */
+/* Usage: XSetErrorHandler(xchandler); */
+int xcerrflag = False;
+XErrorEvent xcerrevt;
+int xchandler(Display *dpy, XErrorEvent *evt) {
+    xcerrflag = True;
+    xcerrevt = *evt;
+
+    int len=255;
+    char buf[len+1];
+    XGetErrorText(dpy, evt->error_code, buf, len);
+    if (xcverb >= OVERBOSE) {
+	fprintf(stderr, "\tXErrorHandler: XError (type %d): %s\n",
+		evt->type, buf);
+    }
+    if (xcverb >= ODEBUG) {
+	fprintf(stderr, 
+		"\t\tEvent Type: %d\n"
+		"\t\tResource ID: %ld\n"
+		"\t\tSerial Num: %lu\n"
+		"\t\tError code: %u\n"
+		"\t\tRequest op code: %u major, %u minor\n",
+		evt->type, 
+		evt->resourceid, 
+		evt->serial, 
+		evt->error_code, 
+		evt->request_code, 
+		evt->minor_code);
+    }
+
+    return 0;
+}
+
+
