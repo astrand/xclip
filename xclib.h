@@ -74,6 +74,8 @@ extern void *xcrealloc(void*, size_t);
 extern void *xcstrdup(const char *);
 extern void xcmemcheck(void*);
 extern int xcfetchname(Display *, Window, char **);
+extern char *xcnamestr(Display *, Window);
+
 
 /* volatile prevents compiler from causing dead-store elimination with optimization enabled */
 typedef void *(*memset_t)(void *, int, size_t);
