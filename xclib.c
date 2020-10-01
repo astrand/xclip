@@ -612,8 +612,11 @@ xcfetchname(Display *display, Window w, char **namep) {
  * It also smoothes over problems by returning the ID number if no name exists.
  *
  * Given a Window ID number, e.g., 0xfa1afe1, return
- * either the window name, if it can be found from its ID,
+ * either the window name followed by the ID in parens, IFF it can be found,
  * otherwise, the string "window id 0xfa1afe1". 
+ *
+ * Example output:  "'Falafel' (0xfa1afe1)"
+ * Example output:  "window id 0xfa1afe1"
  *
  * String is statically allocated and is updated at each call.
  */
@@ -623,7 +626,7 @@ xcnamestr(Display *display, Window w) {
     char *window_name;
     xcfetchname(display, w, &window_name);
     if (window_name && window_name[0]) {
-	strncpy( xcname, window_name, sizeof(xcname)-1 );
+	snprintf( xcname, sizeof(xcname)-1, "'%s' (0x%lx)", window_name, w);
     }
     else {
 	snprintf( xcname, sizeof(xcname)-1, "window id 0x%lx", w );
