@@ -537,9 +537,11 @@ start:
 	    case SelectionClear:
 		if (xcverb >= OVERBOSE) {
 		    fprintf(stderr, "Lost selection ownership. ");
-		    fprintf(stderr, "(Some other client did a 'copy').\n");
-		    if (xcverb >= ODEBUG)
-			requestor_id = XGetSelectionOwner(dpy, sseln);
+		    requestor_id = XGetSelectionOwner(dpy, sseln);
+		    if (requestor_id == None)
+			fprintf(stderr, "(Some other client cleared the selection).\n");
+		    else
+			fprintf(stderr, "(%s did a copy).\n", xcnamestr(dpy, requestor_id) );
 		}
 		/* If the client loses ownership(SelectionClear event)
 		 * while it has a transfer in progress, it must continue to
