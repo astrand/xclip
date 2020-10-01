@@ -582,7 +582,7 @@ start:
 	    }
 
 	    if (xcverb >= ODEBUG) {
-		fprintf(stderr, "xclip: debug: Event received from %s\n",
+		fprintf(stderr, "xclip: debug: event was sent by %s\n",
 			xcnamestr(dpy, requestor_id) );
 		requestor_id=0;
 	    }
