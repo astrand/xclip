@@ -84,11 +84,6 @@ static struct requestor *get_requestor(Window win)
 {
 	struct requestor *requestor;
 
-	if (win==0)
-	    fprintf(stderr,
-		    "\n*** Gadzooks! We've been requested by window zero!\n"
-		    "*** This should never happen!\n\n");
-
 	if (requestors) {
 	    for (requestor = requestors; requestor != NULL; requestor = requestor->next) {
 	        if (requestor->cwin == win) {
