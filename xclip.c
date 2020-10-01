@@ -93,7 +93,9 @@ static struct requestor *get_requestor(Window win)
 	    for (requestor = requestors; requestor != NULL; requestor = requestor->next) {
 	        if (requestor->cwin == win) {
 		    if (xcverb >= OVERBOSE) {
-			fprintf(stderr, "    =Reusing requestor for window id 0x%lx\n", win);
+			fprintf(stderr,
+				"    = Reusing requestor for %s\n",
+				xcnamestr(dpy, win) );
 		    }
 
 	            return requestor;
@@ -102,7 +104,8 @@ static struct requestor *get_requestor(Window win)
 	}
 
 	if (xcverb >= OVERBOSE) {
-	    fprintf(stderr, "    +Creating new requestor for window id 0x%lx\n", win);
+	    fprintf(stderr, "    + Creating new requestor for %s\n",
+		    xcnamestr(dpy, win) );
 	}
 
 	requestor = (struct requestor *)calloc(1, sizeof(struct requestor));
@@ -132,8 +135,8 @@ static void del_requestor(struct requestor *requestor)
 
 	if (xcverb >= OVERBOSE) {
 	    fprintf(stderr,
-		    "    -Deleting requestor for window id 0x%lx\n",
-		    requestor->cwin);
+		    "    - Deleting requestor for %s\n",
+		    xcnamestr(dpy, requestor->cwin) );
 	}
 
 	if (requestors == requestor) {
@@ -165,7 +168,7 @@ int clean_requestors() {
 	// note: this triggers X's BadWindow error and runs xchandler().
 	if ( !XGetWindowAttributes(dpy, win, &dummy) ) {
 	    if (xcverb >= OVERBOSE) {
-		fprintf(stderr, "    !Found obsolete requestor 0x%lx\n", win);
+		fprintf(stderr, "    ! Found obsolete requestor 0x%lx\n", win);
 	    }
 	    del_requestor(r);
 	}
@@ -582,20 +585,8 @@ start:
 	    }
 
 	    if (xcverb >= ODEBUG) {
-		char *window_name = NULL;
-		xcfetchname(dpy, requestor_id, &window_name);
-		if (window_name && window_name[0]) {
-		    fprintf(stderr,
-			    "xclip: debug: Event received from "
-			    "'%s'\n", window_name);
-		}
-		else {
-		    fprintf(stderr,
-			    "xclip: debug: Event received from "
-			    "window id 0x%lx\n", requestor_id);
-		}
-		if (window_name)
-		    XFree(window_name);
+		fprintf(stderr, "xclip: debug: Event received from %s\n",
+			xcnamestr(dpy, requestor_id) );
 		requestor_id=0;
 	    }
 
