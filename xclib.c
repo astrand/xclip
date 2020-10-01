@@ -398,7 +398,7 @@ xcin(Display * dpy,
 	if (evt.type != SelectionRequest) {
 	    if ( xcverb >= ODEBUG ) {
 		fprintf(stderr,
-			"xclib: debug: ignoring %s event\n",
+			"xclib: debug: ignoring %s event (context is NONE)\n",
 			evtstr[evt.type]);
 	    }
 	    return (0);
