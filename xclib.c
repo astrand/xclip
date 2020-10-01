@@ -398,7 +398,7 @@ xcin(Display * dpy,
 	if (evt.type != SelectionRequest) {
 	    if ( xcverb >= ODEBUG ) {
 		fprintf(stderr,
-			"xclib: debug: ignoring %s event\n",
+			"xclib: debug: ignoring %s event (context is NONE)\n",
 			evtstr[evt.type]);
 	    }
 	    return (0);
@@ -415,7 +415,7 @@ xcin(Display * dpy,
 	    Atom types[2] = { targets, target };
 
 	    if ( xcverb >= ODEBUG ) {
-		fprintf(stderr, "xclib: debug: sending list of TARGETS.\n");
+		fprintf(stderr, "xclib: debug: sending list of TARGETS\n");
 	    }
 
 	    /* send data all at once (not using INCR) */
@@ -478,7 +478,7 @@ xcin(Display * dpy,
 
 	/* don't treat TARGETS request as contents request */
 	if (evt.xselectionrequest.target == targets)
-	    return 1;
+	    return (1);		/* Finished with request */
 
 	/* if len <= chunk_size, then the data was sent all at
 	 * once and the transfer is now complete, return 1
@@ -657,7 +657,7 @@ int xchandler(Display *dpy, XErrorEvent *evt) {
     if (xcverb >= ODEBUG) {
 	fprintf(stderr, 
 		"\t\tEvent Type: %d\n"
-		"\t\tResource ID: %ld\n"
+		"\t\tResource ID: 0x%lx\n"
 		"\t\tSerial Num: %lu\n"
 		"\t\tError code: %u\n"
 		"\t\tRequest op code: %u major, %u minor\n",

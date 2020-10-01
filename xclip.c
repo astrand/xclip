@@ -84,11 +84,6 @@ static struct requestor *get_requestor(Window win)
 {
 	struct requestor *requestor;
 
-	if (win==0)
-	    fprintf(stderr,
-		    "\n*** Gadzooks! We've been requested by window zero!\n"
-		    "*** This should never happen!\n\n");
-
 	if (requestors) {
 	    for (requestor = requestors; requestor != NULL; requestor = requestor->next) {
 	        if (requestor->cwin == win) {
@@ -537,9 +532,11 @@ start:
 	    case SelectionClear:
 		if (xcverb >= OVERBOSE) {
 		    fprintf(stderr, "Lost selection ownership. ");
-		    fprintf(stderr, "(Some other client did a 'copy').\n");
-		    if (xcverb >= ODEBUG)
-			requestor_id = XGetSelectionOwner(dpy, sseln);
+		    requestor_id = XGetSelectionOwner(dpy, sseln);
+		    if (requestor_id == None)
+			fprintf(stderr, "(Some other client cleared the selection).\n");
+		    else
+			fprintf(stderr, "(%s did a copy).\n", xcnamestr(dpy, requestor_id) );
 		}
 		/* If the client loses ownership(SelectionClear event)
 		 * while it has a transfer in progress, it must continue to
@@ -553,7 +550,7 @@ start:
 		/* if there are no more in-progress transfers, force exit */
 		if (!requestors) {
 		    if (xcverb >= OVERBOSE) {
-			fprintf(stderr, "No transfers in progress to wait for.\n");
+			fprintf(stderr, "Exiting.\n");
 		    }
 		    return EXIT_SUCCESS;
 		}
@@ -585,7 +582,7 @@ start:
 	    }
 
 	    if (xcverb >= ODEBUG) {
-		fprintf(stderr, "xclip: debug: Event received from %s\n",
+		fprintf(stderr, "xclip: debug: event was sent by %s\n",
 			xcnamestr(dpy, requestor_id) );
 		requestor_id=0;
 	    }
