@@ -555,7 +555,7 @@ start:
 		/* if there are no more in-progress transfers, force exit */
 		if (!requestors) {
 		    if (xcverb >= OVERBOSE) {
-			fprintf(stderr, "No transfers in progress to wait for.\n");
+			fprintf(stderr, "Exiting.\n");
 		    }
 		    return EXIT_SUCCESS;
 		}
