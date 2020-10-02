@@ -135,22 +135,23 @@ do
 done
 
 # test xclip on files >1MB to force INCR mode
-dd if=/dev/zero bs=1024 count=4096 of=$tempi >/dev/null 2>&1
-echo Binary file large enough to force INCR mode
-for sel in primary secondary clipboard buffer
-do
-    echo -n "  Using the $sel selection	"
-    $checker ./xclip -sel $sel -i -t image/jpeg < $tempi
-    sleep $delay
-    $checker ./xclip -sel $sel -o -t image/jpeg > $tempo
-    if diff $tempi $tempo; then
-	echo "PASS"
-    else
-	echo "FAIL"
-	exit 1
-    fi
+for i in 1 2 16; do
+    dd if=/dev/zero bs=1024 count=$((i*1024)) of=$tempi >/dev/null 2>&1
+    echo "Binary file large enough to force INCR mode ($i MB)"
+    for sel in primary secondary clipboard buffer
+    do
+	echo -n "  Using the $sel selection	"
+	$checker ./xclip -sel $sel -i -t image/jpeg < $tempi
+	sleep $delay
+	$checker ./xclip -sel $sel -o -t image/jpeg > $tempo
+	if diff $tempi $tempo; then
+	    echo "PASS"
+	else
+	    echo "FAIL"
+	    exit 1
+	fi
+    done
 done
-
 
 # Kill any remain xclip processes
 killall xclip
