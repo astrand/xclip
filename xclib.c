@@ -657,7 +657,7 @@ int xchandler(Display *dpy, XErrorEvent *evt) {
     if (xcverb >= ODEBUG) {
 	fprintf(stderr, 
 		"\t\tEvent Type: %d\n"
-		"\t\tResource ID: %ld\n"
+		"\t\tResource ID: 0x%lx\n"
 		"\t\tSerial Num: %lu\n"
 		"\t\tError code: %u\n"
 		"\t\tRequest op code: %u major, %u minor\n",
