@@ -428,6 +428,13 @@ doIn(Window win, const char *progname)
     /* FIXME: Should not use CurrentTime, according to ICCCM section 2.1 */
     XSetSelectionOwner(dpy, sseln, win, CurrentTime);
 
+    /* Double-check SetSelectionOwner did not "merely appear to succeed". */
+    Window owner = XGetSelectionOwner(dpy, sseln);
+    if (owner != win) {
+	fprintf(stderr, "xclip: error: Failed to take ownership of selection.\n");
+	return EXIT_FAILURE;
+    }
+
     /* fork into the background, exit parent process if we
      * are in silent mode
      */
@@ -524,6 +531,8 @@ start:
 	    case SelectionRequest:
 		requestor_id = evt.xselectionrequest.requestor;
 		requestor = get_requestor(requestor_id);
+		/* FIXME: ICCCM 2.2: check evt.time and refuse requests from
+		 * outside the period of time we have owned the selection. */
 		break;
 	    case PropertyNotify:
 		requestor_id = evt.xproperty.window;
