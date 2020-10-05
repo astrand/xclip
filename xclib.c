@@ -581,6 +581,7 @@ xcin(Display * dpy,
  * (Like XFetchName but recursively walks up tree of parent windows.)
  * Sets namep to point to the string of the name (must be freed with XFree).
  * Returns 0 if it works. Not 0, otherwise.
+ * [See also, xcnamestr() wrapper below.]
  */
 int
 xcfetchname(Display *display, Window w, char **namep) {
