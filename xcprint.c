@@ -135,7 +135,6 @@ void
 errconvsel(Display *display, Atom target, Atom selection)
 {
     Window w = None;
-    char *window_name = NULL;
     char *selection_name = XGetAtomName(display, selection); /* E.g., "PRIMARY" */
 
     if (!selection_name)
@@ -147,14 +146,9 @@ errconvsel(Display *display, Atom target, Atom selection)
 		selection_name);
     }
     else {
-	/* Find the name of the window that holds the selection */
-	xcfetchname(display, w, &window_name);
-	if (window_name && window_name[0]) {
-	    fprintf(stderr, "xclip: Error: '%s'", window_name);
-	}
-	else {
-	    fprintf(stderr, "xclip: Error: window id 0x%lx", w);
-	}
+	/* Show the name of the window that holds the selection */
+	fprintf(stderr, "xclip: Error: %s", xcnamestr(display, w));
+
 	char *atom_name = XGetAtomName(display, target);
 	if (atom_name) {
 	    fprintf(stderr, " cannot convert %s selection to target '%s'\n",
@@ -169,9 +163,6 @@ errconvsel(Display *display, Atom target, Atom selection)
 
     if (selection_name)
 	XFree(selection_name);
-
-    if (window_name)
-	XFree(window_name);
 
     exit(EXIT_FAILURE);
 }

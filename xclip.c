@@ -151,7 +151,7 @@ static void del_requestor(struct requestor *requestor)
 int clean_requestors() {
     /* Remove any requestors for which the X window has disappeared */
     if (xcverb >= ODEBUG) {
-	fprintf(stderr, "xclip: debug: cleaning up requestors that have disappeared\n");
+	fprintf(stderr, "xclip: debug: checking for requestors whose window has closed\n");
     }
     struct requestor *r = requestors;
     Window win;
