@@ -277,6 +277,15 @@ doOptMain(int argc, char *argv[])
 	fil_names[fil_number] = argv[fil_number + 1];
 	fil_number++;
     }
+
+    /* If filenames were given on the command line, 
+     * default to reading input (unless -o was used).
+     */
+    if (fil_number > 0) {
+      if (!XrmGetResource(opt_db, "xclip.direction", "Xclip.Direction", &rec_typ, &rec_val)) {
+	  fdiri = T;		/* Direction is input */
+      }
+    }
 }
 
 /* process selection command line option */
@@ -773,6 +782,14 @@ main(int argc, char *argv[])
     /* Declare variables */
     Window win;			/* Window */
     int exit_code;
+
+     /* As a convenience to command-line users, default to -o if stdin
+     * is a tty. Will be overriden by -i or if user specifies a
+     * filename as input.
+     */
+    if (isatty(0)) {
+      fdiri = F;		/* direction is out */
+    }
 
     /* set up option table. I can't figure out a better way than this to
      * do it while sticking to pure ANSI C. The option and specifier
