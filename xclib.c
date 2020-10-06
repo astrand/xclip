@@ -31,6 +31,19 @@
 /* global verbosity output level, defaults to OSILENT */
 int xcverb = OSILENT;
 
+/* Table of event names from event numbers */
+const char *evtstr[LASTEvent] = {
+    "ProtocolError", "ProtocolReply", "KeyPress", "KeyRelease",
+    "ButtonPress", "ButtonRelease", "MotionNotify", "EnterNotify",
+    "LeaveNotify", "FocusIn", "FocusOut", "KeymapNotify", "Expose",
+    "GraphicsExpose", "NoExpose", "VisibilityNotify", "CreateNotify",
+    "DestroyNotify", "UnmapNotify", "MapNotify", "MapRequest",
+    "ReparentNotify", "ConfigureNotify", "ConfigureRequest",
+    "GravityNotify", "ResizeRequest", "CirculateNotify",
+    "CirculateRequest", "PropertyNotify", "SelectionClear",
+    "SelectionRequest", "SelectionNotify", "ColormapNotify",
+    "ClientMessage", "MappingNotify", "GenericEvent", };
+
 /* a memset function that won't be optimized away by compler */
 void 
 xcmemzero(void *ptr, size_t len)
@@ -373,10 +386,20 @@ xcin(Display * dpy,
 
     switch (*context) {
     case XCLIB_XCIN_NONE:
+	if ( xcverb >= ODEBUG )
+	    fprintf(stderr, "xclib: debug: context: XCLIB_XCIN_NONE\n");
+
+	if ( xcverb >= ODEBUG  &&  evt.xselectionrequest.target) {
+	    char *tempstr = XGetAtomName(dpy, evt.xselectionrequest.target);
+	    fprintf(stderr, "xclib: debug: target: %s\n", tempstr);
+	    XFree(tempstr);
+	}
+
 	if (evt.type != SelectionRequest) {
 	    if ( xcverb >= ODEBUG ) {
 		fprintf(stderr,
-			"xclib: debug: ignoring event type %d\n", evt.type);
+			"xclib: debug: ignoring %s event (context is NONE)\n",
+			evtstr[evt.type]);
 	    }
 	    return (0);
 	}
@@ -391,6 +414,10 @@ xcin(Display * dpy,
 	if (evt.xselectionrequest.target == targets) {
 	    Atom types[2] = { targets, target };
 
+	    if ( xcverb >= ODEBUG ) {
+		fprintf(stderr, "xclib: debug: sending list of TARGETS\n");
+	    }
+
 	    /* send data all at once (not using INCR) */
 	    XChangeProperty(dpy,
 			    *win,
@@ -403,7 +430,7 @@ xcin(Display * dpy,
 	else if (len > *chunk_size) {
 	    /* send INCR response */
 	    if ( xcverb >= ODEBUG ) {
-		fprintf (stderr, "xclib: debug: sending INCR response\n");
+		fprintf (stderr, "xclib: debug: Starting INCR response\n");
 	    }
 	    XChangeProperty(dpy, *win, *pty, inc, 32, PropModeReplace, 0, 0);
 
@@ -417,11 +444,17 @@ xcin(Display * dpy,
 	}
 	else {
 	    /* send data all at once (not using INCR) */
-	    if ( xcverb >= ODEBUG )
-		fprintf(stderr, "xclib: debug: Sending data all at once\n");
+	    if ( xcverb >= ODEBUG ) {
+		fprintf(stderr, "xclib: debug: Sending data all at once"
+			" (%d bytes)\n", (int) len);
+	    }
+
 	    XChangeProperty(dpy,
 			    *win,
-			    *pty, target, 8, PropModeReplace, (unsigned char *) txt, (int) len);
+			    *pty,
+			    target,
+			    8, PropModeReplace, (unsigned char *) txt,
+			    (int) len);
 	}
 
 	/* Perhaps FIXME: According to ICCCM section 2.5, we should
@@ -445,9 +478,9 @@ xcin(Display * dpy,
 
 	/* don't treat TARGETS request as contents request */
 	if (evt.xselectionrequest.target == targets)
-	    return 0;
+	    return (1);		/* Finished with request */
 
-	/* if len < chunk_size, then the data was sent all at
+	/* if len <= chunk_size, then the data was sent all at
 	 * once and the transfer is now complete, return 1
 	 */
 	if (len > *chunk_size)
@@ -467,8 +500,18 @@ xcin(Display * dpy,
 	/* ignore the event unless it's to report that the
 	 * property has been deleted
 	 */
-	if (evt.xproperty.state != PropertyDelete)
+	if (evt.xproperty.state != PropertyDelete) {
+	    if ( xcverb >= ODEBUG ) {
+		if ( evt.xproperty.state == 0 ) 
+		    fprintf(stderr,
+			    "xclib: debug: ignoring PropertyNewValue\n");
+		else
+		    fprintf(stderr,
+			    "xclib: debug: ignoring state %d\n",
+			    evt.xproperty.state);
+	    }
 	    return (0);
+	}
 
 	/* set the chunk length to the maximum size */
 	chunk_len = *chunk_size;
@@ -489,13 +532,24 @@ xcin(Display * dpy,
 
 	if (chunk_len) {
 	    /* put the chunk into the property */
+	    if ( xcverb >= ODEBUG ) {
+		fprintf(stderr, "xclib: debug: Sending chunk of "
+			" %d bytes\n", (int) chunk_len);
+	    }
 	    XChangeProperty(dpy,
-			    *win, *pty, target, 8, PropModeReplace, &txt[*pos], (int) chunk_len);
+			    *win,
+			    *pty,
+			    target,
+			    8, PropModeReplace, &txt[*pos],
+			    (int) chunk_len);
 	}
 	else {
 	    /* make an empty property to show we've
 	     * finished the transfer
 	     */
+	    if ( xcverb >= ODEBUG ) {
+		fprintf(stderr, "xclib: debug: Signalling end of INCR\n");
+	    }
 	    XChangeProperty(dpy, *win, *pty, target, 8, PropModeReplace, 0, 0);
 	}
 	XFlush(dpy);
@@ -503,7 +557,7 @@ xcin(Display * dpy,
 	/* all data has been sent, break out of the loop */
 	if (!chunk_len) {
 	    if (xcverb >= ODEBUG) {
-		fprintf(stderr, "INCR transfer complete\n");
+		fprintf(stderr, "xclib: debug: Finished INCR transfer.\n");
 	    }
 	    *context = XCLIB_XCIN_NONE;
 	}
@@ -515,9 +569,108 @@ xcin(Display * dpy,
 	 */
 	if (chunk_len > 0)
 	    return (0);
-	else 
+	else
 	    return (1);
 	break;
     }
     return (0);
 }
+
+
+/* xcfetchname(): a utility for finding the name of a given X window.
+ * (Like XFetchName but recursively walks up tree of parent windows.)
+ * Sets namep to point to the string of the name (must be freed with XFree).
+ * Returns 0 if it works. Not 0, otherwise.
+ * [See also, xcnamestr() wrapper below.]
+ */
+int
+xcfetchname(Display *display, Window w, char **namep) {
+    *namep = NULL;
+    if (w == None)
+	return 1;		/* No window, no name. */
+
+    XFetchName(display, w, namep);
+    if (*namep)
+	return 0; 		/* Hurrah! It worked on the first try. */
+
+    /* Otherwise, recursively try the parent windows */
+    Window p = w;
+    Window dummy, *dummyp;
+    unsigned int n;
+    while (!*namep  &&  p != None) {
+	if (!XQueryTree(display, p, &dummy, &p, &dummyp, &n))
+	    break;
+	if (p != None) {
+	    XFetchName(display, p, namep);
+	}
+    }
+    return (*namep == NULL);
+}
+
+
+/* A convenience wrapper for xcfetchname() that returns a string so it can be
+ * used within printf calls with no need to later XFree anything.
+ * It also smoothes over problems by returning the ID number if no name exists.
+ *
+ * Given a Window ID number, e.g., 0xfa1afe1, return
+ * either the window name followed by the ID in parens, IFF it can be found,
+ * otherwise, the string "window id 0xfa1afe1". 
+ *
+ * Example output:  "'Falafel' (0xfa1afe1)"
+ * Example output:  "window id 0xfa1afe1"
+ *
+ * String is statically allocated and is updated at each call.
+ */
+char xcname[4096];
+char *
+xcnamestr(Display *display, Window w) {
+    char *window_name;
+    xcfetchname(display, w, &window_name);
+    if (window_name && window_name[0]) {
+	snprintf( xcname, sizeof(xcname)-1, "'%s' (0x%lx)", window_name, w);
+    }
+    else {
+	snprintf( xcname, sizeof(xcname)-1, "window id 0x%lx", w );
+    }
+    if (window_name)
+	XFree(window_name);
+
+    xcname[sizeof(xcname) - 1] = '\0'; /* Ensure NULL termination */
+    return xcname;
+}
+
+
+/* Xlib Error handler that saves last error event */
+/* Usage: XSetErrorHandler(xchandler); */
+int xcerrflag = False;
+XErrorEvent xcerrevt;
+int xchandler(Display *dpy, XErrorEvent *evt) {
+    xcerrflag = True;
+    xcerrevt = *evt;
+
+    int len=255;
+    char buf[len+1];
+    XGetErrorText(dpy, evt->error_code, buf, len);
+    if (xcverb >= OVERBOSE) {
+	fprintf(stderr, "\tXErrorHandler: XError (type %d): %s\n",
+		evt->type, buf);
+    }
+    if (xcverb >= ODEBUG) {
+	fprintf(stderr, 
+		"\t\tEvent Type: %d\n"
+		"\t\tResource ID: 0x%lx\n"
+		"\t\tSerial Num: %lu\n"
+		"\t\tError code: %u\n"
+		"\t\tRequest op code: %u major, %u minor\n",
+		evt->type, 
+		evt->resourceid, 
+		evt->serial, 
+		evt->error_code, 
+		evt->request_code, 
+		evt->minor_code);
+    }
+
+    return 0;
+}
+
+

@@ -32,31 +32,27 @@ void
 prhelp(char *name)
 {
     fprintf(stderr,
-	    "Usage: %s [OPTION] [FILE]...\n"
-	    "Access an X server selection for reading or writing.\n"
-	    "\n"
-	    "  -i, -in          read text into X selection from standard input or files\n"
-	    "                   (default)\n"
-	    "  -o, -out         prints the selection to standard out (generally for\n"
-	    "                   piping to a file or program)\n"
-	    "  -l, -loops       number of selection requests to "
-	    "wait for before exiting\n"
-	    "  -d, -display     X display to connect to (eg "
-	    "localhost:0\")\n"
-	    "  -h, -help        usage information\n"
-	    "      -selection   selection to access (\"primary\", "
-	    "\"secondary\", \"clipboard\" or \"buffer-cut\")\n"
-	    "      -noutf8      don't treat text as utf-8, use old unicode\n"
-	    "      -target      use the given target atom\n"
-	    "      -rmlastnl    remove the last newline character if present\n"
-	    "      -version     version information\n"
-	    "      -silent      errors only, run in background (default)\n"
-	    "      -filter      text piped in will be both copied and printed out\n"
-	    "      -quiet       run in foreground, show what's happening\n"
-	    "      -verbose     running commentary\n"
-	    "      -sensitive   only allow copied data to be pasted once\n"
-	    "      -wait n      exit n milliseconds pasting, timer restarts on each paste\n"
-	    "\n" "Report bugs to <astrand@lysator.liu.se>\n", name);
+"Usage: %s [OPTION] [FILE]...\n"
+"Access an X server selection for reading or writing.\n"
+"\n"
+"  -i, -in          read text into X selection from stdin or files [DEFAULT]\n"
+"      -filter      text piped in to selection will also be printed out\n"
+"  -o, -out         prints the selection to standard out\n"
+"      -selection   primary [DEFAULT], clipboard, secondary, or buffer-cut\n"
+"      -target      specify target atom: image/jpeg, UTF8_STRING [DEFAULT]\n"
+"      -silent      errors only, (run in background) [DEFAULT]\n"
+"      -quiet       minimal output (foreground)\n"
+"      -verbose     running commentary (foreground)\n"
+"      -debug       garrulous verbiage (foreground)\n"
+"      -sensitive   only allow copied data to be pasted once\n"
+"  -l, -loops       number of selection requests to wait for before exiting\n"
+"      -wait n      exit n milliseconds pasting, timer restarts on each paste\n"
+"      -noutf8      don't treat text as utf-8, use old unicode\n"
+"      -rmlastnl    remove the last newline character if present\n"
+"  -d, -display     X display to connect to (eg localhost:0\")\n"
+"      -version     version information\n"
+"  -h, -help        this usage information\n"
+"\n" "Report bugs to <astrand@lysator.liu.se>\n", name);
     exit(EXIT_SUCCESS);
 }
 
@@ -133,62 +129,26 @@ errperror(int prf_tot, ...)
     free(msg_all);
 }
 
-/* a utility for finding the name of the X window that owns the selection. 
- * Sets namep to point to the string of the name (must be freed with XFree). 
- * Sets wp to point to the Window (an integer id).
- * Returns 0 if it works. Not 0, otherwise. 
- */ 
-int
-fetchname(Display *display, Atom selection, char **namep, Window *wp) {
-    *namep = NULL;
-    *wp = XGetSelectionOwner(display, selection);
-    if (*wp == None)
-	return 1;		/* Nobody has the selection. */
-
-    XFetchName(display, *wp, namep);
-    if (*namep)
-	return 0; 		/* Hurrah! It worked on the first try. */
-	
-    /* Otherwise, recursively try the parent windows */
-    Window p = *wp;
-    Window dummy, *dummyp;
-    unsigned int n;
-    while (!*namep  &&  p != None) {
-	if (!XQueryTree(display, p, &dummy, &p, &dummyp, &n))
-	    break;
-	if (p != None) {
-	    XFetchName(display, p, namep);
-	}
-    }
-    return (*namep == NULL);
-}
-
 
 /* failure to convert selection */
 void
 errconvsel(Display *display, Atom target, Atom selection)
 {
     Window w = None;
-    char *window_name;
     char *selection_name = XGetAtomName(display, selection); /* E.g., "PRIMARY" */
 
     if (!selection_name)
 	exit(EXIT_FAILURE);	/* Invalid selection Atom  */
 
-    /* Find the name of the window that holds the selection */
-    fetchname(display, selection, &window_name, &w);
-
+    w = XGetSelectionOwner(display, selection);
     if (w == None) {
 	fprintf(stderr, "xclip: Error: There is no owner for the %s selection\n",
 		selection_name);
     }
     else {
-	if (window_name && window_name[0]) {
-	    fprintf(stderr, "xclip: Error: '%s'", window_name);
-	}
-	else {
-	    fprintf(stderr, "xclip: Error: window id 0x%lx", w);
-	}
+	/* Show the name of the window that holds the selection */
+	fprintf(stderr, "xclip: Error: %s", xcnamestr(display, w));
+
 	char *atom_name = XGetAtomName(display, target);
 	if (atom_name) {
 	    fprintf(stderr, " cannot convert %s selection to target '%s'\n",
@@ -203,9 +163,6 @@ errconvsel(Display *display, Atom target, Atom selection)
 
     if (selection_name)
 	XFree(selection_name);
-
-    if (window_name)
-	XFree(window_name);
 
     exit(EXIT_FAILURE);
 }

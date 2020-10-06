@@ -24,6 +24,10 @@
 /* global verbosity output level */
 extern int xcverb;
 
+/* global error flags from xchandler() */
+extern int xcerrflag;
+extern XErrorEvent xcerrevt;
+
 /* output level constants for xcverb */
 #define OSILENT  0
 #define OQUIET   1
@@ -69,8 +73,15 @@ extern void *xcmalloc(size_t);
 extern void *xcrealloc(void*, size_t);
 extern void *xcstrdup(const char *);
 extern void xcmemcheck(void*);
+extern int xcfetchname(Display *, Window, char **);
+extern char *xcnamestr(Display *, Window);
+
 
 /* volatile prevents compiler from causing dead-store elimination with optimization enabled */
 typedef void *(*memset_t)(void *, int, size_t);
 static volatile memset_t memset_func = memset;
 void xcmemzero(void *ptr, size_t len);
+int xchandler(Display *, XErrorEvent *);
+
+/* Table of event names from event numbers */
+extern const char *evtstr[LASTEvent];

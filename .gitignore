@@ -18,6 +18,7 @@ stamp-h1
 # compiling output
 *.o
 xclip
+borked
 
 # temporary files
 *.swp

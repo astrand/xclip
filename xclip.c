@@ -87,9 +87,20 @@ static struct requestor *get_requestor(Window win)
 	if (requestors) {
 	    for (requestor = requestors; requestor != NULL; requestor = requestor->next) {
 	        if (requestor->cwin == win) {
+		    if (xcverb >= OVERBOSE) {
+			fprintf(stderr,
+				"    = Reusing requestor for %s\n",
+				xcnamestr(dpy, win) );
+		    }
+
 	            return requestor;
 	        }
 	    }
+	}
+
+	if (xcverb >= OVERBOSE) {
+	    fprintf(stderr, "    + Creating new requestor for %s\n",
+		    xcnamestr(dpy, win) );
 	}
 
 	requestor = (struct requestor *)calloc(1, sizeof(struct requestor));
@@ -117,6 +128,12 @@ static void del_requestor(struct requestor *requestor)
 	    return;
 	}
 
+	if (xcverb >= OVERBOSE) {
+	    fprintf(stderr,
+		    "    - Deleting requestor for %s\n",
+		    xcnamestr(dpy, requestor->cwin) );
+	}
+
 	if (requestors == requestor) {
 	    requestors = requestors->next;
 	} else {
@@ -129,6 +146,30 @@ static void del_requestor(struct requestor *requestor)
 	}
 
 	free(requestor);
+}
+
+int clean_requestors() {
+    /* Remove any requestors for which the X window has disappeared */
+    if (xcverb >= ODEBUG) {
+	fprintf(stderr, "xclip: debug: checking for requestors whose window has closed\n");
+    }
+    struct requestor *r = requestors;
+    Window win;
+    XWindowAttributes dummy;
+    while (r) {
+	win = r->cwin;
+
+	// check if window exists by seeing if XGetWindowAttributes works.
+	// note: this triggers X's BadWindow error and runs xchandler().
+	if ( !XGetWindowAttributes(dpy, win, &dummy) ) {
+	    if (xcverb >= OVERBOSE) {
+		fprintf(stderr, "    ! Found obsolete requestor 0x%lx\n", win);
+	    }
+	    del_requestor(r);
+	}
+	r = r -> next;
+    }
+    return 0;
 }
 
 /* Use XrmParseCommand to parse command line options to option variable */
@@ -387,6 +428,13 @@ doIn(Window win, const char *progname)
     /* FIXME: Should not use CurrentTime, according to ICCCM section 2.1 */
     XSetSelectionOwner(dpy, sseln, win, CurrentTime);
 
+    /* Double-check SetSelectionOwner did not "merely appear to succeed". */
+    Window owner = XGetSelectionOwner(dpy, sseln);
+    if (owner != win) {
+	fprintf(stderr, "xclip: error: Failed to take ownership of selection.\n");
+	return EXIT_FAILURE;
+    }
+
     /* fork into the background, exit parent process if we
      * are in silent mode
      */
@@ -408,10 +456,13 @@ doIn(Window win, const char *progname)
 	    fprintf(stderr, "Waiting for one selection request.\n");
 
 	if (sloop < 1)
-	    fprintf(stderr, "Waiting for selection requests, Control-C to quit\n");
+	    fprintf(stderr,
+		    "Waiting for selection requests, Control-C to quit\n");
 
 	if (sloop > 1)
-	    fprintf(stderr, "Waiting for %i selection requests, Control-C to quit\n", sloop);
+	    fprintf(stderr,
+		    "Waiting for %i selection request%s, Control-C to quit\n",
+		    sloop,  (sloop==1)?"":"s");
     }
 
     /* Avoid making the current directory in use, in case it will need to be umounted */
@@ -420,12 +471,16 @@ doIn(Window win, const char *progname)
 	return EXIT_FAILURE;
     }
 
+    /* Jump into the middle of two while loops */
     goto start;
 
     /* loop and wait for the expected number of
      * SelectionRequest events
      */
     while (dloop < sloop || sloop < 1) {
+	if (xcverb >= ODEBUG)
+	    fprintf(stderr, "\n========\n");
+
 	/* print messages about what we're waiting for
 	 * if not in silent mode
 	 */
@@ -443,6 +498,7 @@ doIn(Window win, const char *progname)
 	/* wait for a SelectionRequest (paste) event */
 	while (1) {
 	    struct requestor *requestor;
+	    Window requestor_id;
 	    int finished;
 
 	    if (!XPending(dpy) && wait > 0) {
@@ -463,20 +519,33 @@ start:
 
 	    XNextEvent(dpy, &evt);
 
-	    if (evt.type == SelectionRequest) {
-		if (xcverb >= ODEBUG) {
-		    fprintf(stderr, "xclip: debug: Received SelectionRequest\n");
-		}
-		requestor = get_requestor(evt.xselectionrequest.requestor);
-	    } else if (evt.type == PropertyNotify) {
-		if (xcverb >= ODEBUG) {
-		    fprintf(stderr, "xclip: debug: Received PropertyNotify\n");
-		}
-		requestor = get_requestor(evt.xproperty.window);
-	    } else if (evt.type == SelectionClear) {
+	    if (xcverb >= ODEBUG)
+		fprintf(stderr, "\n");
+
+	    if (xcverb >= ODEBUG) {
+		fprintf(stderr, "xclip: debug: Received %s event\n",
+		    evtstr[evt.type]);
+	    }
+
+	    switch (evt.type) {
+	    case SelectionRequest:
+		requestor_id = evt.xselectionrequest.requestor;
+		requestor = get_requestor(requestor_id);
+		/* FIXME: ICCCM 2.2: check evt.time and refuse requests from
+		 * outside the period of time we have owned the selection. */
+		break;
+	    case PropertyNotify:
+		requestor_id = evt.xproperty.window;
+		requestor = get_requestor(requestor_id);
+		break;
+	    case SelectionClear:
 		if (xcverb >= OVERBOSE) {
 		    fprintf(stderr, "Lost selection ownership. ");
-		    fprintf(stderr, "(Some other client did a 'copy').\n");
+		    requestor_id = XGetSelectionOwner(dpy, sseln);
+		    if (requestor_id == None)
+			fprintf(stderr, "(Some other client cleared the selection).\n");
+		    else
+			fprintf(stderr, "(%s did a copy).\n", xcnamestr(dpy, requestor_id) );
 		}
 		/* If the client loses ownership(SelectionClear event)
 		 * while it has a transfer in progress, it must continue to
@@ -485,33 +554,46 @@ start:
 		 */
 		/* Set dloop to force exit after all transfers finish. */
 		dloop = sloop;
+		/* remove requestors for dead windows */
+		clean_requestors();
 		/* if there are no more in-progress transfers, force exit */
 		if (!requestors) {
 		    if (xcverb >= OVERBOSE) {
-			fprintf(stderr, "No transfers in progress to wait for.\n");
+			fprintf(stderr, "Exiting.\n");
 		    }
 		    return EXIT_SUCCESS;
 		}
 		else {
 		    if (xcverb >= OVERBOSE) {
 			struct requestor *r = requestors;
-			int i=1;
-			while ( (r = r->next) )
+			int i=0;
+			fprintf(stderr, "Requestors: ");
+			while (r) {
+			    fprintf(stderr, "0x%lx\t", r->cwin);
+			    r = r->next;
 			    i++;
+			}
+			fprintf(stderr, "\n");
 			fprintf(stderr,
 				"Still transfering data to %d requestor%s.\n",
 				i, (i==1)?"":"s");
 		    }
 		}
-		continue;
-	    } else {
+		continue;	/* Wait for INCR PropertyNotify events */
+	    default:
 		/* Ignore all other event types */
 		if (xcverb >= ODEBUG) {
-		    fprintf(stderr, "xclip: debug: Ignoring X event type %d\n",
-			    evt.type);
+		    fprintf(stderr,
+			    "xclip: debug: Ignoring X event type %d (%s)\n",
+			    evt.type, evtstr[evt.type]);
 		}
-
 		continue;
+	    }
+
+	    if (xcverb >= ODEBUG) {
+		fprintf(stderr, "xclip: debug: event was sent by %s\n",
+			xcnamestr(dpy, requestor_id) );
+		requestor_id=0;
 	    }
 
 	    finished = xcin(dpy, &(requestor->cwin), evt, &(requestor->pty),
@@ -522,7 +604,12 @@ start:
 		del_requestor(requestor);
 		break;
 	    }
+	    if (requestor->cwin == 0) {
+		del_requestor(requestor);
+		break;
+	    }
 	}
+
 	dloop++;		/* increment loop counter */
     }
 
@@ -633,8 +720,12 @@ doOut(Window win)
 		}
 		else {
 		    /* no fallback available, exit with failure */
-		    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
-		    xcmemzero(sel_buf,sel_len);
+		    if (fsecm) {
+			/* If user requested -sensitive, then prevent further pastes (even though we failed to paste) */
+			XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+			/* Clear memory buffer */
+			xcmemzero(sel_buf,sel_len);
+		    }
 		    free(sel_buf);
 		    errconvsel(dpy, target, sseln);
 		    // errconvsel does not return but exits with EXIT_FAILURE
@@ -846,6 +937,9 @@ main(int argc, char *argv[])
 
     /* get events about property changes */
     XSelectInput(dpy, win, PropertyChangeMask);
+
+    /* If we get an X error, catch it instead of barfing */
+    XSetErrorHandler(xchandler);
 
     if (fdiri)
 	exit_code = doIn(win, argv[0]);
