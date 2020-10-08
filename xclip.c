@@ -36,7 +36,7 @@
 
 /* command line option table for XrmParseCommand() */
 XrmOptionDescRec opt_tab[20];
-int opt_tab_size;
+int opt_tab_size;		/* for sanity check later */
 
 /* Options that get set on the command line */
 int sloop = 0;			/* number of loops */

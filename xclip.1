@@ -17,6 +17,87 @@
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 .\"
+.
+.\" URL and email definitions from groff's an-ext.tmac file, just in
+.\" case we're on a system with "classic" troff.
+.
+.\" Start URL.
+.de UR
+.  ds m1 \\$1\"
+.  nh
+.  if \\n(mH \{\
+.    \" Start diversion in a new environment.
+.    do ev URL-div
+.    do di URL-div
+.  \}
+..
+.
+.
+.\" End URL.
+.de UE
+.  ie \\n(mH \{\
+.    br
+.    di
+.    ev
+.
+.    \" Has there been one or more input lines for the link text?
+.    ie \\n(dn \{\
+.      do HTML-NS "<a href=""\\*(m1"">"
+.      \" Yes, strip off final newline of diversion and emit it.
+.      do chop URL-div
+.      do URL-div
+\c
+.      do HTML-NS </a>
+.    \}
+.    el \
+.      do HTML-NS "<a href=""\\*(m1"">\\*(m1</a>"
+\&\\$*\"
+.  \}
+.  el \
+\\*(la\\*(m1\\*(ra\\$*\"
+.
+.  hy \\n(HY
+..
+.
+.
+.\" Start email address.
+.de MT
+.  ds m1 \\$1\"
+.  nh
+.  if \\n(mH \{\
+.    \" Start diversion in a new environment.
+.    do ev URL-div
+.    do di URL-div
+.  \}
+..
+.
+.
+.\" End email address.
+.de ME
+.  ie \\n(mH \{\
+.    br
+.    di
+.    ev
+.
+.    \" Has there been one or more input lines for the link text?
+.    ie \\n(dn \{\
+.      do HTML-NS "<a href=""mailto:\\*(m1"">"
+.      \" Yes, strip off final newline of diversion and emit it.
+.      do chop URL-div
+.      do URL-div
+\c
+.      do HTML-NS </a>
+.    \}
+.    el \
+.      do HTML-NS "<a href=""mailto:\\*(m1"">\\*(m1</a>"
+\&\\$*\"
+.  \}
+.  el \
+\\*(la\\*(m1\\*(ra\\$*\"
+.
+.  hy \\n(HY
+..
+.
 .TH XCLIP 1
 .SH NAME
 xclip \- command line interface to X selections (clipboard)
@@ -24,22 +105,37 @@ xclip \- command line interface to X selections (clipboard)
 .B xclip
 [OPTION] [FILE]...
 .SH DESCRIPTION
-Reads from standard in, or from one or more files, and makes the data available as an X selection for pasting into X applications. Prints current X selection to standard out.
+Reads from standard input, or from one or more files, and makes the data available as an X selection for pasting into X applications. Prints current X selection to standard out.
 .TP
 \fB\-i\fR, \fB\-in\fR
-read text into X selection from standard input or files (default)
+Read text into X selection from standard input or files. (Default unless it would read from a tty.)
 .TP
 \fB\-o\fR, \fB\-out\fR
-print the selection to standard out (generally for piping to a file or program)
+Print the selection to standard out. (Default when no files are specified and standard input is a tty.)
 .TP
 \fB\-f\fR, \fB\-filter\fR
-when xclip is invoked in the in mode with output level set to silent (the defaults), the filter option will cause xclip to print the text piped to standard in back to standard out unmodified
+Reads text into the X selection and causes xclip to print any text piped to
+standard input back to standard out, unmodified. This does not work with files.
+Not compatible with verbosity levels above "silent" (the default) as xclip would
+not exit after making the copy.
+.TP
+\fB\-selection\fR \fIselection\fR
+Specify which X selection to use, options are \(lqprimary\(rq (default), \(lqsecondary\(rq, or \(lqclipboard\(rq. 
+.TP
+\fB\-c\fR, \fB\-clipboard\fR
+Shorthand for \(lq-selection clipboard\(rq. 
+.TP
+\fB\-t\fR, \fB\-target\fR \fItarget\fR
+Specify a particular data format using the given target atom (E.g., \(lqtext/html\(rq, \(lqimage/jpeg\(rq). The default target is \(lqUTF8_STRING\(rq. On output, if a selection doesn't provide \(lqUTF8_STRING\(rq, xclip will fallback to \(lqSTRING\(rq. 
+.TP
+\fB\-T\fR
+Show all valid targets for -t. Technically, this is just shorthand for \(lq-target TARGETS\(rq. The special target atom named \(lqTARGETS\(rq contains the list of all valid target atoms for this selection. For more information about target atoms refer to ICCCM section 2.6.2.
 .TP
 \fB\-r\fR, \fB\-rmlastnl\fR
-when the last character of the selection is a newline character, remove it. Newline characters that are not the last character in the selection are not affected. If the selection does not end with a newline character, this option has no effect. This option is useful for copying one-line output of programs like \fBpwd\fR to the clipboard to paste it again into the command prompt without executing the line immediately due to the newline character \fBpwd\fR appends.
+If the last character of the selection is a newline, remove it. Newline characters that are not the last character in the selection are not affected. If the selection does not end with a newline character, this option has no effect. This option is useful for copying one-line output of programs like \fBpwd\fR to the clipboard to paste it again into the command prompt without executing the line immediately due to the newline character \fBpwd\fR appends.
 .TP
 \fB\-l\fR \fIn\fR, \fB\-loops\fR \fIn\fR
-number of X selection requests (pastes into X applications) to wait for before exiting, with a value of 0 (default) causing xclip to wait for an unlimited number of requests until another application (possibly another invocation of xclip) takes ownership of the selection.
+Number of X selection requests (pastes into X applications) to wait for before exiting, with a value of 0 (default) causing xclip to wait for an unlimited number of requests until another application (possibly another invocation of xclip) takes ownership of the selection.
 .TP
 \fB\-t\fR \fIt\fR, \fB\-target\fR \fIt\fR
 .
@@ -55,34 +151,31 @@ to list available TARGETS, xclip never rejects any unsupported target requests
 and simply sends the same data. For more information about target atoms refer to ICCCM section 2.6.2
 .
 .TP
-\fB\-d\fR, \fB\-display\fR
-.
-X display to use (e.g. "localhost:0"), xclip defaults to the value in $\fBDISPLAY\fR if this option is omitted
+\fB\-d\fR, \fB\-display\fR \fIdpy:n\fR
+X display to use (e.g. "localhost:0"), xclip defaults to the value in
+$\fBDISPLAY\fR if this option is omitted.
 .TP
 \fB\-h\fR, \fB\-help\fR
-show quick summary of options
-.TP
-\fB\-selection\fR \fIs\fR
-specify which X selection to use, options are "primary" to use XA_PRIMARY (default), "secondary" for XA_SECONDARY or "clipboard" for XA_CLIPBOARD
+Show quick summary of options
 .TP
 \fB\-version\fR
-show version information
+Show version information.
 .TP
 \fB\-silent\fR
-fork into the background to wait for requests, no informational output, errors only (default)
+Fork into the background to wait for requests, no informational output, errors only (default).
 .TP
 \fB\-quiet\fR
-show informational messages on the terminal and run in the foreground
+Run in the foreground and show informational messages on the terminal.
 .TP
 \fB\-verbose\fR
-provide a running commentary of what xclip is doing
+Run in the foreground and provide a running commentary of what xclip is doing.
 .TP
 \fB\-debug\fR
-garrulously print debugging output
+Run in the foreground and print garrulous debugging output.
 .TP
 \fB\-noutf8\fR
-operate in legacy (i.e. non UTF-8) mode for backwards compatibility
-(Use this option only when really necessary, as the old behavior was broken)
+Operate in legacy (i.e. non UTF-8) mode for backwards compatibility.
+(Use this option only when really necessary, as the old behavior was broken).
 .TP
 \fB\-sensitive\fR
 clear sensitive data from seleciton buffer after being pasted once.
@@ -94,20 +187,25 @@ request arrives before the timer expires, reset the timer. Once the timer
 expires, the selection buffer is cleared so the data cannot be pasted again.
 .
 .PP
-xclip reads data from files or standard input and makes it available to other X
-applications for pasting as an X selection. This is the default when the input
-is from a file or a pipeline.
+Xclip was designed to allow tighter integration of X applications and command
+line programs. Xclip can be in either input mode (copy) or output mode (paste)
+and will typically do the right thing without needing \fB-i\fP or \fB-o\fP to be
+specified. Filenames on the commandline are always used for input. When the
+input is from a file or a pipeline, xclip copies text (or binary data) in to the
+X selection and forks a daemon to makes the data available to other X
+applications for pasting. When no input is detected, or if \fB-o\fP is used,
+xclip will print the contents of the current selection to standard output. This
+is commonly piped into other commands, redirected to a file, or used in command
+substitution. This is the default when no files are specified and stdin is a tty
+(the user's keyboard).
 
-xclip can also print the contents of a selection to standard output with the
-\fB\-o\fR option. This is the default when no files are specified and stdin is
-tty (the user's keyboard).
-
-xclip was designed to allow tighter integration of X applications and command
-line programs. The default action for \fB-in\fP (copy) is to silently wait in
-the background for X selection requests (pastes) until another X application
-places data in the selection, at which point xclip exits silently. You can use
-the \fB\-verbose\fR option to see if and when xclip actually receives selection
-requests from other X applications.
+The default action for \fB-in\fP (copy) is to silently fork a temporary daemon
+and appear to exit immediately. The daemon waits in the background for X
+selection requests (pastes) and sends the data to other applications. Xclip's
+daemon exits silently when another X application performs a copy (technically,
+when xclip "loses ownership of the selection"). You can use the \fB\-verbose\fR
+option to prevent xclip from backgrounding itself to see if and when it receives
+selection requests from other X applications.
 
 Options can be abbreviated as long as they remain unambiguous. For example, it is possible to use \fB\-d\fR or \fB\-disp\fR instead of \fB\-display\fR. However, \fB\-v\fR couldn't be used because it is ambiguous (it could be short for \fB\-verbose\fR or \fB\-version\fR), so it would be interpreted as a filename.
 
@@ -122,56 +220,79 @@ applications and, traditionally, the middle mouse button does a paste.
 
 The "clipboard" selection is useful for large, binary data, such as images.
 Applications use the "clipboard" when using menu options, like Edit \[->] Copy,
-or Control+C (copy) and Control+V (paste). The "clipboard" is very useful, so
-xclip allows the shortcut \fB-c\fP to mean \fB-selection\fP \fBclipboard\fP.
+or Control+C (copy) and Control+V (paste). The "clipboard" is quite commonly
+used, so xclip allows the shortcut \fB-c\fP to mean \fB-selection\fP
+\fBclipboard\fP. (xclip ecumenically also accepts \fIxsel\fP's \fB-b\fP option
+as a synonym for \fB-c\fP).
 
 .SH EXAMPLES
-.PP
-I hate man pages without examples!
-
 .TP
-.B xclip <<< 'Hello there!'
+.B echo 'I hate man pages without examples!' | xclip
 .IP
 Copy a string into the "primary" selection.
-
+Then middle click in an X application to paste.
+.
 .TP
 .B xclip
 .IP
 Print the "primary" selection to the screen.
-
+.
+.TP
+.B xclip <foo.txt
+.IP
+Read the file foo.txt and copy it into the "primary" selection. Note that you
+could also use "xclip foo.txt" without the redirection, however that would not
+work with the -filter option.
+.
+.TP
+.B xclip > helloworld.c
+.IP
+Paste the "primary" selection into the file helloworld.c.
+.
+.TP
+.B xclip | rev | xclip -f
+.IP
+Reverse the letters in the selection and also print them out.
+.
+.TP
+.B wget $(xclip)
+.IP
+Download the URL that has been selected by the mouse. (Requires wget). 
+.
+.TP
+.B xclip -t image/png | convert -geometry '>800x>480' - sixel:-
+.IP
+Show the image from the clipboard in a terminal which handles sixel graphics
+(for example, 'xterm -ti vt340'). This works, for example, after using Right
+Click \[->] Copy Image from within a web browser.
+.
 .TP
 .B uptime | xclip
 .IP
 Put your uptime in the X selection. 
-Then middle click in an X application to paste.
-
+.
 .TP
 .B xclip -loops 10 -verbose /etc/motd
 .IP
 Exit after /etc/motd (message of the day) has been pasted 10 times. Show how many selection requests (pastes) have been processed.
-
-.TP
-.B xclip > helloworld.c
-.IP
-Put the contents of the selection into a file.
-
+.
 .TP
 .B xclip -t text/html index.html
 .IP
 Copy a file with a specific MIME type. Middle click in an X application supporting HTML to paste the contents of the given file as HTML.
-
+.
 .TP
 .B xclip -c -t image/jpeg foo.jpg
 .IP
 Copy an image to the clipboard. You can now paste it into a graphical
 application using Control+V. 
-
+.
 .TP
 .B xclip -c -T
 .IP
 List valid data formats available on the clipboard. For example, after doing
 right-click \[->] \(lqCopy Image\(rq in a web browser, one might see:
-
+.
 .EX
 TIMESTAMP
 TARGETS
@@ -181,13 +302,15 @@ image/png
 image/tiff
 image/jpeg
 .EE
-
+.
 .TP
 .B xclip -c -t image/jpeg > bar.jpg
 .IP
 Paste an image from the clipboard to a file.
 
-.SH NOTES
+.SH USAGE NOTES
+
+.SS Sensitive data
 
 Using the \fB\-sensitive\fR option will clear the selection buffer of the
 sensitive information 50 milliseconds after it has been pasted, effectively only
@@ -202,6 +325,18 @@ Ideally, \fB\-sensitive\fR would allow exactly one paste and not need a timeout,
 but due to subtleties in the way the X clipboard protocol works, doing so is not
 as simple as it may seem.
 
+.SS "Secondary" and "buffercut" selections
+Historically, there were other selections such as "secondary" and "buffercut".
+Very few applications nowadays make use of them. Xclip fully handles them, if
+you so desire. For example, to swap the "primary" and "secondary" selections,
+you could do this:
+
+.EX
+$ xclip -sel s | xclip -sel b
+$ xclip | xclip -sel s
+$ xclip -sel b | xclip
+.EE
+
 .SH ENVIRONMENT
 .TP
 .SM
@@ -211,10 +346,51 @@ X display to use if none is specified with the
 \-display
 option.
 
+.SH "SEE ALSO"
+.PP
+.IR xclip-copyfile (1),
+.IR xclip-cutfile  (1),
+and
+.IR xclip-pastefile (1)
+copy and move files via the X clipboard.
+.PP
+.IR xsel (1)
+and
+.IR wl-clipboard (1)
+are command line programs similar to xclip. xsel has the ability to keep a primary selection even after a program has closed. wl-clipboard works with Wayland instead of X.
+.PP
+.IR copyq (1),
+.IR diodon (1),
+.IR gpaste (1),
+and
+.IR xclipboard (1)
+are just a few of many, many GUI clipboard managers which let you browse your clipboard's history.
+.PP
+
+.SH KNOWN BUGS
+.PP
+xclip is not ICCCM compliant. For example, the TIMESTAMP isn't set.
+.PP
+Only one target type can be chosen. It would be useful to let users pick a
+different type for each input file.
+.PP
+Making users specify the MIME type of files by hand is silly. Xclip ought to be
+able to automatically set the target appropriately using `file --brief
+--mime-type` on any files provided on the command line.
+.PP
+Xclip cannot automatically convert between data types. For example, if the user
+has specified \fB-t image/png\fP as input, xclip will ignore a request for a
+different target, such as "image/jpeg". Currently xclip sends the same data
+willy-nilly regardless of what was requested.
+
 .SH REPORTING BUGS
 Please report any bugs, problems, queries, experiences, etc. directly to the author.
 
 .SH AUTHORS
-Kim Saunders <kims@debian.org>
-Peter \[oA]strand <astrand@lysator.liu.se>
+.MT astrand@lysator.liu.se
+Peter \(oAstrand
+.ME
 .br
+.MT kims@debian.org
+Kim Saunders 
+.ME
