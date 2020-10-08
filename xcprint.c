@@ -3,7 +3,7 @@
  * 
  *  xcprint.c - functions to print help, version, errors, etc
  *  Copyright (C) 2001 Kim Saunders
- *  Copyright (C) 2007-2008 Peter Åstrand
+ *  Copyright (C) 2007-2020 Peter Åstrand
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,25 +35,34 @@ prhelp(char *name)
 "Usage: %s [OPTION] [FILE]...\n"
 "Access an X server selection for reading or writing.\n"
 "\n"
-"  -i, -in          read text into X selection from stdin or files [DEFAULT]\n"
-"      -filter      text piped in to selection will also be printed out\n"
-"  -o, -out         prints the selection to standard out\n"
-"      -selection   primary [DEFAULT], clipboard, secondary, or buffer-cut\n"
-"      -target      specify target atom: image/jpeg, UTF8_STRING [DEFAULT]\n"
-"      -silent      errors only, (run in background) [DEFAULT]\n"
-"      -quiet       minimal output (foreground)\n"
-"      -verbose     running commentary (foreground)\n"
-"      -debug       garrulous verbiage (foreground)\n"
+"  -i, -in          copy text into X selection from stdin or files\n"
+"                   (DEFAULT if stdin is read from file or pipe)\n"
+"  -o, -out         paste X selection to stdout\n"
+"                   (DEFAULT if stdin is a keyboard)\n"
+"      -filter      data piped in to selection will also be printed out\n"
+"      -selection   primary [DEFAULT], clipboard, or secondary\n"
+"  -c               shortcut for \"-selection clipboard\"\n"
+"      -target      request specific data format: eg, image/jpeg\n"
+"  -T               list available formats for the current selection and exit\n"
 "      -sensitive   only allow copied data to be pasted once\n"
-"  -l, -loops       number of selection requests to wait for before exiting\n"
-"      -wait n      exit n milliseconds pasting, timer restarts on each paste\n"
-"      -noutf8      don't treat text as utf-8, use old unicode\n"
+"  -l, -loops       number of paste requests to wait for before exiting\n"
+"      -wait n      exit n ms after paste request, timer restarts on each paste\n"
 "      -rmlastnl    remove the last newline character if present\n"
 "  -d, -display     X display to connect to (eg localhost:0\")\n"
 "      -version     version information\n"
-"  -h, -help        this usage information\n"
-"\n" "Report bugs to <astrand@lysator.liu.se>\n", name);
+"      -silent      errors only, (run in background) [DEFAULT]\n"
+" -quiet/-verbose   show minimal/running commentary (foreground)\n"
+"\n"
+"Report bugs to https://github.com/astrand/xclip\n", name);
     exit(EXIT_SUCCESS);
+
+/* The following lines aren't shown because we want to fit on an 80x24 screen */
+//"      -noutf8      don't treat text as utf-8, use old unicode\n"
+//"  -h, -help        this usage information\n"
+//"      -quiet       show minimal output, running in foreground\n"
+//"      -verbose     running commentary (foreground)\n"
+//"      -debug       garrulous verbiage (foreground)\n"
+
 }
 
 
@@ -62,7 +71,7 @@ void
 prversion(void)
 {
     fprintf(stderr, "%s version %s\n", PACKAGE_NAME, PACKAGE_VERSION);
-    fprintf(stderr, "Copyright (C) 2001-2008 Kim Saunders et al.\n");
+    fprintf(stderr, "Copyright (C) 2001-2020 Kim Saunders et al.\n");
     fprintf(stderr, "Distributed under the terms of the GNU GPL\n");
     exit(EXIT_SUCCESS);
 }

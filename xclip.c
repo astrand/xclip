@@ -3,7 +3,7 @@
  *
  *  xclip.c - command line interface to X server selections
  *  Copyright (C) 2001 Kim Saunders
- *  Copyright (C) 2007-2008 Peter Åstrand
+ *  Copyright (C) 2007-2020 Peter Åstrand
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@
 #include "xclib.h"
 
 /* command line option table for XrmParseCommand() */
-XrmOptionDescRec opt_tab[17];
+XrmOptionDescRec opt_tab[20];
 int opt_tab_size;
 
 /* Options that get set on the command line */
@@ -343,6 +343,12 @@ doOptTarget(void)
 	if (xcverb >= OVERBOSE)
 	    fprintf(stderr, "Using target: %s\n", rec_val.addr);
     }
+    else if (XrmGetResource(opt_db, "xclip.TARGETS", "", &rec_typ, &rec_val) ) {
+	target = XInternAtom(dpy, "TARGETS", False);
+	fdiri = F;		/* direction is always output when -T used */
+	if (xcverb >= OVERBOSE)
+	    fprintf(stderr, "Showing TARGETS.\n");
+    }
     else {
 	target = XA_UTF8_STRING(dpy);
 	if (xcverb >= OVERBOSE)
@@ -488,7 +494,7 @@ doIn(Window win, const char *progname)
      */
     while (dloop < sloop || sloop < 1) {
 	if (xcverb >= ODEBUG)
-	    fprintf(stderr, "\n========\n");
+	    fprintf(stderr, "\n________\n");
 
 	/* print messages about what we're waiting for
 	 * if not in silent mode
@@ -896,6 +902,27 @@ main(int argc, char *argv[])
     opt_tab[i].specifier = xcstrdup(".target");
     opt_tab[i].argKind = XrmoptionSepArg;
     opt_tab[i].value = (XPointer) NULL;
+    i++;
+
+    /* -T is shorthand for "-target TARGETS" */
+    opt_tab[i].option = xcstrdup("-TARGETS");
+    opt_tab[i].specifier = xcstrdup(".TARGETS");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("T");
+    i++;
+
+    /* -c is shorthand for "-selection clipboard" */
+    opt_tab[i].option = xcstrdup("-clipboard");
+    opt_tab[i].specifier = xcstrdup(".selection");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("clipboard");
+    i++;
+
+    /* Allow -b as synonym for -c for folks used to xsel */
+    opt_tab[i].option = xcstrdup("-board");
+    opt_tab[i].specifier = xcstrdup(".selection");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("clipboard");
     i++;
 
     /* "remove newline if it is the last character" entry */
