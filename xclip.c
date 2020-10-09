@@ -429,7 +429,7 @@ doIn(Window win, const char *progname)
 	sel_len--;
     }
 
-    /* Handle cut buffer if needed */
+    /* Handle old-style cut buffer if needed */
     if (sseln == XA_STRING) {
 	XStoreBuffer(dpy, (char *) sel_buf, (int) sel_len, 0);
 	XSetSelectionOwner(dpy, sseln, None, CurrentTime);
@@ -715,6 +715,8 @@ doOut(Window win)
     XEvent evt;			/* X Event Structures */
     unsigned int context = XCLIB_XCOUT_NONE;
 
+    
+    /* Handle old-style cut buffer if needed */
     if (sseln == XA_STRING)
 	sel_buf = (unsigned char *) XFetchBuffer(dpy, (int *) &sel_len, 0);
     else {
