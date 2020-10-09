@@ -72,7 +72,7 @@ for opt in o i h c b T ; do
 	echo "FAIL: ./xclip -$opt returned an error."
 	killall xclip
 	exit 1
-    fi	
+    fi
 done
 echo "	PASS"
 
@@ -84,8 +84,8 @@ tempo=`mktemp` || exit 1
 # test xclip on different amounts of data (2^fold) to bring out any errors
 c=0			# Number of folds completed.
 lines=1			# Current file size (2 to the c power).
-echo -n -e "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_ "  > $tempi
-echo -n -e "abcdefghijklmnopqrstuvwzyz!@#$%^&*()\n" >> $tempi
+echo -n -e 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-=` '  > $tempi
+echo -n -e 'abcdefghijklmnopqrstuvwzyz!@#$%^&*()_+~\n' >> $tempi
 for fold in 1 4 7 10 13
 do
     # double size of file to two to the $fold power
