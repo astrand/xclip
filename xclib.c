@@ -24,6 +24,7 @@
 #include <string.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
+#include <X11/Xproto.h>
 #include "xcdef.h"
 #include "xcprint.h"
 #include "xclib.h"
@@ -43,6 +44,47 @@ const char *evtstr[LASTEvent] = {
     "CirculateRequest", "PropertyNotify", "SelectionClear",
     "SelectionRequest", "SelectionNotify", "ColormapNotify",
     "ClientMessage", "MappingNotify", "GenericEvent", };
+
+/* Table of Requests indexed by op-code (from Xproto.h) */
+const char *reqstr[X_NoOperation+1] = {
+    "X_CreateWindow", "X_ChangeWindowAttributes", "X_GetWindowAttributes",
+    "X_DestroyWindow", "X_DestroySubwindows", "X_ChangeSaveSet",
+    "X_ReparentWindow", "X_MapWindow", "X_MapSubwindows", "X_UnmapWindow", 
+    "X_UnmapSubwindows", "X_ConfigureWindow", "X_CirculateWindow",
+    "X_GetGeometry", "X_QueryTree", "X_InternAtom", "X_GetAtomName",
+    "X_ChangeProperty", "X_DeleteProperty", "X_GetProperty",
+    "X_ListProperties", "X_SetSelectionOwner", "X_GetSelectionOwner",
+    "X_ConvertSelection", "X_SendEvent", "X_GrabPointer", "X_UngrabPointer",
+    "X_GrabButton", "X_UngrabButton", "X_ChangeActivePointerGrab",
+    "X_GrabKeyboard", "X_UngrabKeyboard", "X_GrabKey", "X_UngrabKey",
+    "X_AllowEvents", "X_GrabServer", "X_UngrabServer", "X_QueryPointer",
+    "X_GetMotionEvents", "X_TranslateCoords", "X_WarpPointer",
+    "X_SetInputFocus", "X_GetInputFocus", "X_QueryKeymap", "X_OpenFont",
+    "X_CloseFont", "X_QueryFont", "X_QueryTextExtents", "X_ListFonts",
+    "X_ListFontsWithInfo", "X_SetFontPath", "X_GetFontPath", "X_CreatePixmap",
+    "X_FreePixmap", "X_CreateGC", "X_ChangeGC", "X_CopyGC", "X_SetDashes",
+    "X_SetClipRectangles", "X_FreeGC", "X_ClearArea", "X_CopyArea",
+    "X_CopyPlane", "X_PolyPoint", "X_PolyLine", "X_PolySegment",
+    "X_PolyRectangle", "X_PolyArc", "X_FillPoly", "X_PolyFillRectangle",
+    "X_PolyFillArc", "X_PutImage", "X_GetImage", "X_PolyText8",
+    "X_PolyText16", "X_ImageText8", "X_ImageText16", "X_CreateColormap",
+    "X_FreeColormap", "X_CopyColormapAndFree", "X_InstallColormap",
+    "X_UninstallColormap", "X_ListInstalledColormaps", "X_AllocColor",
+    "X_AllocNamedColor", "X_AllocColorCells", "X_AllocColorPlanes",
+    "X_FreeColors", "X_StoreColors", "X_StoreNamedColor", "X_QueryColors",
+    "X_LookupColor", "X_CreateCursor", "X_CreateGlyphCursor", "X_FreeCursor",
+    "X_RecolorCursor", "X_QueryBestSize", "X_QueryExtension",
+    "X_ListExtensions", "X_ChangeKeyboardMapping", "X_GetKeyboardMapping",
+    "X_ChangeKeyboardControl", "X_GetKeyboardControl", "X_Bell",
+    "X_ChangePointerControl", "X_GetPointerControl", "X_SetScreenSaver",
+    "X_GetScreenSaver", "X_ChangeHosts", "X_ListHosts", "X_SetAccessControl",
+    "X_SetCloseDownMode", "X_KillClient", "X_RotateProperties",
+    "X_ForceScreenSaver", "X_SetPointerMapping", "X_GetPointerMapping",
+    "X_SetModifierMapping", "X_GetModifierMapping", "120", "121", "122",
+    "123", "124", "125", "126", "X_NoOperation",
+};
+
+
 
 /* a memset function that won't be optimized away by compler */
 void 
@@ -661,13 +703,16 @@ int xchandler(Display *dpy, XErrorEvent *evt) {
 		"\t\tResource ID: 0x%lx\n"
 		"\t\tSerial Num: %lu\n"
 		"\t\tError code: %u\n"
-		"\t\tRequest op code: %u major, %u minor\n",
+		"\t\tRequest op-code: %u major, %u minor\n"
+		"\t\tFailed request: %s\n"
+		,
 		evt->type, 
 		evt->resourceid, 
 		evt->serial, 
 		evt->error_code, 
 		evt->request_code, 
-		evt->minor_code);
+		evt->minor_code,
+		reqstr[evt->request_code] );
     }
 
     return 0;
