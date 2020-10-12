@@ -39,24 +39,27 @@ prhelp(char *name)
 "                   (DEFAULT if stdin is read from file or pipe)\n"
 "  -o, -out         paste X selection to stdout\n"
 "                   (DEFAULT if stdin is a keyboard)\n"
-"      -filter      data piped in to selection will also be printed out\n"
+"  -f, -filter      data piped in to selection will also be printed out\n"
 "      -selection   primary [DEFAULT], clipboard, or secondary\n"
-"  -c               shortcut for \"-selection clipboard\"\n"
-"      -target      request specific data format: eg, image/jpeg\n"
+"  -c, -clipboard   shortcut for \"-selection clipboard\"\n"
+"  -t, -target      request specific data format: eg, image/jpeg\n"
 "  -T               list available formats for the current selection and exit\n"
 "      -sensitive   only allow copied data to be pasted once\n"
 "  -l, -loops       number of paste requests to wait for before exiting\n"
 "      -wait n      exit n ms after paste request, timer restarts on each paste\n"
-"      -rmlastnl    remove the last newline character if present\n"
+"  -r, -rmlastnl    remove the last newline character if present\n"
 "  -d, -display     X display to connect to (eg localhost:0\")\n"
 "      -version     version information\n"
 "      -silent      errors only, (run in background) [DEFAULT]\n"
-" -quiet/-verbose   show minimal/running commentary (foreground)\n"
+"      -verbose     show running commentary (foreground)\n"
 "\n"
 "Report bugs to https://github.com/astrand/xclip\n", name);
     exit(EXIT_SUCCESS);
 
 /* The following lines aren't shown because we want to fit on an 80x24 screen */
+/* Also, it's more helpful to show only the most commonly used options for -h */
+/* The man page, of course, mentions everything. */
+//"      -selection   ... buffercut\n"
 //"      -noutf8      don't treat text as utf-8, use old unicode\n"
 //"  -h, -help        this usage information\n"
 //"      -quiet       show minimal output, running in foreground\n"

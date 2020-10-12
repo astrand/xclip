@@ -28,9 +28,8 @@ trap cleanup EXIT HUP INT
 
 
 
-if  sleep 0.1  2>/dev/null; then
-    delay=0.1   # seconds to wait before running xclip -o
-else
+delay=0.01   # seconds to wait before running xclip -o
+if ! sleep $delay  2>/dev/null; then
     delay=1
 fi    
 
@@ -66,7 +65,7 @@ fi
 echo
 echo "Testing whether xclip recognizes the advertised shorthand options"
 echo -n "Trying: "
-for opt in o i h c b T f r l ; do
+for opt in o i h c b T f r "l 0" "t STRING" ; do
     echo -n "-$opt "
     if ! ./xclip -$opt -out 2>/dev/null | ./xclip -$opt -in >/dev/null 2>&1; then
 	echo "FAIL: ./xclip -$opt returned an error."
@@ -144,7 +143,7 @@ echo "Binary files large enough to force INCR mode"
 for i in 1 2 16; do
     dd if=/dev/zero bs=1024 count=$((i*1024)) of=$tempi >/dev/null 2>&1
     echo -n "Trying: ($i MB)	"
-    for sel in primary secondary clipboard buffercut
+    for sel in primary secondary clipboard
     do
 	echo -n "$sel  	"
 	$checker ./xclip -sel $sel -i -t image/jpeg < $tempi

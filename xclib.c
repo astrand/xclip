@@ -25,6 +25,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xproto.h>
+#include <X11/Xmu/Error.h>
 #include "xcdef.h"
 #include "xcprint.h"
 #include "xclib.h"
@@ -46,7 +47,7 @@ const char *evtstr[LASTEvent] = {
     "ClientMessage", "MappingNotify", "GenericEvent", };
 
 /* Table of Requests indexed by op-code (from Xproto.h) */
-const char *reqstr[X_NoOperation+1] = {
+const char *reqstr[X_NoOperation+1] = { "0",
     "X_CreateWindow", "X_ChangeWindowAttributes", "X_GetWindowAttributes",
     "X_DestroyWindow", "X_DestroySubwindows", "X_ChangeSaveSet",
     "X_ReparentWindow", "X_MapWindow", "X_MapSubwindows", "X_UnmapWindow", 
@@ -631,7 +632,10 @@ xcfetchname(Display *display, Window w, char **namep) {
     if (w == None)
 	return 1;		/* No window, no name. */
 
+    xcerrflag = False;
     XFetchName(display, w, namep);
+    if (xcerrflag == True)	/* Give up if the window disappeared */
+	return 1;
     if (*namep)
 	return 0; 		/* Hurrah! It worked on the first try. */
 
@@ -681,12 +685,23 @@ xcnamestr(Display *display, Window w) {
     return xcname;
 }
 
+struct requestor
+{
+	Window cwin;
+	Atom pty;
+	unsigned int context;
+	unsigned long sel_pos;
+	int finished;
+	long chunk_size;
+	struct requestor *next;
+};
 
 /* Xlib Error handler that saves last error event */
 /* Usage: XSetErrorHandler(xchandler); */
 int xcerrflag = False;
 XErrorEvent xcerrevt;
 int xchandler(Display *dpy, XErrorEvent *evt) {
+    void *fn = XSetErrorHandler(XmuSimpleErrorHandler);
     xcerrflag = True;
     xcerrevt = *evt;
 
@@ -715,6 +730,7 @@ int xchandler(Display *dpy, XErrorEvent *evt) {
 		reqstr[evt->request_code] );
     }
 
+    XSetErrorHandler(fn);
     return 0;
 }
 
