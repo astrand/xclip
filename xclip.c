@@ -30,6 +30,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xmu/Atoms.h>
+#include <X11/Xmu/Error.h>
 #include "xcdef.h"
 #include "xcprint.h"
 #include "xclib.h"
@@ -146,6 +147,7 @@ static void del_requestor(struct requestor *requestor)
 	}
 
 	free(requestor);
+	requestor = NULL;
 }
 
 int clean_requestors() {
@@ -986,6 +988,7 @@ main(int argc, char *argv[])
 
     /* If we get an X error, catch it instead of barfing */
     XSetErrorHandler(xchandler);
+//    XSetErrorHandler(XmuSimpleErrorHandler);
 
     if (fdiri)
 	exit_code = doIn(win, argv[0]);
