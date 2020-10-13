@@ -51,12 +51,15 @@ prhelp(char *name)
 "  -d, -display     X display to connect to (eg localhost:0\")\n"
 "      -version     version information\n"
 "      -silent      errors only, (run in background) [DEFAULT]\n"
-" -quiet/-verbose   show minimal/running commentary (foreground)\n"
+"      -verbose     show running commentary (foreground)\n"
 "\n"
 "Report bugs to https://github.com/astrand/xclip\n", name);
     exit(EXIT_SUCCESS);
 
 /* The following lines aren't shown because we want to fit on an 80x24 screen */
+/* Also, it's more helpful to show only the most commonly used options for -h */
+/* The man page, of course, mentions everything. */
+//"      -selection   ... buffercut\n"
 //"      -noutf8      don't treat text as utf-8, use old unicode\n"
 //"  -h, -help        this usage information\n"
 //"      -quiet       show minimal output, running in foreground\n"
