@@ -698,8 +698,8 @@ struct requestor
 
 /* Xlib Error handler that saves last error event */
 /* Usage: XSetErrorHandler(xchandler); */
-int xcerrflag = False;
-XErrorEvent xcerrevt;
+int xcerrflag = False;		/* GLOBAL */
+XErrorEvent xcerrevt;		/* GLOBAL */
 int xchandler(Display *dpy, XErrorEvent *evt) {
     void *fn = XSetErrorHandler(XmuSimpleErrorHandler);
     xcerrflag = True;
