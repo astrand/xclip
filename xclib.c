@@ -698,16 +698,15 @@ struct requestor
 
 /* Xlib Error handler that saves last error event */
 /* Usage: XSetErrorHandler(xchandler); */
-int xcerrflag = False;
-XErrorEvent xcerrevt;
+int xcerrflag = False;		/* GLOBAL */
+XErrorEvent xcerrevt;		/* GLOBAL */
 int xchandler(Display *dpy, XErrorEvent *evt) {
     void *fn = XSetErrorHandler(XmuSimpleErrorHandler);
     xcerrflag = True;
     xcerrevt = *evt;
 
-    int len=255;
-    char buf[len+1];
-    XGetErrorText(dpy, evt->error_code, buf, len);
+    char buf[256];
+    XGetErrorText(dpy, evt->error_code, buf, sizeof(buf)-1);
     if (xcverb >= OVERBOSE) {
 	fprintf(stderr, "\tXErrorHandler: XError (type %d): %s\n",
 		evt->type, buf);

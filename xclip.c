@@ -431,10 +431,20 @@ doIn(Window win, const char *progname)
 	sel_len--;
     }
 
-    /* Handle old-style cut buffer if needed */
+    /* Handle old-style cut buffer ('-selection buffercut') */
     if (sseln == XA_STRING) {
+	xcerrflag = False;
 	XStoreBuffer(dpy, (char *) sel_buf, (int) sel_len, 0);
 	XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+	XSync(dpy, False);	/* Too force error to occur if it is going to */
+	if (xcerrflag == True) {
+	    fprintf(stderr, "xclip: error: Could not copy to old-style cut buffer\n");
+	    if (xcverb >= OVERBOSE)
+		XmuPrintDefaultErrorMessage(dpy, &xcerrevt, stderr);
+	    xcmemzero(sel_buf,sel_len);
+	    return EXIT_FAILURE;
+	}
+
 	xcmemzero(sel_buf,sel_len);
 	return EXIT_SUCCESS;
     }
