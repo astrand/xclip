@@ -83,8 +83,8 @@ tempo=`mktemp` || exit 1
 # test xclip on different amounts of data (2^fold) to bring out any errors
 c=0			# Number of folds completed.
 lines=1			# Current file size (2 to the c power).
-echo -n -e 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-=` '  > $tempi
-echo -n -e 'abcdefghijklmnopqrstuvwzyz!@#$%^&*()_+~\n' >> $tempi
+echo -n 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-=` ' > $tempi
+echo    'abcdefghijklmnopqrstuvwzyz!@#$%^&*()_+~' >> $tempi
 for fold in 1 4 7 10 13
 do
     # double size of file to two to the $fold power
