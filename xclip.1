@@ -123,8 +123,8 @@ standard input is a tty.)
 .
 Read text into the X selection and also print it out to standard out,
 unmodified. Handy for pipelines. This does not (yet) work with files for input.
-Not compatible with verbosity levels above \(lqsilent\(rq (the default) as xclip
-would not exit after making the copy and could hang a pipeline.
+Not compatible with verbosity levels above \(lqsilent\(rq (the default) as
+xclip would not exit after making the copy and could hang a pipeline.
 .TP
 \fB\-selection\fR \fIselection\fR
 .
@@ -141,30 +141,26 @@ using the given target \fIfmt\fR (E.g., \(lqtext/html\(rq, \(lqimage/jpeg\(rq).
 The default target is \(lqUTF8_STRING\(rq. If that is not available for output,
 xclip will fallback to \(lqSTRING\(rq.
 .
-N.B.: When setting the selection with \fB-i\fR, xclip currently can only handle
-one target data format. While xclip does respond correctly to clients when asked
-to list available TARGETS, xclip never rejects any unsupported target requests
-and simply sends the same data. For more information about target atoms refer to
-ICCCM section 2.6.2
+Note: When setting the selection (copying), xclip can only specify one target
+data format.
 .
 .TP
-\fB\-T\fR
+\fB\-T\fR, \fB\-TARGETS\fR
 .
 Show all valid targets for -t. Technically, this is just shorthand for
 \(lq-target TARGETS\(rq. The special target atom named \(lqTARGETS\(rq contains
-the list of all valid target atoms for this selection. For more information
-about target atoms refer to ICCCM section 2.6.2.
+the list of all valid target atoms for this selection. 
 .TP
 \fB\-r\fR, \fB\-rmlastnl\fR
 .
 If the last character of the selection is a newline, remove it. Newline
-characters that are not the last character in the selection are not affected. If
-the selection does not end with a newline character, this option has no effect.
-This option is useful for copying one-line output of programs like \fBpwd\fR to
-the clipboard to paste it again into the command prompt without executing the
-line immediately due to the newline character \fBpwd\fR appends.
+characters that are not the last character in the selection are not affected.
+If the selection does not end with a newline character, this option has no
+effect. This option is useful for copying one-line output of programs like
+\fBpwd\fR to the clipboard to paste it again into the command prompt without
+executing the line immediately due to the newline character \fBpwd\fR appends.
 .TP
-\fB\-l\fR \fIn\fR, \fB\-loops\fR \fIn\fR
+\fB\-loops\fR \fIn\fR
 .
 Number of X selection requests (pastes into X applications) to wait for before
 exiting, with a value of 0 (default) causing xclip to wait for an unlimited
@@ -180,7 +176,7 @@ $\fBDISPLAY\fR if this option is omitted.
 \fB\-h\fR, \fB\-help\fR
 Show quick summary of options
 .TP
-\fB\-version\fR
+\fB\-V\fR, \fB\-version\fR
 Show version information.
 .TP
 \fB\-silent\fR
@@ -191,7 +187,7 @@ only (default).
 \fB\-quiet\fR
 Run in the foreground and show informational messages on the terminal.
 .TP
-\fB\-verbose\fR
+\fB\-v\fR, \fB\-verbose\fR
 Run in the foreground and provide a running commentary of what xclip is doing.
 .TP
 \fB\-debug\fR
@@ -215,15 +211,15 @@ expires, the selection buffer is cleared so the data cannot be pasted again.
 .PP
 Xclip was designed to allow tighter integration of X applications and command
 line programs. Xclip can be in either input mode (copy) or output mode (paste)
-and will typically do the right thing without needing \fB-i\fP or \fB-o\fP to be
-specified. Filenames on the commandline are always used for input. When the
-input is from a file or a pipeline, xclip copies text (or binary data) in to the
-X selection and forks a daemon to makes the data available to other X
+and will typically do the right thing without needing \fB-i\fP or \fB-o\fP to
+be specified. Filenames on the commandline are always used for input. When the
+input is from a file or a pipeline, xclip copies text (or binary data) in to
+the X selection and forks a daemon to makes the data available to other X
 applications for pasting. When no input is detected, or if \fB-o\fP is used,
 xclip will print the contents of the current selection to standard output. This
 is commonly piped into other commands, redirected to a file, or used in command
-substitution. This is the default when no files are specified and stdin is a tty
-(the user's keyboard).
+substitution. This is the default when no files are specified and stdin is a
+tty (the user's keyboard).
 
 The default action for \fB-in\fP (copy) is to silently fork a temporary daemon
 and appear to exit immediately. The daemon waits in the background for X
@@ -233,23 +229,52 @@ when xclip \(lqloses ownership of the selection\(rq). You can use the
 \fB\-verbose\fR option to prevent xclip from backgrounding itself to see if and
 when it receives selection requests from other X applications.
 
-Options can be abbreviated as long as they remain unambiguous. For example, it is possible to use \fB\-d\fR or \fB\-disp\fR instead of \fB\-display\fR. However, \fB\-v\fR couldn't be used because it is ambiguous (it could be short for \fB\-verbose\fR or \fB\-version\fR), so it would be interpreted as a filename.
+Options can be abbreviated as long as they remain unambiguous. For example, it
+is possible to use \fB\-d\fR or \fB\-disp\fR instead of \fB\-display\fR as no
+other option begins with the letter 'd'. Any single character option listed in
+this manual, will also work, even if ambiguous. For example, \fB\-v\fR will
+always be short for \fB\-verbose\fR (which is much more useful than
+\fB\-version\fR)). Due to a fluke, using an ambiguous option will give a rather
+elliptical response: \(lqNo such file or directory.\(rq
 
 Note that only the first character of the selection specified with the
 \fB\-selection\fR option is important. This means that \(lqp\(rq, \(lqsec\(rq
 and \(lqclip\(rq would have the same effect as using \(lqprimary\(rq,
 \(lqsecondary\(rq or \(lqclipboard\(rq respectively.
 
-The \(lqprimary\(rq selection is mainly used for quick text transfers. For example,
-highlighting with a mouse does an implicit copy to \(lqprimary\(rq in most
-applications and, traditionally, the middle mouse button does a paste.
+.Ss About selections
 
-The \(lqclipboard\(rq selection is useful for large, binary data, such as images.
-Applications use the \(lqclipboard\(rq when using menu options, like Edit \[->] Copy,
-or Control+C (copy) and Control+V (paste). The \(lqclipboard\(rq is quite commonly
-used, so xclip allows the shortcut \fB-c\fP to mean \fB-selection\fP
+One of the differences of X from systems like Apple MacOS\(tm and Microsoft
+Windows\(tm is that there is more than one clipboard (called
+\(lqselections\(rq) available. Only two are in common use nowadays. The
+\fB\(lqprimary\(rq\fP selection (the default in xclip) is mainly used for quick
+text transfers. For example, highlighting with a mouse does an implicit copy to
+\(lqprimary\(rq in most applications and, traditionally, the middle mouse
+button does a paste.
+
+The \fB\(lqclipboard\(rq\fP selection is useful for large, binary data, such as
+images. Applications use the \(lqclipboard\(rq when copying using menu options
+or Control+C (copy) / Control+V (paste). The \(lqclipboard\(rq is quite
+commonly used, so xclip allows the shortcut \fB-c\fP to mean \fB-selection\fP
 \fBclipboard\fP. (xclip ecumenically also accepts \fIxsel\fP's \fB-b\fP option
 as a synonym for \fB-c\fP).
+
+.Ss About targets
+
+Each selection in X can have multiple \(lqtargets\(rq available. Each target is
+a different data format. For example, a single clipboard selection might be
+available as UTF8_STRING, STRING, text/html, image/jpeg, and application/pdf.
+Which targets are available and what they mean is up to the copying
+application. When multiple targets are available, the application that did the
+copy provides a list of targets (data types) that it is willing to convert to
+upon request. In xclip, you can see all targets currently available for pasting
+with \fB-T\fP and pick one with \fB-t\fP.
+
+When setting the selection (copying), xclip can only specify a single target
+per selection. (This may change in the future). If no target is specified, then
+xclip's default is UTF8_STRING. 
+
+For more information about target atoms refer to ICCCM section 2.6.2.
 
 .SH EXAMPLES
 .TP
@@ -332,11 +357,14 @@ TIMESTAMP
 TARGETS
 MULTIPLE
 SAVE_TARGETS
+text/html
 image/png
 image/tiff
 image/jpeg
 .EE
 .
+Note that in this case the text/html target is the HTML source code that
+embedded the image on the page.
 .TP
 .B xclip -c -t image/jpeg > bar.jpg
 .IP
@@ -417,9 +445,10 @@ able to automatically set the target appropriately using `file --brief
 --mime-type` on any files provided on the command line.
 .PP
 Xclip cannot automatically convert between data types. For example, if the user
-has specified \fB-t image/png\fP as input, xclip will ignore a request for a
-different target, such as \(lqimage/jpeg\(rq. Currently xclip sends the same
-data willy-nilly regardless of what was requested.
+has specified \fB-t image/png\fP as input, xclip will not correctly handle a
+request for a different target, such as \(lqimage/jpeg\(rq. Currently xclip
+sends the same data willy-nilly regardless of what was requested. It ought to,
+at the least, return an error if it cannot comply.
 
 .SH REPORTING BUGS
 Please report any bugs, problems, queries, experiences, etc. directly to the author.
