@@ -65,8 +65,8 @@ fi
 echo
 echo "Testing whether xclip recognizes the advertised shorthand options"
 echo -n "Trying: "
-for opt in o i h c b T f r "l 0" "t STRING" ; do
-    echo -n "-$opt "
+for opt in i o f "v -silent" c T r "t STRING" h V ; do
+    echo -n "-$opt, "
     if ! ./xclip -$opt -out 2>/dev/null | ./xclip -$opt -in >/dev/null 2>&1; then
 	echo "FAIL: ./xclip -$opt returned an error."
 	killall xclip
@@ -79,6 +79,20 @@ echo
 # temp file names (in and out)
 tempi=`mktemp` || exit 1
 tempo=`mktemp` || exit 1
+
+echo -n "Testing whether xclip can specify target "
+echo hello | ./xclip -t xctest/datatype &
+sleep $delay
+if ! ./xclip -T | grep -q xctest/datatype; then
+    echo FAIL
+    killall xclip
+    exit 1
+elif [ hello != $(./xclip -t xctest/datatype) ]; then
+    echo FAIL
+    killall xclip
+    exit 1
+fi
+echo PASS
 
 # test xclip on different amounts of data (2^fold) to bring out any errors
 c=0			# Number of folds completed.
@@ -137,12 +151,13 @@ do
     done
 done
 
-# test xclip on files >1MB to force INCR mode
+# test xclip on files >1MB to force INCR mode.
 echo
 echo "Binary files large enough to force INCR mode"
-for i in 1 2 16; do
+for i in 1 2 16 64; do
     dd if=/dev/zero bs=1024 count=$((i*1024)) of=$tempi >/dev/null 2>&1
     echo -n "Trying: ($i MB)	"
+    # Note: not testing "buffercut" because it cannot do INCR.
     for sel in primary secondary clipboard
     do
 	echo -n "$sel  	"
@@ -150,7 +165,7 @@ for i in 1 2 16; do
 	sleep $delay
 	$checker ./xclip -sel $sel -o -t image/jpeg > $tempo
 	if ! diff $tempi $tempo; then
-	    echo "FAIL: xclip could not transfer $i MB using the $sel selection "
+	    echo "FAIL: xclip could not transfer $i MB using the $sel selection"
 	    exit 1
 	fi
     done
