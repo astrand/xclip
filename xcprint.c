@@ -43,21 +43,21 @@ prhelp(char *name)
 "      -selection   primary [DEFAULT], clipboard, or secondary\n"
 "  -c, -clipboard   shortcut for \"-selection clipboard\"\n"
 "  -t, -target      request specific data format: eg, image/jpeg\n"
-"  -T               list available formats for the current selection and exit\n"
+"  -T, -TARGETS     list available formats for the current selection and exit\n"
 "      -sensitive   only allow copied data to be pasted once\n"
-"  -l, -loops       number of paste requests to wait for before exiting\n"
+"      -loops n     number of paste requests to wait for before exiting\n"
 "      -wait n      exit n ms after paste request, timer restarts on each paste\n"
 "  -r, -rmlastnl    remove the last newline character if present\n"
-"  -d, -display     X display to connect to (eg localhost:0\")\n"
-"      -version     version information\n"
+"      -display     X display to connect to (eg localhost:0\")\n"
+"  -V, -version     version information\n"
 "      -silent      errors only, (run in background) [DEFAULT]\n"
-"      -verbose     show running commentary (foreground)\n"
+"  -v, -verbose     show running commentary (run in foreground)\n"
 "\n"
 "Report bugs to https://github.com/astrand/xclip\n", name);
     exit(EXIT_SUCCESS);
 
-/* The following lines aren't shown because we want to fit on an 80x24 screen */
-/* Also, it's more helpful to show only the most commonly used options for -h */
+/* The following lines aren't shown so we can fit on an 80x24 screen. */
+/* Also, it's better to show only the most commonly used options for -h. */
 /* The man page, of course, mentions everything. */
 //"      -selection   ... buffercut\n"
 //"      -noutf8      don't treat text as utf-8, use old unicode\n"
