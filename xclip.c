@@ -36,7 +36,7 @@
 #include "xclib.h"
 
 /* command line option table for XrmParseCommand() */
-XrmOptionDescRec opt_tab[20];
+XrmOptionDescRec opt_tab[29];
 int opt_tab_size;		/* for sanity check later */
 
 /* Options that get set on the command line */
@@ -847,9 +847,19 @@ main(int argc, char *argv[])
     opt_tab[i].argKind = XrmoptionNoArg;
     opt_tab[i].value = (XPointer) xcstrdup(ST);
     i++;
+    opt_tab[i].option = xcstrdup("-f"); /* Ensure -f always means filter */
+    opt_tab[i].specifier = xcstrdup(".filter");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup(ST);
+    i++;
 
     /* in option entry */
     opt_tab[i].option = xcstrdup("-in");
+    opt_tab[i].specifier = xcstrdup(".direction");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("I");
+    i++;
+    opt_tab[i].option = xcstrdup("-i"); /* Ensure -i always mean -in */
     opt_tab[i].specifier = xcstrdup(".direction");
     opt_tab[i].argKind = XrmoptionNoArg;
     opt_tab[i].value = (XPointer) xcstrdup("I");
@@ -861,9 +871,19 @@ main(int argc, char *argv[])
     opt_tab[i].argKind = XrmoptionNoArg;
     opt_tab[i].value = (XPointer) xcstrdup("O");
     i++;
+    opt_tab[i].option = xcstrdup("-o"); /* Ensure -o always means -out */
+    opt_tab[i].specifier = xcstrdup(".direction");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("O");
+    i++;
 
     /* version option entry */
     opt_tab[i].option = xcstrdup("-version");
+    opt_tab[i].specifier = xcstrdup(".print");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("V");
+    i++;
+    opt_tab[i].option = xcstrdup("-V"); /* Allow capital -V for version */
     opt_tab[i].specifier = xcstrdup(".print");
     opt_tab[i].argKind = XrmoptionNoArg;
     opt_tab[i].value = (XPointer) xcstrdup("V");
@@ -896,6 +916,11 @@ main(int argc, char *argv[])
     opt_tab[i].argKind = XrmoptionNoArg;
     opt_tab[i].value = (XPointer) xcstrdup("V");
     i++;
+    opt_tab[i].option = xcstrdup("-v"); /* Ensure -v always means verbose */
+    opt_tab[i].specifier = xcstrdup(".olevel");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("V");
+    i++;
 
     /* debug option entry */
     opt_tab[i].option = xcstrdup("-debug");
@@ -917,8 +942,19 @@ main(int argc, char *argv[])
     opt_tab[i].argKind = XrmoptionSepArg;
     opt_tab[i].value = (XPointer) NULL;
     i++;
+    opt_tab[i].option = xcstrdup("-t"); /* Ensure -t always means -target */
+    opt_tab[i].specifier = xcstrdup(".target");
+    opt_tab[i].argKind = XrmoptionSepArg;
+    opt_tab[i].value = (XPointer) NULL;
+    i++;
 
     /* -T is shorthand for "-target TARGETS" */
+    opt_tab[i].option = xcstrdup("-T");
+    opt_tab[i].specifier = xcstrdup(".TARGETS");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("T");
+    i++;
+    /* Allow -TARGETS instead of -T, though why would anyone do that? */
     opt_tab[i].option = xcstrdup("-TARGETS");
     opt_tab[i].specifier = xcstrdup(".TARGETS");
     opt_tab[i].argKind = XrmoptionNoArg;
@@ -926,6 +962,12 @@ main(int argc, char *argv[])
     i++;
 
     /* -c is shorthand for "-selection clipboard" */
+    opt_tab[i].option = xcstrdup("-c");
+    opt_tab[i].specifier = xcstrdup(".selection");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("clipboard");
+    i++;
+    /* Allow -clipboard instead of -c, but why would anyone do that? */
     opt_tab[i].option = xcstrdup("-clipboard");
     opt_tab[i].specifier = xcstrdup(".selection");
     opt_tab[i].argKind = XrmoptionNoArg;
@@ -933,7 +975,7 @@ main(int argc, char *argv[])
     i++;
 
     /* Allow -b as synonym for -c for folks used to xsel */
-    opt_tab[i].option = xcstrdup("-board");
+    opt_tab[i].option = xcstrdup("-b");
     opt_tab[i].specifier = xcstrdup(".selection");
     opt_tab[i].argKind = XrmoptionNoArg;
     opt_tab[i].value = (XPointer) xcstrdup("clipboard");
@@ -941,6 +983,11 @@ main(int argc, char *argv[])
 
     /* "remove newline if it is the last character" entry */
     opt_tab[i].option = xcstrdup("-rmlastnl");
+    opt_tab[i].specifier = xcstrdup(".rmlastnl");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup(ST);
+    i++;
+    opt_tab[i].option = xcstrdup("-r"); /* Ensure -r always means -rmlastnl */
     opt_tab[i].specifier = xcstrdup(".rmlastnl");
     opt_tab[i].argKind = XrmoptionNoArg;
     opt_tab[i].value = (XPointer) xcstrdup(ST);
@@ -964,7 +1011,7 @@ main(int argc, char *argv[])
     opt_tab_size = i;
     if ( ( sizeof(opt_tab) / sizeof(opt_tab[0]) ) < opt_tab_size ) {
 	fprintf(stderr,
-		"xclip: programming error: opt_tab declared to hold %ld options, but %d defined\n",
+		"xclip: programming error: opt_tab[] declared to hold %ld options, but %d defined\n",
 		sizeof(opt_tab) / sizeof(opt_tab[0]), opt_tab_size);
 	return EXIT_FAILURE;
     }
