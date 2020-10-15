@@ -49,17 +49,18 @@ do
     esac
 done
 
-echo "Testing whether xclip exits correctly when the selection is lost"
+echo -n "Testing whether xclip exits correctly when the selection is lost: "
 echo hello | ./xclip -q -i 2>/dev/null &
 sleep $delay
 echo goodbye | ./xclip -i
 sleep $delay
 if ps $! > /dev/null; then
-    echo "FAIL: Zombie xclip yet lives! Killing."
+    echo "FAIL"
+    echo "Zombie xclip yet lives! Killing."
     killall xclip
     exit 1
 else
-    echo "PASS: xclip exited correctly after losing selection"
+    echo "PASS"
 fi
 
 echo
@@ -81,7 +82,7 @@ echo
 tempi=`mktemp` || exit 1
 tempo=`mktemp` || exit 1
 
-echo -n "Testing whether xclip can specify target "
+echo -n "Testing whether xclip can specify target with -t: "
 echo hello | ./xclip -t xctest/datatype &
 sleep $delay
 if ! ./xclip -T | grep -q xctest/datatype; then
