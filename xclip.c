@@ -773,9 +773,7 @@ doOut(Window win)
     }
 
     if (sel_len) {
-	/* only print the buffer out, and free it, if it's not
-	 * empty
-	 */
+	/* only print the buffer out, and free it, if it's not empty */
 	printSelBuf(stdout, sel_type, sel_buf, sel_len);
 
 	if (fsecm) {
@@ -1011,7 +1009,8 @@ main(int argc, char *argv[])
     opt_tab_size = i;
     if ( ( sizeof(opt_tab) / sizeof(opt_tab[0]) ) < opt_tab_size ) {
 	fprintf(stderr,
-		"xclip: programming error: opt_tab[] declared to hold %ld options, but %d defined\n",
+		"xclip: programming error: "
+		"opt_tab[] declared to hold %ld options, but %d defined\n",
 		sizeof(opt_tab) / sizeof(opt_tab[0]), opt_tab_size);
 	return EXIT_FAILURE;
     }
@@ -1045,7 +1044,6 @@ main(int argc, char *argv[])
 
     /* If we get an X error, catch it instead of barfing */
     XSetErrorHandler(xchandler);
-//    XSetErrorHandler(XmuSimpleErrorHandler);
 
     if (fdiri)
 	exit_code = doIn(win, argv[0]);
