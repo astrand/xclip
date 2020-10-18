@@ -366,6 +366,10 @@ xcout(Display * dpy,
     return (0);
 }
 
+
+/* Global variable to store our own Window ID when xcin() is called. */
+Window xcinwin = 0;
+
 /* put data into a selection, in response to a SelectionRequest event from
  * another window (and any subsequent events relating to an INCR transfer).
  *
@@ -396,16 +400,15 @@ int
 xcin(Display * dpy,
      Window * win,
      XEvent evt,
-     Atom * pty, Atom target, unsigned char *txt, unsigned long len, unsigned long *pos,
-     unsigned int *context, long *chunk_size)
+     Atom * pty, Atom target, unsigned char *txt, unsigned long len,
+     unsigned long *pos, unsigned int *context, long *chunk_size)
 {
-    unsigned long chunk_len;	/* length of current chunk (for incr
-				 * transfers only)
-				 */
-    XEvent res;			/* response to event */
+    unsigned long chunk_len;   /* length of current chunk (for incr xfr only)*/
+    XEvent res;		       /* response to event */
     static Atom inc;
     static Atom targets;
 
+    
     if (!targets) {
 	targets = XInternAtom(dpy, "TARGETS", False);
     }
@@ -416,6 +419,7 @@ xcin(Display * dpy,
 
     /* We consider selections larger than a quarter of the maximum
        request size to be "large". See ICCCM section 2.5 */
+    /* FIXME! Why divide by four instead of multiply? Size is in "words". */
     if (!(*chunk_size)) {
 	*chunk_size = XExtendedMaxRequestSize(dpy) / 4;
 	if (!(*chunk_size)) {
@@ -730,6 +734,18 @@ int xchandler(Display *dpy, XErrorEvent *evt) {
     }
 
     XSetErrorHandler(fn);
+
+    if (xcinwin) {
+	fprintf(stderr, "XXX foo Sending event to self: Window 0x%lx\n", xcinwin);
+	XEvent e;
+	e.xerror = xcerrevt;
+
+	XSendEvent(dpy, xcinwin, 0, 0, &e);
+    }
+    else {
+	fprintf(stderr, "XXX no window to send to!?\n");
+    }	
+    
     return 0;
 }
 
