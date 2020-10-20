@@ -35,10 +35,11 @@ extern XErrorEvent xcerrevt;
 #define ODEBUG   9
 
 /* xcout() contexts */
-#define XCLIB_XCOUT_NONE	0	/* no context */
-#define XCLIB_XCOUT_SENTCONVSEL	1	/* sent a request */
-#define XCLIB_XCOUT_INCR	2	/* in an incr loop */
-#define XCLIB_XCOUT_BAD_TARGET	3	/* given target failed */
+#define XCLIB_XCOUT_NONE		0	/* no context */
+#define XCLIB_XCOUT_SENTCONVSEL		1	/* sent a request */
+#define XCLIB_XCOUT_INCR		2	/* in an incr loop */
+#define XCLIB_XCOUT_BAD_TARGET		3	/* given target failed */
+#define XCLIB_XCOUT_SELECTION_REFUSED	4	/* owner signaled an error */
 
 /* xcin() contexts */
 #define XCLIB_XCIN_NONE		0
@@ -59,6 +60,7 @@ extern int xcout(
 );
 extern int xcin(
 	Display*,
+	Window,
 	Window*,
 	XEvent,
 	Atom*,
@@ -75,13 +77,14 @@ extern void *xcstrdup(const char *);
 extern void xcmemcheck(void*);
 extern int xcfetchname(Display *, Window, char **);
 extern char *xcnamestr(Display *, Window);
+extern void xcmemzero(void *ptr, size_t len);
+extern int xchandler(Display *, XErrorEvent *);
+extern int xcnull(Display *dpy, XErrorEvent *evt);
 
 
 /* volatile prevents compiler from causing dead-store elimination with optimization enabled */
 typedef void *(*memset_t)(void *, int, size_t);
 static volatile memset_t memset_func = memset;
-void xcmemzero(void *ptr, size_t len);
-int xchandler(Display *, XErrorEvent *);
 
 /* Table of event names from event numbers */
 extern const char *evtstr[LASTEvent];

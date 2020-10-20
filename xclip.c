@@ -436,7 +436,7 @@ doIn(Window win, const char *progname)
 	xcerrflag = False;
 	XStoreBuffer(dpy, (char *) sel_buf, (int) sel_len, 0);
 	XSetSelectionOwner(dpy, sseln, None, CurrentTime);
-	XSync(dpy, False);	/* Too force error to occur if it is going to */
+	XSync(dpy, False);	/* Force error to occur now or never */
 	if (xcerrflag == True) {
 	    fprintf(stderr, "xclip: error: Could not copy to old-style cut buffer\n");
 	    if (xcverb >= OVERBOSE)
@@ -544,7 +544,7 @@ doIn(Window win, const char *progname)
 
 start:
 
-	    XNextEvent(dpy, &evt);
+	    XNextEvent(dpy, &evt); /* Wait until next request comes in */
 
 	    if (xcverb >= ODEBUG)
 		fprintf(stderr, "\n");
@@ -607,6 +607,10 @@ start:
 		    }
 		}
 		continue;	/* Wait for INCR PropertyNotify events */
+	    case ClientMessage:
+		/* xchandler asks us to remove requestors for dead windows */
+		clean_requestors();
+		continue;
 	    default:
 		/* Ignore all other event types */
 		if (xcverb >= ODEBUG) {
@@ -623,10 +627,27 @@ start:
 		requestor_id=0;
 	    }
 
-	    finished = xcin(dpy, &(requestor->cwin), evt, &(requestor->pty),
+	    xcerrflag = False;
+
+	    finished = xcin(dpy, win,
+			    &(requestor->cwin), evt, &(requestor->pty),
 			    target, sel_buf, sel_len, &(requestor->sel_pos),
 			    &(requestor->context), &(requestor->chunk_size));
 
+	    if (xcerrflag == True) {
+		if (xcerrevt.error_code == BadWindow) {
+		    if (xcverb >= OVERBOSE) {
+			fprintf(stderr,
+				"Requestor window 0x%lx disappeared\n",
+				requestor->cwin);
+		    }
+		    if (xcverb >= ODEBUG) {
+			XmuPrintDefaultErrorMessage(dpy, &xcerrevt, stderr);
+		    }
+		    del_requestor(requestor);
+		    break;
+		}
+	    }
 	    if (finished) {
 		del_requestor(requestor);
 		break;
@@ -739,6 +760,11 @@ doOut(Window win)
 
 	    /* fetch the selection, or part of it */
 	    xcout(dpy, win, evt, sseln, target, &sel_type, &sel_buf, &sel_len, &context);
+
+	    if (context == XCLIB_XCOUT_SELECTION_REFUSED) { /* XXX */
+		fprintf(stderr, "xclip: error: selection owner signaled an error\n");
+		return EXIT_FAILURE;
+	    }
 
 	    if (context == XCLIB_XCOUT_BAD_TARGET) {
 		if (target == XA_UTF8_STRING(dpy)) {
