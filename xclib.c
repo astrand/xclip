@@ -458,7 +458,6 @@ xcin(Display * dpy,
     /* FIXME! Why divide by four instead of multiply? Size is in "words". */
     if (!(*chunk_size)) {
 	*chunk_size = XExtendedMaxRequestSize(dpy) / 4;
-	*chunk_size = XExtendedMaxRequestSize(dpy) *4 + 1; /* XXXX */
 	if (!(*chunk_size)) {
 	    *chunk_size = XMaxRequestSize(dpy) / 4;
 	}
