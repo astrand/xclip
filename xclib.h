@@ -80,6 +80,7 @@ extern char *xcnamestr(Display *, Window);
 extern void xcmemzero(void *ptr, size_t len);
 extern int xchandler(Display *, XErrorEvent *);
 extern int xcnull(Display *dpy, XErrorEvent *evt);
+extern int xcchangeprop(Display *, Window, Atom, Atom, int, int, unsigned char *, int);
 
 
 /* volatile prevents compiler from causing dead-store elimination with optimization enabled */

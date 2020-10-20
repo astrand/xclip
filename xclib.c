@@ -1,6 +1,6 @@
 /*
- *  
- * 
+ *
+ *
  *  xclib.c - xclip library to look after xlib mechanics for xclip
  *  Copyright (C) 2001 Kim Saunders
  *  Copyright (C) 2007-2020 Peter Åstrand
@@ -55,7 +55,7 @@ const char *evtstr[LASTEvent] = {
 const char *reqstr[X_NoOperation+1] = { "0",
     "X_CreateWindow", "X_ChangeWindowAttributes", "X_GetWindowAttributes",
     "X_DestroyWindow", "X_DestroySubwindows", "X_ChangeSaveSet",
-    "X_ReparentWindow", "X_MapWindow", "X_MapSubwindows", "X_UnmapWindow", 
+    "X_ReparentWindow", "X_MapWindow", "X_MapSubwindows", "X_UnmapWindow",
     "X_UnmapSubwindows", "X_ConfigureWindow", "X_CirculateWindow",
     "X_GetGeometry", "X_QueryTree", "X_InternAtom", "X_GetAtomName",
     "X_ChangeProperty", "X_DeleteProperty", "X_GetProperty",
@@ -93,7 +93,7 @@ const char *reqstr[X_NoOperation+1] = { "0",
 
 
 /* a memset function that won't be optimized away by compler */
-void 
+void
 xcmemzero(void *ptr, size_t len)
 {
     if (xcverb >= ODEBUG) {
@@ -166,19 +166,19 @@ mach_itemsize(int format)
 /* Retrieves the contents of a selections. Arguments are:
  *
  * A display that has been opened.
- * 
+ *
  * A window
- * 
+ *
  * An event to process
- * 
+ *
  * The selection to return
- * 
- * The target(UTF8_STRING or XA_STRING) to return 
+ *
+ * The target(UTF8_STRING or XA_STRING) to return
  *
  * A pointer to an atom that receives the type of the data
  *
  * A pointer to a char array to put the selection into.
- * 
+ *
  * A pointer to a long to record the length of the char array
  *
  * A pointer to an int to record the context in which to process the event
@@ -402,23 +402,23 @@ xcout(Display * dpy,
  * ARGUMENTS are:
  *
  * * A display
- * 
+ *
  * * Our window: just used to stash in a global variable, xcourwin, so our X
  * 	         error handler (xchandler) can send a message to our window to
  * 	         break the main loop out of blocking on XNextEvent() .
- * 
+ *
  * * Their window: The window that sent us an event.
- * 
+ *
  * * The event to respond to
- * 
+ *
  * * A pointer to an Atom. This gets set to the property nominated by the other
  *   app in it's SelectionRequest. Things are likely to break if you change the
  *   value of this yourself.
- * 
+ *
  * * The target(UTF8_STRING or XA_STRING) to respond to
  *
  * * A pointer to an array of chars to read selection data from.
- * 
+ *
  * * The length of the array of chars.
  *
  * * In the case of an INCR transfer, the position within the array of chars
@@ -468,7 +468,7 @@ xcin(Display * dpy,
 	}
     }
 
-    int xcchangepropok = True;	/* Flag if XChangeProperty() succeeded */
+    int xcchangeproperr = False; /* Flag if XChangeProperty() failed */
     switch (*context) {
     case XCLIB_XCIN_NONE:
 	if ( xcverb >= ODEBUG  &&  evt.xselectionrequest.target) {
@@ -502,20 +502,11 @@ xcin(Display * dpy,
 	    }
 
 	    /* send data all at once (not using INCR) */
-	    xcerrflag = False;
-	    XChangeProperty(dpy,
-			    *theirwin,
-			    *pty,
-			    XA_ATOM,
-			    32, PropModeReplace, (unsigned char *) types,
-			    (int) (sizeof(types) / sizeof(Atom))
-		);
-	    XSync(dpy, False);
-	    if (xcerrflag == True) {
-		if (xcverb >= OVERBOSE) {
-		    fprintf(stderr, "Detected XChangeProperty failure\n");
-		}
-		xcchangepropok = False;
+	    xcchangeproperr = xcchangeprop(dpy, *theirwin, *pty,
+			 XA_ATOM, 32, PropModeReplace, (unsigned char *) types,
+			 (int) (sizeof(types) / sizeof(Atom)) );
+	    if (xcverb >= OVERBOSE && xcchangeproperr) {
+		fprintf(stderr, "Detected XChangeProperty failure\n");
 	    }
 	}
 	else if (len > *chunk_size) {
@@ -524,14 +515,10 @@ xcin(Display * dpy,
 		fprintf (stderr, "xclib: debug: XCIN_NONE: "
 			 "Starting INCR response\n");
 	    }
-	    xcerrflag = False;
-	    XChangeProperty(dpy, *theirwin, *pty, inc, 32,PropModeReplace,0,0);
-	    XSync(dpy, False);
-	    if (xcerrflag == True) {
-		if (xcverb >= OVERBOSE) {
-		    fprintf(stderr, "Detected XChangeProperty failure\n");
-		}
-		xcchangepropok = False;
+	    xcchangeproperr = xcchangeprop( dpy, *theirwin, *pty, inc,
+					    32, PropModeReplace, 0, 0);
+	    if (xcverb >= OVERBOSE && xcchangeproperr) {
+
 	    }
 	    else {		/* No error */
 		/* With the INCR mechanism, we need to know
@@ -549,33 +536,13 @@ xcin(Display * dpy,
 			"Sending data all at once (%d bytes)\n", (int) len);
 	    }
 
-	    xcerrflag = False;
-	    XChangeProperty(dpy,
-			    *theirwin,
-			    *pty,
-			    target,
-			    8, PropModeReplace, (unsigned char *) txt,
-			    (int) len);
-	    XSync(dpy, False);
-	    if (xcerrflag == True) {
-		if (xcverb >= OVERBOSE) {
-		    fprintf(stderr, "Detected XChangeProperty failure\n");
-		}
-		xcchangepropok = False;
+	    xcchangeproperr = xcchangeprop( dpy, *theirwin, *pty, target,
+					    8, PropModeReplace,
+					    (unsigned char *) txt,  (int) len);
+	    if (xcverb >= OVERBOSE && xcchangeproperr) {
+		fprintf(stderr, "Detected XChangeProperty failure\n");
 	    }
 	}
-
-	/* According to ICCCM section 2.5, we should confirm that
-	   XChangeProperty succeeded without any Alloc errors before
-	   replying with SelectionNotify. 
-
-	   Doing so is a bit complicated. We use an error handler, xchandler,
-	   which modifies a global variable, xcerrflag, which we examine after
-	   each XChangeProperty() + XSync(). If xcerrflag is set, we set the
-	   xcchangepropok flag to zero, which signals that we should refuse the
-	   selection request using XSend. I think this would be easier with
-	   libxcb instead of libX11.
-	*/
 
 	/* set values for the response event */
 	res.xselection.property = *pty;
@@ -586,8 +553,8 @@ xcin(Display * dpy,
 	res.xselection.target = evt.xselectionrequest.target;
 	res.xselection.time = evt.xselectionrequest.time;
 
-	if (!xcchangepropok) {
-	    /* XChangeProp failed, so refuse XSelectionRequestion */
+	if (xcchangeproperr) {
+	    /* if XChangeProp failed, refuse XSelectionRequestion */
 	    res.xselection.property = None;
 	}
 
@@ -600,7 +567,7 @@ xcin(Display * dpy,
 	    return (1);		/* Finished with request */
 
 	/* if XChangeProp failed, requestor is done no matter what */
-	if (!xcchangepropok)
+	if (xcchangeproperr)
 	    return (-1);		/* Error in request */
 
 	/* if len <= chunk_size, then the data was sent all at
@@ -629,12 +596,12 @@ xcin(Display * dpy,
 	 */
 	if (evt.xproperty.state != PropertyDelete) {
 	    if ( xcverb >= ODEBUG ) {
-		if ( evt.xproperty.state == 0 ) 
+		if ( evt.xproperty.state == 0 )
 		    fprintf(stderr,
 			    "xclib: debug: INCR: ignoring PropertyNewValue\n");
 		else
 		    fprintf(stderr,
-			    "xclib: debug: ignoring state %d\n",
+			    "xclib: debug: INCR: ignoring state %d\n",
 			    evt.xproperty.state);
 	    }
 	    return (0);
@@ -663,19 +630,11 @@ xcin(Display * dpy,
 		fprintf(stderr, "xclib: debug: Sending chunk of "
 			" %d bytes\n", (int) chunk_len);
 	    }
-	    xcerrflag = False;
-	    XChangeProperty(dpy,
-			    *theirwin,
-			    *pty,
-			    target,
-			    8, PropModeReplace, &txt[*pos],
-			    (int) chunk_len);
-	    XSync(dpy, False);
-	    if (xcerrflag == True) {
-		if (xcverb >= OVERBOSE) {
-		    fprintf(stderr, "Detected XChangeProperty failure\n");
-		}
-		xcchangepropok = False;
+	    xcchangeproperr = xcchangeprop( dpy, *theirwin, *pty, target,
+					    8, PropModeReplace, &txt[*pos],
+					    (int) chunk_len);
+	    if (xcverb >= OVERBOSE && xcchangeproperr) {
+		fprintf(stderr, "Detected XChangeProperty failure\n");
 	    }
 	}
 	else {
@@ -685,12 +644,16 @@ xcin(Display * dpy,
 	    if ( xcverb >= ODEBUG ) {
 		fprintf(stderr, "xclib: debug: Signalling end of INCR\n");
 	    }
-	    XChangeProperty(dpy, *theirwin, *pty, target, 8, PropModeReplace, 0, 0);
+	    xcchangeproperr = xcchangeprop( dpy, *theirwin, *pty, target,
+					    8, PropModeReplace, 0, 0);
+	    if (xcverb >= OVERBOSE && xcchangeproperr) {
+		fprintf(stderr, "Detected XChangeProperty failure\n");
+	    }
 	}
 	XFlush(dpy);
 
 	/* did XChangeProp fail (perhaps alloc error?) */
-	if (!xcchangepropok) {
+	if (xcchangeproperr) {
 	    if (xcverb >= ODEBUG) {
 		fprintf(stderr, "xclib: debug: Refusing INCR transfer.\n");
 	    }
@@ -759,7 +722,7 @@ xcfetchname(Display *display, Window w, char **namep) {
 	XSetErrorHandler(fn);
 	return 0; 		/* Hurrah! It worked on the first try. */
     }
-    
+
     /* Otherwise, recursively try the parent windows */
     Window p = w;
     Window dummy, *dummyp;
@@ -783,7 +746,7 @@ xcfetchname(Display *display, Window w, char **namep) {
  *
  * Given a Window ID number, e.g., 0xfa1afe1, return
  * either the window name followed by the ID in parens, IFF it can be found,
- * otherwise, the string "window id 0xfa1afe1". 
+ * otherwise, the string "window id 0xfa1afe1".
  *
  * Example output:  "'Falafel' (0xfa1afe1)"
  * Example output:  "window id 0xfa1afe1"
@@ -830,13 +793,13 @@ int xcnull(Display *dpy, XErrorEvent *evt) {
     return 0;
 }
 
-/* xchandler(): Xlib Error handler that saves last error event. 
+/* xchandler(): Xlib Error handler that saves last error event.
  *
  * Also, wakes up the main loop from blocking on XNextEvent when a BadWindow
  * error is detected. Requires global xcourwin set to our window ID (currently
  * that's done when xcin() is called).
  *
- * Usage: XSetErrorHandler(xchandler); 
+ * Usage: XSetErrorHandler(xchandler);
  */
 int xchandler(Display *dpy, XErrorEvent *evt) {
     void *fn = XSetErrorHandler(XmuSimpleErrorHandler);
@@ -850,17 +813,17 @@ int xchandler(Display *dpy, XErrorEvent *evt) {
 		evt->error_code, buf);
     }
     if (xcverb >= ODEBUG) {
-	fprintf(stderr, 
+	fprintf(stderr,
 		"\t\tResource ID: 0x%lx\n"
 		"\t\tSerial Num: %lu\n"
 		"\t\tError code: %u\n"
 		"\t\tRequest op-code: %u major, %u minor\n"
 		"\t\tFailed request: %s\n"
 		,
-		evt->resourceid, 
-		evt->serial, 
-		evt->error_code, 
-		evt->request_code, 
+		evt->resourceid,
+		evt->serial,
+		evt->error_code,
+		evt->request_code,
 		evt->minor_code,
 		reqstr[evt->request_code] );
     }
@@ -871,7 +834,7 @@ int xchandler(Display *dpy, XErrorEvent *evt) {
 	if (xcourwin) {
 	    /* We need to break the mainloop out of XNextEvent so it can delete
 	     * the window from the list of requestors right away before another
-	     * window with the same ID is created. 
+	     * window with the same ID is created.
 	     * Solution: Send ourselves a ClientMessage event.
 	     */
 	    if (xcverb >= ODEBUG) {
@@ -898,15 +861,26 @@ int xchandler(Display *dpy, XErrorEvent *evt) {
 			"because xcourwin not initialized yet.\n");
 	    }
 	}
-    }	
-    
+    }
+
     return 0;
 }
 
 
-/* 
- * xcchangeprop: wrapper for XChangeProperty that catches errors from xchandler
- * 		 and returns 0 if there was no error. Not zero, otherwise.
+/*
+ * xcchangeprop: wrapper for XChangeProperty that gets errors from xchandler.
+ * 		 Returns zero if there was no error. Not zero, otherwise.
+ *
+ * According to ICCCM section 2.5, we should confirm that
+ * XChangeProperty succeeded without any Alloc errors before
+ * replying with SelectionNotify.
+ *
+ * Doing so is a bit complicated. We use an error handler, xchandler,
+ * which modifies a global variable, xcerrflag, which we examine after
+ * each XChangeProperty() + XSync(). If xcerrflag is set, we return
+ * non-zero, which sets the xcchangeproperr flag, and, in turn, signals
+ * that we should refuse the selection request using XSend. (I think
+ * this would be easier with libxcb instead of libX11).
  */
 
 int
@@ -919,4 +893,4 @@ xcchangeprop(Display *display, Window w, Atom property, Atom type,
 	return xcerrevt.error_code;
     else
 	return 0;
-}    
+}
