@@ -453,14 +453,16 @@ xcin(Display * dpy,
 	inc = XInternAtom(dpy, "INCR", False);
     }
 
-    /* We consider selections larger than a quarter of the maximum
-       request size to be "large". See ICCCM section 2.5 */
-    /* FIXME! Why divide by four instead of multiply? Size is in "words". */
+    /* Selections larger than the maximum request size must be sent
+       incrementally. See ICCCM section 2.5. Note that we must subtract some
+       bytes to account for the protocol header of a request. As of 2020, the
+       header is 32 bytes, but we'll leave aside 1024, just in case. */
     if (!(*chunk_size)) {
-	*chunk_size = XExtendedMaxRequestSize(dpy) / 4;
+	*chunk_size = XExtendedMaxRequestSize(dpy) << 2; /* Words to bytes */
 	if (!(*chunk_size)) {
-	    *chunk_size = XMaxRequestSize(dpy) / 4;
-	}
+	    *chunk_size = XMaxRequestSize(dpy) << 2;
+	}		                                 /* Leave room for */
+	*chunk_size -= 1024;				 /* request header */
 	if ( xcverb >= ODEBUG ) {
 	    fprintf(stderr,
 		    "xclib: debug: INCR chunk size is %ld\n", (*chunk_size));
@@ -517,7 +519,7 @@ xcin(Display * dpy,
 	    xcchangeproperr = xcchangeprop( dpy, *theirwin, *pty, inc,
 					    32, PropModeReplace, 0, 0);
 	    if (xcverb >= OVERBOSE && xcchangeproperr) {
-
+		fprintf(stderr, "Detected XChangeProperty failure\n");
 	    }
 	    else {		/* No error */
 		/* With the INCR mechanism, we need to know
@@ -555,6 +557,9 @@ xcin(Display * dpy,
 	if (xcchangeproperr) {
 	    /* if XChangeProp failed, refuse XSelectionRequestion */
 	    res.xselection.property = None;
+	    fprintf(stderr, "xclib: error: XCIN_NONE: "
+		    "XChangeProp failed (%d), "
+		    "refusing request.\n", xcchangeproperr);
 	}
 
 	/* send the response event */
@@ -888,7 +893,13 @@ xcchangeprop(Display *display, Window w, Atom property, Atom type,
     xcerrflag = False;		/* global set by xchandler() */
     XChangeProperty(display, w, property, type, format, mode, data, nelements);
     XSync(display, False);
-    if (xcerrflag == True)
+    if (xcverb >= OVERBOSE && xcerrflag) {
+	char buf[256];
+	XGetErrorText(display, xcerrevt.error_code, buf, sizeof(buf)-1);
+	fprintf(stderr, "xclib: error: XChangeProp failed with %s\n", buf);
+    }
+
+    if (xcerrflag)
 	return xcerrevt.error_code;
     else
 	return 0;
