@@ -68,86 +68,78 @@ char *rec_typ;
 
 int tempi = 0;
 
-struct requestor
-{
-	Window cwin;
-	Atom pty;
-	unsigned int context;
-	unsigned long sel_pos;
-	int finished;
-	long chunk_size;
-	struct requestor *next;
-};
+// See xclip.h for definition of struct requestor.
 
 static struct requestor *requestors;
 
-static struct requestor *get_requestor(Window win)
+static struct requestor *get_requestor(Window win, Atom pty)
 {
-	struct requestor *requestor;
+	struct requestor *r;
 
 	if (requestors) {
-	    for (requestor = requestors; requestor != NULL; requestor = requestor->next) {
-	        if (requestor->cwin == win) {
+	    for (r = requestors; r != NULL; r = r->next) {
+	        if (r->cwin == win  &&  r->pty == pty) {
 		    if (xcverb >= OVERBOSE) {
 			fprintf(stderr,
-				"    = Reusing requestor for %s\n",
-				xcnamestr(dpy, win) );
+				"    = Reusing requestor %lx-%s for %s\n", win,
+				xcatomstr(dpy, pty), xcnamestr(dpy, win) );
 		    }
 
-	            return requestor;
+	            return r;
 	        }
 	    }
 	}
 
 	if (xcverb >= OVERBOSE) {
-	    fprintf(stderr, "    + Creating new requestor for %s\n",
-		    xcnamestr(dpy, win) );
+	    fprintf(stderr, "    + Creating new requestor %lx-%s for %s\n",
+		    win, xcatomstr(dpy, pty), xcnamestr(dpy, win) );
 	}
 
-	requestor = (struct requestor *)calloc(1, sizeof(struct requestor));
-	if (!requestor) {
+	r = (struct requestor *)calloc(1, sizeof(struct requestor));
+	if (!r) {
 	    errmalloc();
 	} else {
-	    requestor->context = XCLIB_XCIN_NONE;
+	    r->context = XCLIB_XCIN_NONE;
+	    /* Please comment: Why do we not set r->cwin or r->pty here? */
 	}
 
 	if (!requestors) {
-	    requestors = requestor;
+	    requestors = r;
 	} else {
-	    requestor->next = requestors;
-	    requestors = requestor;
+	    r->next = requestors;
+	    requestors = r;
 	}
 
-	return requestor;
+	return r;
 }
 
-static void del_requestor(struct requestor *requestor)
+static void del_requestor(struct requestor *r)
 {
 	struct requestor *reqitr;
 
-	if (!requestor) {
+	if (!r) {
 	    return;
 	}
 
 	if (xcverb >= OVERBOSE) {
 	    fprintf(stderr,
-		    "    - Deleting requestor for %s\n",
-		    xcnamestr(dpy, requestor->cwin) );
+		    "    - Deleting requestor %lx-%s for %s\n",
+		    r->cwin, xcatomstr(dpy, r->pty), xcnamestr(dpy, r->cwin) );
 	}
 
-	if (requestors == requestor) {
+	if (requestors == r) {
 	    requestors = requestors->next;
 	} else {
 	    for (reqitr = requestors; reqitr != NULL; reqitr = reqitr->next) {
-	        if (reqitr->next == requestor) {
+	        if (reqitr->next == r) {
 	            reqitr->next = reqitr->next->next;
 	            break;
 	        }
 	    }
 	}
 
-	free(requestor);
-	requestor = NULL;
+	free(r);
+	r = NULL;
 }
 
 int clean_requestors() {
@@ -525,7 +517,8 @@ doIn(Window win, const char *progname)
 	/* wait for a SelectionRequest (paste) event */
 	while (1) {
 	    struct requestor *requestor;
-	    Window requestor_id;
+	    Window requestor_win;
+	    Atom requestor_pty;
 	    int finished;
 
 	    if (!XPending(dpy) && wait > 0) {
@@ -556,23 +549,25 @@ start:
 
 	    switch (evt.type) {
 	    case SelectionRequest:
-		requestor_id = evt.xselectionrequest.requestor;
-		requestor = get_requestor(requestor_id);
+		requestor_win = evt.xselectionrequest.requestor;
+		requestor_pty = evt.xselectionrequest.property;
+		requestor = get_requestor(requestor_win, requestor_pty);
 		/* FIXME: ICCCM 2.2: check evt.time and refuse requests from
 		 * outside the period of time we have owned the selection. */
 		break;
 	    case PropertyNotify:
-		requestor_id = evt.xproperty.window;
-		requestor = get_requestor(requestor_id);
+		requestor_win = evt.xproperty.window;
+		requestor_pty = evt.xproperty.atom;
+		requestor = get_requestor(requestor_win, requestor_pty);
 		break;
 	    case SelectionClear:
 		if (xcverb >= OVERBOSE) {
 		    fprintf(stderr, "Lost selection ownership. ");
-		    requestor_id = XGetSelectionOwner(dpy, sseln);
-		    if (requestor_id == None)
+		    requestor_win = XGetSelectionOwner(dpy, sseln);
+		    if (requestor_win == None)
 			fprintf(stderr, "(Some other client cleared the selection).\n");
 		    else
-			fprintf(stderr, "(%s did a copy).\n", xcnamestr(dpy, requestor_id) );
+			fprintf(stderr, "(%s did a copy).\n", xcnamestr(dpy, requestor_win) );
 		}
 		/* If the client loses ownership(SelectionClear event)
 		 * while it has a transfer in progress, it must continue to
@@ -623,8 +618,8 @@ start:
 
 	    if (xcverb >= ODEBUG) {
 		fprintf(stderr, "xclip: debug: event was sent by %s\n",
-			xcnamestr(dpy, requestor_id) );
-		requestor_id=0;
+			xcnamestr(dpy, requestor_win) );
+		requestor_win=0;
 	    }
 
 	    xcerrflag = False;
@@ -675,9 +670,7 @@ printSelBuf(FILE * fout, Atom sel_type, unsigned char *sel_buf, size_t sel_len)
 #endif
 
     if (xcverb >= OVERBOSE) {	/* print in verbose mode only */
-	char *atom_name = XGetAtomName(dpy, sel_type);
-	fprintf(stderr, "Type is %s.\n", atom_name);
-	XFree(atom_name);
+	fprintf(stderr, "Type is %s.\n", xcatomstr(dpy, sel_type));
     }
 
     if (sel_type == XA_INTEGER) {
@@ -694,9 +687,7 @@ printSelBuf(FILE * fout, Atom sel_type, unsigned char *sel_buf, size_t sel_len)
 	Atom *atom_buf = (Atom *) sel_buf;
 	size_t atom_len = sel_len / sizeof(Atom);
 	while (atom_len--) {
-	    char *atom_name = XGetAtomName(dpy, *atom_buf++);
-	    fprintf(fout, "%s\n", atom_name);
-	    XFree(atom_name);
+	    fprintf(fout, "%s\n", xcatomstr(dpy, *atom_buf++));
 	}
 	return;
     }
