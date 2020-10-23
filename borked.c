@@ -240,7 +240,8 @@ inChunkTooLarge(Window win) {
     printf("maxreq is %ld words (%ld bytes)\n", maxreq, 4*maxreq);
 
     long chunk_size = (maxreq<<2);
-    // Normally would reduce chunk_size by 1024 here. We don't to cause an error.
+    // Normally would reduce chunk_size by 1024 here.
+    // But we WANT to cause an error.
     printf("chunk_size is %ld bytes\n", chunk_size);
     unsigned char *sel_buf = malloc(maxreq<<2);
     unsigned long sel_len = (maxreq<<2);
