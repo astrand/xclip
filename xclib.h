@@ -77,6 +77,7 @@ extern void *xcstrdup(const char *);
 extern void xcmemcheck(void*);
 extern int xcfetchname(Display *, Window, char **);
 extern char *xcnamestr(Display *, Window);
+extern char *xcatomstr(Display *, Atom);
 extern void xcmemzero(void *ptr, size_t len);
 extern int xchandler(Display *, XErrorEvent *);
 extern int xcnull(Display *dpy, XErrorEvent *evt);
@@ -89,3 +90,16 @@ static volatile memset_t memset_func = memset;
 
 /* Table of event names from event numbers */
 extern const char *evtstr[LASTEvent];
+
+struct requestor
+{
+    Window cwin;
+    Atom pty;
+    Time stamp;
+    unsigned int context;
+    unsigned long sel_pos;
+    int finished;
+    long chunk_size;
+    struct requestor *next;
+};
+
