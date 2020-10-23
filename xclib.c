@@ -470,7 +470,12 @@ xcin(Display * dpy,
     /* FIXME: report bug to xsel and then allow this number to vary */
     *chunk_size = 4*1000*1000;
 
+    /* If an Alloc error occurs during the storing of the selection data,
+     * all properties stored for this selection should be deleted and the
+     * ConvertSelection request should be refused (see ICCCM 2.2). 
+     */
     int xcchangeproperr = False; /* Flag if XChangeProperty() failed */
+
     switch (*context) {
     case XCLIB_XCIN_NONE:
 	if ( xcverb >= ODEBUG  &&  evt.xselectionrequest.target) {
@@ -557,6 +562,7 @@ xcin(Display * dpy,
 
 	if (xcchangeproperr) {
 	    /* if XChangeProp failed, refuse XSelectionRequestion */
+	    XDeleteProperty(dpy, *theirwin, *pty);
 	    res.xselection.property = None;
 	    fprintf(stderr, "xclib: error: XCIN_NONE: "
 		    "XChangeProp failed (%d), "
@@ -829,6 +835,12 @@ xcatomstr(Display *display, Atom a) {
 
 /* xcnull()
  * An X error handler that saves errors but does not print them.
+ * Writes to global variables xcerrflag and xcerrevt.
+ * 
+ * Usage: 
+ *     void *fn = XSetErrorHandler(xcnull);
+ *     ... [ do work where errors are expected ] ...
+ *     XSetErrorHandler(fn);     // Restore previous X error handler 
  */
 int xcnull(Display *dpy, XErrorEvent *evt) {
     xcerrflag = True;
@@ -838,9 +850,11 @@ int xcnull(Display *dpy, XErrorEvent *evt) {
 
 /* xchandler(): Xlib Error handler that saves last error event.
  *
- * Also, wakes up the main loop from blocking on XNextEvent when a BadWindow
- * error is detected. Requires global xcourwin set to our window ID (currently
- * that's done when xcin() is called).
+ * Writes to global variables xcerrflag and xcerrevt.
+ *
+ * Also, wakes up the main loop from blocking on XNextEvent() when a BadWindow
+ * error is detected by sending an XClientMessage to our own window. Requires
+ * global xcourwin set to our window ID (currently done when xcin() is called).
  *
  * Usage: XSetErrorHandler(xchandler);
  */
@@ -914,18 +928,17 @@ int xchandler(Display *dpy, XErrorEvent *evt) {
  * xcchangeprop: wrapper for XChangeProperty that gets errors from xchandler.
  * 		 Returns zero if there was no error. Not zero, otherwise.
  *
- * According to ICCCM section 2.5, we should confirm that
- * XChangeProperty succeeded without any Alloc errors before
- * replying with SelectionNotify.
+ * According to ICCCM section 2.5, we should confirm that XChangeProperty
+ * succeeded without any Alloc errors before replying with SelectionNotify.
  *
- * Doing so is a bit complicated. We use an error handler, xchandler,
- * which modifies a global variable, xcerrflag, which we examine after
- * each XChangeProperty() + XSync(). If xcerrflag is set, we return
- * non-zero, which sets the xcchangeproperr flag, and, in turn, signals
- * that we should refuse the selection request using XSend. (Perhaps
- * this would be easier with libxcb instead of libX11).
+ * Doing so is a bit convoluted. We rely on an error handler, xchandler,
+ * which modifies a global variable, xcerrflag, which xcchangeprop examines
+ * after XChangeProperty() + XSync(). If xcerrflag is set, xcchangeprop
+ * returns non-zero to its caller (xcin, usually), which then sets the
+ * xcchangeproperr flag that, in turn, signals xclip to refuse the
+ * selection request by sending a SelectionNotify with the Property set to
+ * None. (Perhaps this would be easier with libxcb instead of libX11?)
  */
-
 int
 xcchangeprop(Display *display, Window w, Atom property, Atom type,
 	     int format, int mode, unsigned char *data, int nelements) {
