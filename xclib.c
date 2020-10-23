@@ -427,8 +427,9 @@ xcout(Display * dpy,
  * * The context that event is the be processed within.
  *
  * RETURN VALUE
- * * 1 if we are finished with a multipart request.
- * * 0 otherwise.
+ * *  1 if we are finished with a multipart request.
+ * * -1 if XChangeProperty returned an error.
+ * *  0 otherwise.
  */
 int
 xcin(Display * dpy,
@@ -463,19 +464,19 @@ xcin(Display * dpy,
 	    *chunk_size = XMaxRequestSize(dpy) << 2;
 	}		                                 /* Leave room for */
 	*chunk_size -= 1024;				 /* request header */
-	if ( xcverb >= ODEBUG ) {
-	    fprintf(stderr,
-		    "xclib: debug: INCR chunk size is %ld\n", (*chunk_size));
-	}
     }
+
+    /* xsel(1) hangs if given more than 4,000,000 bytes at a time. */
+    /* FIXME: report bug to xsel and then allow this number to vary */
+    *chunk_size = 4*1000*1000;
 
     int xcchangeproperr = False; /* Flag if XChangeProperty() failed */
     switch (*context) {
     case XCLIB_XCIN_NONE:
 	if ( xcverb >= ODEBUG  &&  evt.xselectionrequest.target) {
-	    char *tempstr = XGetAtomName(dpy, evt.xselectionrequest.target);
-	    fprintf(stderr, "xclib: debug: XCIN_NONE: target: %s\n", tempstr);
-	    XFree(tempstr);
+	    fprintf(stderr, "xclib: debug: XCIN_NONE: target: %s\n",
+		    xcatomstr(dpy, evt.xselectionrequest.target));
+	    
 	}
 
 	if (evt.type != SelectionRequest) {
@@ -656,7 +657,8 @@ xcin(Display * dpy,
 	}
 	XFlush(dpy);
 
-	/* did XChangeProp fail (perhaps alloc error?) */
+	/* Did XChangeProp fail? Refuse xfr and return -1*/
+	/* Fixme: This doesn't seem to work to tell xsel to quit XXX */ 
 	if (xcchangeproperr) {
 	    if (xcverb >= ODEBUG) {
 		fprintf(stderr, "xclib: debug: Refusing INCR transfer.\n");
@@ -670,8 +672,9 @@ xcin(Display * dpy,
 	    res.xselection.selection = evt.xselectionrequest.selection;
 	    res.xselection.target = evt.xselectionrequest.target;
 	    res.xselection.time = evt.xselectionrequest.time;
-
-	    res.xselection.property = None; /* Refuse selection request */
+	    
+	    /* Refuse selection request */
+	    res.xselection.property = None; 
 	    if (! XSendEvent(dpy, evt.xselectionrequest.requestor,0,0, &res)) {
 		fprintf(stderr, "xclib: error: Failed to send event "
 			"to requestor to signal our refusal.\n");
@@ -705,8 +708,19 @@ xcin(Display * dpy,
 /* xcfetchname(): a utility for finding the name of a given X window.
  * (Like XFetchName but recursively walks up tree of parent windows.)
  * Sets namep to point to the string of the name (must be freed with XFree).
- * Returns 0 if it works. Not 0, otherwise.
- * [See also, xcnamestr() wrapper below.]
+ *
+ * ARGUMENTS are: 
+ *
+ * * The Display.
+ *
+ * * A Window to look up.
+ *
+ * * A pointer to a string to return the result.
+ *   (Note that the caller must XFree() the string when finished.)
+ *
+ * RETURNS 0 if it works. Not 0, otherwise.
+ *
+ * [See also, xcnamestr() wrapper below for statically allocated string.]
  */
 int
 xcfetchname(Display *display, Window w, char **namep) {
@@ -748,8 +762,14 @@ xcfetchname(Display *display, Window w, char **namep) {
  * used within printf calls with no need to later XFree anything.
  * It also smoothes over problems by returning the ID number if no name exists.
  *
- * Given a Window ID number, e.g., 0xfa1afe1, return
- * either the window name followed by the ID in parens, IFF it can be found,
+ * ARGUMENTS are:
+ *
+ * The Display
+ *
+ * A Window ID number, e.g., 0xfa1afe1
+ *
+ * RETURNS a pointer to a statically allocated string containing
+ * either the window name followed by the ID in parens, if it can be found,
  * otherwise, the string "window id 0xfa1afe1".
  *
  * Example output:  "'Falafel' (0xfa1afe1)"
@@ -775,25 +795,44 @@ xcnamestr(Display *display, Window w) {
     return xcname;
 }
 
-struct requestor
-{
-	Window cwin;
-	Atom pty;
-	unsigned int context;
-	unsigned long sel_pos;
-	int finished;
-	long chunk_size;
-	struct requestor *next;
-};
+/* xcatomstr: A convenience wrapper for XGetAtomName() that returns a
+ * string so it can be used within printf calls with no need to later XFree
+ * anything. It also smoothes over problems by returning "(null)" if no name
+ * exists and ignoring errors.
+ *
+ * Given an Atom, return
+ * either the Atom name, IFF it can be found,
+ * otherwise, the string "(null)".
+ *
+ * String is statically allocated and is updated at each call.
+ */
+char xcatom[4096];
+char *
+xcatomstr(Display *display, Atom a) {
+    char *atom_name;
+    void *fn = XSetErrorHandler(xcnull); /* Suppress error messages */
+    atom_name = XGetAtomName(display, a);
+    XSetErrorHandler(fn);    
+    if (atom_name && atom_name[0]) {
+	snprintf( xcatom, sizeof(xcatom)-1, "%s", atom_name);
+    }
+    else {
+	snprintf( xcatom, sizeof(xcatom)-1, "(null)");
+    }
+    if (atom_name)
+	XFree(atom_name);
+
+    xcatom[sizeof(xcatom) - 1] = '\0'; /* Ensure NULL termination */
+    return xcatom;
+}
+
 
 /* xcnull()
- * An X error handler that notes and ignores all errors.
+ * An X error handler that saves errors but does not print them.
  */
 int xcnull(Display *dpy, XErrorEvent *evt) {
     xcerrflag = True;
     xcerrevt = *evt;
-    if (xcverb >= ODEBUG)
-	fprintf(stderr, "xclib: debug: xcnull ignoring error event\n");
     return 0;
 }
 
@@ -883,7 +922,7 @@ int xchandler(Display *dpy, XErrorEvent *evt) {
  * which modifies a global variable, xcerrflag, which we examine after
  * each XChangeProperty() + XSync(). If xcerrflag is set, we return
  * non-zero, which sets the xcchangeproperr flag, and, in turn, signals
- * that we should refuse the selection request using XSend. (I think
+ * that we should refuse the selection request using XSend. (Perhaps
  * this would be easier with libxcb instead of libX11).
  */
 
