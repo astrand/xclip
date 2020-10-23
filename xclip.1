@@ -193,10 +193,6 @@ Run in the foreground and provide a running commentary of what xclip is doing.
 \fB\-debug\fR
 Run in the foreground and print garrulous debugging output.
 .TP
-\fB\-noutf8\fR
-Operate in legacy (i.e. non UTF-8) mode for backwards compatibility.
-(Use this option only when really necessary, as the old behavior was broken).
-.TP
 \fB\-sensitive\fR
 .
 Clear sensitive data from selection buffer after being pasted once.
@@ -207,6 +203,11 @@ This is currently implemented as -wait 50. See \fBNOTES\fR
 After the first paste, wait for \fIn\fR milliseconds. If a subsequent paste
 request arrives before the timer expires, reset the timer. Once the timer
 expires, the selection buffer is cleared so the data cannot be pasted again.
+.
+.TP
+\fB\-noutf8\fR
+Operate in legacy (i.e. non UTF-8) mode for backwards compatibility.
+(Use this option only when really necessary, as the old behavior was broken).
 .
 .PP
 Xclip was designed to allow tighter integration of X applications and command
