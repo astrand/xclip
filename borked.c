@@ -239,11 +239,12 @@ inChunkTooLarge(Window win) {
     maxreq = maxreq?maxreq:XMaxRequestSize(dpy);
     printf("maxreq is %ld words (%ld bytes)\n", maxreq, 4*maxreq);
 
-    long chunk_size = (maxreq<<2);
-    // Normally would reduce chunk_size by 1024 here. We don't to cause an error.
+    // Normally chunk_size = 4*maxreq - 1024.
+    // But we WANT to cause an error.
+    long chunk_size = 4*maxreq;
     printf("chunk_size is %ld bytes\n", chunk_size);
-    unsigned char *sel_buf = malloc(maxreq<<2);
-    unsigned long sel_len = (maxreq<<2);
+    unsigned char *sel_buf = malloc(chunk_size);
+    unsigned long sel_len = (chunk_size);
 
     if (4*maxreq >= chunk_size + 32) {
 	printf("OOOPS! chunk_size fits in maxreq, will not cause error.\n");
@@ -261,7 +262,7 @@ inChunkTooLarge(Window win) {
     }
 
     while (1) {
-	printf("Waiting for an event\n");
+	printf("\nWaiting for an event\n");
 	XNextEvent(dpy, &evt); /* Wait until next request comes in */
 	printf("Received %s event\n", evtstr[evt.type]);
 
@@ -299,7 +300,8 @@ inChunkTooLarge(Window win) {
 int
 main(int argc, char *argv[])
 {
-    XSetErrorHandler(XmuSimpleErrorHandler);
+    XSetErrorHandler(xchandler);
+    xcverb = ODEBUG;
 
     /* Declare variables */
     Window win;			/* Window */
