@@ -401,8 +401,8 @@ $ xclip -sel b | xclip
 .EE
 
 Note that the \(lqbuffercut\(rq selection uses an older transfer method and has
-various limitations, such as, inability to choose a TARGET and a small maximum
-amount of data (≈ 16 MB).
+various limitations, such as, inability to choose a TARGET and a maximum
+amount of data (\[~=] 16 MB).
 
 .SH ENVIRONMENT
 .TP
@@ -424,19 +424,26 @@ copy and move files via the X clipboard.
 .IR xsel (1)
 and
 .IR wl-clipboard (1)
-are command line programs similar to xclip. xsel has the ability to keep a primary selection even after a program has closed. wl-clipboard works with Wayland instead of X.
+are command line programs similar to xclip. xsel has the ability to keep a
+primary selection even after a program has closed. wl-clipboard works with
+Wayland instead of X.
 .PP
+.IR clipit (1),
 .IR copyq (1),
 .IR diodon (1),
 .IR gpaste (1),
+.IR qlipper (1),
+.IR xfce4-clipman (1)
 and
 .IR xclipboard (1)
-are just a few of many, many GUI clipboard managers which let you browse your clipboard's history.
+are just a few of many, many GUI clipboard managers which let you browse your
+clipboard's history.
 .PP
 
 .SH KNOWN BUGS
 .PP
-xclip is not ICCCM compliant. For example, the TIMESTAMP isn't set.
+xclip is not ICCCM compliant. For example, the TIMESTAMP isn't set and MULTIPLE
+does not work.
 .PP
 Only one target type can be chosen. It would be useful to let users pick a
 different type for each input file.
