@@ -760,6 +760,10 @@ doOut(Window win)
 	    if (context == XCLIB_XCOUT_BAD_TARGET) {
 		if (target == XA_UTF8_STRING(dpy)) {
 		    /* fallback is needed. set XA_STRING to target and restart the loop. */
+		    if (xcverb >= OVERBOSE) {
+			fprintf(stderr, "Target UTF8_STRING failed, "
+				"falling back to XA_STRING\n");
+		    }
 		    context = XCLIB_XCOUT_NONE;
 		    target = XA_STRING;
 		    continue;
