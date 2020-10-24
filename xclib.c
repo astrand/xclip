@@ -221,6 +221,12 @@ xcout(Display * dpy,
 	    *len = 0;
 	}
 
+	if ( xcverb >= ODEBUG ) {
+	    fprintf(stderr,"xclib: debug: XCOUT_NONE: "
+		    "Requesting XConvertSelection from %s\n",
+		    xcnamestr(dpy, win));
+	}
+
 	/* send a selection request */
 	XConvertSelection(dpy, sel, target, pty, win, CurrentTime);
 	*context = XCLIB_XCOUT_SENTCONVSEL;
@@ -237,6 +243,10 @@ xcout(Display * dpy,
 
 	/* return failure when the current target failed */
 	if (evt.xselection.property == None) {
+	    if ( xcverb >= ODEBUG ) {
+		fprintf(stderr,"xclib: debug: SENTCONVSEL: "
+			"received failure notification\n");
+	    }
 	    *context = XCLIB_XCOUT_BAD_TARGET;
 	    return (0);
 	}
@@ -464,11 +474,11 @@ xcin(Display * dpy,
 	    *chunk_size = XMaxRequestSize(dpy) << 2;
 	}		                                 /* Leave room for */
 	*chunk_size -= 1024;				 /* request header */
-    }
 
-    /* xsel(1) hangs if given more than 4,000,000 bytes at a time. */
-    /* FIXME: report bug to xsel and then allow this number to vary */
-    *chunk_size = 4*1000*1000;
+	/* xsel(1) hangs if given more than 4,000,000 bytes at a time. */
+	/* FIXME: report bug to xsel and then allow this number to vary */
+	*chunk_size = 4*1000*1000; /* What other programs have limits? */
+    }
 
     /* If an Alloc error occurs during the storing of the selection data,
      * all properties stored for this selection should be deleted and the
@@ -565,8 +575,9 @@ xcin(Display * dpy,
 	    XDeleteProperty(dpy, *theirwin, *pty);
 	    res.xselection.property = None;
 	    fprintf(stderr, "xclib: error: XCIN_NONE: "
-		    "XChangeProp failed (%d), "
-		    "refusing request.\n", xcchangeproperr);
+		    "XChangeProp failed (error %d), "
+		    "refusing request from %s.\n", xcchangeproperr,
+		    xcnamestr(dpy, *theirwin));
 	}
 
 	/* send the response event */
@@ -928,6 +939,9 @@ int xchandler(Display *dpy, XErrorEvent *evt) {
  * xcchangeprop: wrapper for XChangeProperty that gets errors from xchandler.
  * 		 Returns zero if there was no error. Not zero, otherwise.
  *
+ * REQUIRES: XSetErrorHandler(xchandler) must have been previously called.
+ *	    [XSetErrorHandler(xcnull) would also work if an error is expected.]
+ *
  * According to ICCCM section 2.5, we should confirm that XChangeProperty
  * succeeded without any Alloc errors before replying with SelectionNotify.
  *
@@ -938,15 +952,20 @@ int xchandler(Display *dpy, XErrorEvent *evt) {
  * xcchangeproperr flag that, in turn, signals xclip to refuse the
  * selection request by sending a SelectionNotify with the Property set to
  * None. (Perhaps this would be easier with libxcb instead of libX11?)
+ *
+ * Note: Although XSetErrorHandler(xchandler) is required, this routine does
+ * not do it itself because it slows down xclip significantly (circa 2020).
+ * 
  */
 int
 xcchangeprop(Display *display, Window w, Atom property, Atom type,
 	     int format, int mode, unsigned char *data, int nelements) {
-    xcerrflag = False;		/* global set by xchandler() */
+    static char buf[256];	/* For holding error string */
+
+    xcerrflag = False;		/* global, set by xchandler() */
     XChangeProperty(display, w, property, type, format, mode, data, nelements);
     XSync(display, False);
     if (xcverb >= OVERBOSE && xcerrflag) {
-	char buf[256];
 	XGetErrorText(display, xcerrevt.error_code, buf, sizeof(buf)-1);
 	fprintf(stderr, "xclib: error: XChangeProp failed with %s\n", buf);
     }
