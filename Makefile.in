@@ -78,6 +78,9 @@ configure: configure.ac
 borked: borked.c xclib.o xcprint.o
 	$(CC) $^ $(CFLAGS) -o $@ $(X11OBJ) $(LDFLAGS)
 
+xclip.pdf: xclip.1 
+	groff -Tpdf -man $^ > $@ 
+
 .SUFFIXES:
 .SUFFIXES: .c .o
 
