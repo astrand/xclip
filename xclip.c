@@ -100,7 +100,17 @@ static struct requestor *get_requestor(Window win, Atom pty)
 	    errmalloc();
 	} else {
 	    r->context = XCLIB_XCIN_NONE;
-	    /* Please comment: Why do we not set r->cwin or r->pty here? */
+	    /* XXX Please Comment: Why do we not set r->cwin or r->pty here? */
+	    
+	    /* xsel(1) hangs if given more than 4,000,000 bytes at a time. */
+	    /* FIXME: report bug to xsel and then remove this kludge */
+	    /* XXX: Do other programs have similar limits? */
+	    if (!strcmp(xcatomstr(dpy, pty), "XSEL_DATA")) {
+		r->chunk_size = 4*1000*1000; 
+		if (xcverb >= ODEBUG)
+		    fprintf(stderr,
+			    "Kludging chunksize to 4,000,000 for xsel\n");
+	    }
 	}
 
 	if (!requestors) {
