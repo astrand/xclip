@@ -474,10 +474,6 @@ xcin(Display * dpy,
 	    *chunk_size = XMaxRequestSize(dpy) << 2;
 	}		                                 /* Leave room for */
 	*chunk_size -= 1024;				 /* request header */
-
-	/* xsel(1) hangs if given more than 4,000,000 bytes at a time. */
-	/* FIXME: report bug to xsel and then allow this number to vary */
-	*chunk_size = 4*1000*1000; /* What other programs have limits? */
     }
 
     /* If an Alloc error occurs during the storing of the selection data,
@@ -745,7 +741,7 @@ xcfetchname(Display *display, Window w, char **namep) {
     if (w == None)
 	return 1;		/* No window, no name. */
 
-    void *fn = XSetErrorHandler(xcnull);
+    void *fn = XSetErrorHandler(xcnull); /* Suppress error messages */
 
     xcerrflag = False;
     XFetchName(display, w, namep);
