@@ -111,17 +111,17 @@ Pastes current X selection to standard out.
 .TP
 \fB\-i\fR, \fB\-in\fR
 .
-Read text into X selection from standard input or files. (Default unless it
+Copy text into X selection from standard input or files. (Default unless it
 would read from a tty.)
 .TP
 \fB\-o\fR, \fB\-out\fR
 .
-Print the selection to standard out. (Default when no files are specified and
+Paste the selection to standard out. (Default when no files are specified and
 standard input is a tty.)
 .TP
 \fB\-f\fR, \fB\-filter\fR
 .
-Read text into the X selection and also print it out to standard out,
+Copy text into the X selection and also print it out to standard out,
 unmodified. Handy for pipelines. This does not (yet) work with files for input.
 Not compatible with verbosity levels above \(lqsilent\(rq (the default) as
 xclip would not exit after making the copy and could hang a pipeline.
@@ -129,7 +129,9 @@ xclip would not exit after making the copy and could hang a pipeline.
 \fB\-selection\fR \fIselection\fR
 .
 Specify which X selection to use, options are PRIMARY (default),
-SECONDARY, or CLIPBOARD.
+CLIPBOARD, or SECONDARY. See discussion in
+\fBAbout Selections\fP
+below.
 .TP
 \fB\-c\fR, \fB\-clipboard\fR
 Shorthand for \(lq-selection clipboard\(rq. 
@@ -137,9 +139,9 @@ Shorthand for \(lq-selection clipboard\(rq.
 \fB\-t\fR \fIfmt\fR, \fB\-target\fR \fIfmt\fR
 .
 Specify a particular data format to request (out mode) or advertise (in mode)
-using the given target \fIfmt\fR (e.g., \(lqtext/html\(rq, \(lqimage/jpeg\(rq).
-The default target is \(lqUTF8_STRING\(rq. If, during output, that is not
-available, xclip will fallback to \(lqSTRING\(rq.
+using the given target \fIfmt\fR (e.g., image/jpeg). The default target is
+UTF8_STRING. If, during output, that is not available, xclip will fallback to
+STRING.
 .
 Note: xclip can only specify one target data format.
 .
@@ -157,13 +159,15 @@ If the selection does not end with a newline character, this option has no
 effect. This option is useful for copying one-line output of programs like
 \fBpwd\fR to the clipboard to paste it again into the command prompt without
 executing the line immediately due to the newline character \fBpwd\fR appends.
+Can be used on input or ouput.
 .TP
-\fB\-loops\fR \fIn\fR
+\fB\-loops\fR \fIn\fP
 .
-Number of X selection requests (pastes into X applications) to wait for before
-exiting, with a value of 0 (default) causing xclip to wait for an unlimited
-number of requests until another application \[en] possibly another invocation
-of xclip \[en] takes ownership of the selection (performs a copy).
+Given a natural number \fIn\fP, wait for \fIn\fP selection requests (pastes)
+before clearing the selection and exiting. A value of 0 (default) causes xclip
+to wait for an unlimited number of requests until another application \[em]
+possibly another invocation of xclip \[em] takes ownership of the selection
+(performs a copy). Input mode only.
 .
 .TP
 \fB\-display\fR \fIdpy:n\fR
@@ -179,8 +183,8 @@ Show version information.
 .TP
 \fB\-silent\fR
 .
-Fork into the background to wait for requests, no informational output, errors
-only (default).
+Errors only, no informational output. (Default). In input mode (copy), forks
+a background process to wait for requests and returns to command line.
 .TP
 \fB\-quiet\fR
 Run in the foreground and show informational messages on the terminal.
@@ -194,7 +198,7 @@ Run in the foreground and print garrulous debugging output.
 \fB\-sensitive\fR
 .
 Clear sensitive data from selection buffer after being pasted once.
-This is currently implemented as -wait 50. See \fBNOTES\fR
+This is currently implemented as \fB-wait 50\fP. See \fBNOTES\fR
 .TP
 \fB\-wait\fR \fIn\fR
 .
@@ -224,7 +228,7 @@ The default action for \fB-in\fP (copy) is to silently fork a temporary daemon
 and appear to exit immediately. The daemon waits in the background for X
 selection requests (pastes) and sends the data to other applications. Xclip's
 daemon exits silently when another X application performs a copy (technically,
-when xclip \(lqloses ownership of the selection\(rq). You can use the
+when xclip \(lqloses ownership of the selection\(rq). One can use the
 \fB\-verbose\fR option to prevent xclip from backgrounding itself to see if and
 when it receives selection requests from other X applications.
 
@@ -265,7 +269,7 @@ available as UTF8_STRING, STRING, text/html, image/jpeg, and application/pdf.
 Which targets are available and what they mean is up to the copying
 application. When multiple targets are available, the application that did the
 copy provides a list of targets (data types) that it is willing to convert to
-upon request. In xclip, you can see all targets currently available for pasting
+upon request. In xclip, one can see all targets currently available for pasting
 with \fB-T\fP and pick one with \fB-t\fP.
 
 When setting the selection (copying), xclip can only specify a single target
@@ -297,7 +301,7 @@ Print the PRIMARY selection to the screen.
 .IP
 Read the file foo.txt and copy it into the PRIMARY selection. Note that
 \fBxclip foo.txt\fP (without the redirection) also works but is currently
-incompatible with the -filter option.
+incompatible with the \fB-filter\fP option.
 .
 .TP
 .B xclip > helloworld.c
@@ -335,7 +339,7 @@ supporting HTML to paste the contents of the given file as HTML.
 .TP
 .B xclip -c -t image/jpeg foo.jpg
 .IP
-Copy an image to the clipboard. You can now paste it into a graphical
+Copy an image to the clipboard. Now it is possible topaste it into a graphical
 application using Control-V. 
 .
 .TP
