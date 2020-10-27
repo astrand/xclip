@@ -128,8 +128,8 @@ xclip would not exit after making the copy and could hang a pipeline.
 .TP
 \fB\-selection\fR \fIselection\fR
 .
-Specify which X selection to use, options are \(lqprimary\(rq (default),
-\(lqsecondary\(rq, or \(lqclipboard\(rq.
+Specify which X selection to use, options are PRIMARY (default),
+SECONDARY, or CLIPBOARD.
 .TP
 \fB\-c\fR, \fB\-clipboard\fR
 Shorthand for \(lq-selection clipboard\(rq. 
@@ -138,18 +138,16 @@ Shorthand for \(lq-selection clipboard\(rq.
 .
 Specify a particular data format to request (out mode) or advertise (in mode)
 using the given target \fIfmt\fR (e.g., \(lqtext/html\(rq, \(lqimage/jpeg\(rq).
-The default target is \(lqUTF8_STRING\(rq. If that is not available for output,
-xclip will fallback to \(lqSTRING\(rq.
+The default target is \(lqUTF8_STRING\(rq. If, during output, that is not
+available, xclip will fallback to \(lqSTRING\(rq.
 .
-Note: When setting the selection (copying), xclip can only specify one target
-data format. This may change in the future.
+Note: xclip can only specify one target data format.
 .
 .TP
 \fB\-T\fR, \fB\-TARGETS\fR
 .
-Show all valid targets for -t. Technically, this is just shorthand for
-\(lq-target TARGETS\(rq. The special target atom named \(lqTARGETS\(rq contains
-the list of all valid target atoms for this selection. 
+Show all formats that the current selection owner is willing to send for an
+output (paste). Use this to pick a format for \fB-t\fR \fIfmt\fR.
 .TP
 \fB\-r\fR, \fB\-rmlastnl\fR
 .
@@ -235,33 +233,31 @@ is possible to use \fB\-d\fR or \fB\-disp\fR instead of \fB\-display\fR as no
 other option begins with the letter 'd'. Any single character option listed in
 this manual, will also work, even if ambiguous. For example, \fB\-v\fR will
 always be short for \fB\-verbose\fR (rather than the less useful
-\fB\-version\fR)). Due to a fluke, using an ambiguous option, or forgetting to
+\fB\-version\fR). Due to a fluke, using an ambiguous option, or forgetting to
 include a mandatory argument, will give an elliptical response: \(lqNo such
 file or directory.\(rq
 
 Note that only the first character of the selection specified with the
 \fB\-selection\fR option is important. This means that \(lqp\(rq, \(lqsec\(rq
-and \(lqclip\(rq would have the same effect as using \(lqprimary\(rq,
-\(lqsecondary\(rq or \(lqclipboard\(rq respectively.
+and \(lqclip\(rq would have the same effect as using PRIMARY,
+SECONDARY or CLIPBOARD respectively.
 
-.Ss About selections
+.SS About selections
 
-One of the differences of X from systems like Apple MacOS\(tm and Microsoft
-Windows\(tm is that there is more than one clipboard (called
-\(lqselections\(rq) available. Only two are in common use nowadays. The
-\fB\(lqprimary\(rq\fP selection (the default in xclip) is mainly used for quick
-text transfers. For example, highlighting with a mouse does an implicit copy to
-\(lqprimary\(rq in most applications and, traditionally, the middle mouse
-button does a paste.
+The X Windowing System differs from Apple MacOS\(tm and Microsoft Windows\(tm
+in that there are multiple clipboards (called \(lqselections\(rq) available.
+Only two are in common use nowadays. The \fBPRIMARY\fP selection (the default
+in xclip) is mainly used for quick text transfers. For example, highlighting
+with a mouse does an implicit copy to PRIMARY in most applications and,
+traditionally, the middle mouse button does a paste.
 
-The \fB\(lqclipboard\(rq\fP selection is useful for large, binary data, such as
-images. Applications use the \(lqclipboard\(rq when copying using menu options
-or Control+C (copy) / Control+V (paste). The \(lqclipboard\(rq is quite
-commonly used, so xclip allows the shortcut \fB-c\fP to mean \fB-selection\fP
-\fBclipboard\fP. (xclip ecumenically also accepts \fIxsel\fP's \fB-b\fP option
-as a synonym for \fB-c\fP).
+The \fBCLIPBOARD\fP selection is for data explicitly copied by the user,
+including binary objects, such as images. Applications use the CLIPBOARD when
+copying with menu options or the keyboard (Control-C / Control-V). Xclip allows
+the shortcut \fB-c\fP to mean \fB-selection\fP \fBclipboard\fP. (Ecumenically,
+xclip also accepts \fIxsel\fP's \fB-b\fP option as a synonym for \fB-c\fP).
 
-.Ss About targets
+.SS About targets
 
 Each selection in X can have multiple \(lqtargets\(rq available. Each target is
 a different data format. For example, a single clipboard selection might be
@@ -280,61 +276,55 @@ For more information about target atoms refer to ICCCM section 2.6.2.
 
 .SH EXAMPLES
 .TP
-.B echo 'I hate man pages without examples!' | xclip
+.B echo \[aq]I love man pages with examples!\[aq] | xclip
 .IP
-Copy a string into the \(lqprimary\(rq selection.
+Copy a string into the PRIMARY selection.
 Then middle click in an X application to paste.
-.
-.TP
-.B xclip
-.IP
-Print the \(lqprimary\(rq selection to the screen.
-.
-.TP
-.B xclip <foo.txt
-.IP
-Read the file foo.txt and copy it into the \(lqprimary\(rq selection. Note that
-you could also use \(lqxclip foo.txt\(rq without the redirection, however that
-would not work with the -filter option.
-.
-.TP
-.B xclip > helloworld.c
-.IP
-Paste the \(lqprimary\(rq selection into the file helloworld.c.
 .
 .TP
 .B pwd | xclip -r
 .IP
-Then middle click to paste the current working directory but without pasting a
-newline.
+Middle click will paste the current working directory, but without the
+trailing newline.
 .
 .TP
-.B xclip | rev | xclip -f
+.B xclip
 .IP
-Reverse the letters in the selection and also print them out.
+Print the PRIMARY selection to the screen.
 .
 .TP
-.B wget $(xclip)
+.B xclip < foo.txt
 .IP
-Download the URL that has been selected by the mouse. (Requires wget). 
+Read the file foo.txt and copy it into the PRIMARY selection. Note that
+\fBxclip foo.txt\fP (without the redirection) also works but is currently
+incompatible with the -filter option.
 .
 .TP
-.B xclip -t image/png | convert -geometry '>800x>480' - sixel:-
+.B xclip > helloworld.c
 .IP
-Show the image from the clipboard in a terminal which handles sixel graphics
-(for example, 'xterm -ti vt340'). This works, for example, after using Right
-Click \[->] Copy Image from within a web browser.
+Paste the PRIMARY selection into the file helloworld.c.
 .
 .TP
-.B uptime | xclip
+.B xclip | figlet | xclip
 .IP
-Put your uptime in the X selection. 
+Change the PRIMARY selection into an ASCII art banner of the original text.
+.EX
+.vs 1m			\" No extra vertical line spacing 
+.tr , \"		\" Translate comma to space
+,,,,,,,,,,_,_,,,,,,,,,_,,,,__,_,,,,,,,_,,,,,,_,,,
+__,,_____|,(_)_,__,,,|,|,,/,_(_),__,_|,|,___|,|_,
+\\,\\/,/,__|,|,|,'_,\\,,|,|,|,|_|,|/,_`,|,|/,_,\\,__|
+,>,,<,(__|,|,|,|_),|,|,|,|,,_|,|,(_|,|,|,,__/,|_,
+/_/\\_\\___|_|_|,.__/,,|,|,|_|,|_|\\__,,|_|\\___|\\__|
+,,,,,,,,,,,,,|_|,,,,,|_|,,,,,,,,|___/,,,,,,,,,,,,
+.tr ,, \"		\" Reset comma
+.vs			\" Reset vertical spacing
+.EE
 .
 .TP
-.B xclip -loops 10 -verbose /etc/motd
+.B youtube-dl \[dq]$(xclip)\[dq]
 .IP
-Exit after /etc/motd (message of the day) has been pasted 10 times. Show how
-many selection requests (pastes) have been processed.
+Download the video at the URL selected by the mouse. (Requires youtube-dl). 
 .
 .TP
 .B xclip -t text/html index.html
@@ -346,15 +336,17 @@ supporting HTML to paste the contents of the given file as HTML.
 .B xclip -c -t image/jpeg foo.jpg
 .IP
 Copy an image to the clipboard. You can now paste it into a graphical
-application using Control+V. 
+application using Control-V. 
 .
 .TP
 .B xclip -c -T
 .IP
 List valid data formats available on the clipboard. For example, after doing
-right-click \[->] \(lqCopy Image\(rq in a web browser, one might see:
+Right Click \[->] Copy Image in a web browser, one might see:
 .
 .EX
+.RS
+.RS
 TIMESTAMP
 TARGETS
 MULTIPLE
@@ -363,14 +355,40 @@ text/html
 image/png
 image/tiff
 image/jpeg
+.RE
 .EE
 .
 Note that in this case the text/html target is the HTML source code that
 embedded the image on the page.
+.RE
 .TP
 .B xclip -c -t image/jpeg > bar.jpg
 .IP
 Paste an image from the clipboard to a file.
+.
+.TP
+.B xclip -t image/jpeg | convert -geometry \[aq]>800x>480\[aq] - sixel:-
+.IP
+Show the image from the clipboard in a terminal which handles sixel graphics
+(e.g., \fIxterm\~-ti\~vt340\fP). 
+.
+.TP
+.B xclip -loops 10 -verbose /etc/motd
+.IP
+Exit after /etc/motd (message of the day) has been pasted 10 times. Show how
+many selection requests (pastes) have been processed.
+.
+.TP
+.B xclip \
+|\~sed\~-E\~\[aq]\
+s/\[dq](\[rs]s|$)|\[rs]b\[dq]/\[rs]xE2\[rs]x80\[rs]x9D\[rs]1/g;\~\
+s/\[dq]\[rs]b|(\[rs]s)\[dq]/\[rs]1\[rs]xE2\[rs]x80\[rs]x9C/g\[aq] \
+| xclip\~-f | xclip\~-c
+.IP
+Modify the selection so that plain ASCII quotes\~(\[dq]) are
+replaced with left\~(\[lq]) or right\~(\[rq]) quotes, as appropriate. The
+result is copied to both the PRIMARY and CLIPBOARD so that text that has been
+highlighted with the mouse can be easily replaced with Control-V (paste).
 
 .SH USAGE NOTES
 
@@ -385,15 +403,15 @@ instead. \fB\-wait\fR is the same as \fB\-sensitive\fR, except it allows one to
 adjust the time to wait before clearing the selection to be \fIn\fR
 milliseconds.
 .PP
-Ideally, \fB\-sensitive\fR would allow exactly one paste and not need a timeout,
-but due to subtleties in the way the X clipboard protocol works, doing so is not
-as simple as it may seem.
+Ideally, \fB\-sensitive\fR would allow exactly one paste and not need a
+timeout, but due to subtleties in the way the X clipboard protocol works, doing
+so is not as simple as it may seem.
 
-.SS \(lqSecondary\(rq and \(lqbuffercut\(rq selections
-Historically, there were other selections such as \(lqsecondary\(rq and
-\(lqbuffercut\(rq. Very few applications nowadays make use of them. Xclip fully
-handles them, if you so desire. For example, to swap the \(lqprimary\(rq and
-\(lqsecondary\(rq selections, you could do this:
+.SS SECONDARY and BUFFERCUT selections
+Historically, there were other selections such as SECONDARY and BUFFERCUT. Very
+few applications nowadays make use of them. They are fully supported by Xclip,
+if you so desire. For example, to swap the PRIMARY and SECONDARY selections,
+you could do this:
 
 .EX
 $ xclip -sel s | xclip -sel b
@@ -401,7 +419,7 @@ $ xclip | xclip -sel s
 $ xclip -sel b | xclip
 .EE
 
-Note that the \(lqbuffercut\(rq selection uses an older transfer method and has
+Note that the BUFFERCUT selection uses an older transfer method and has
 various limitations, such as, inability to choose a TARGET and a maximum
 amount of data (\[~=] 16 MB).
 
@@ -414,7 +432,7 @@ X display to use if none is specified with the
 \-display
 option.
 
-.SH \(lqSEE ALSO\(rq
+.SH SEE ALSO
 .PP
 .IR xclip-copyfile (1),
 .IR xclip-cutfile  (1),
@@ -425,9 +443,9 @@ copy and move files via the X clipboard.
 .IR xsel (1)
 and
 .IR wl-clipboard (1)
-are command line programs similar to xclip. xsel has the ability to keep a
-primary selection even after a program has closed. wl-clipboard works with
-Wayland instead of X.
+are command line programs similar to xclip. xsel only works with text, but has
+the ability to keep a primary selection even after a program has closed.
+wl-clipboard works with Wayland instead of X.
 .PP
 .IR clipit (1),
 .IR copyq (1),
@@ -440,11 +458,15 @@ and
 are just a few of many, many GUI clipboard managers which let you browse your
 clipboard's history.
 .PP
+.UR https://www.x.org/releases/X11R7.6/doc/xorg-docs/specs/ICCCM/icccm.html
+ICCCM: The Inter-Client Communication Conventions Manual
+.UE
+
 
 .SH KNOWN BUGS
 .PP
-xclip is not ICCCM compliant. For example, the TIMESTAMP isn't set and MULTIPLE
-does not work.
+xclip is not fully ICCCM compliant. For example, the TIMESTAMP isn't set and
+MULTIPLE does not work.
 .PP
 Only one target type can be chosen. It would be useful to let users pick a
 different type for each input file.
