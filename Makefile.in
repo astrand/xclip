@@ -76,17 +76,26 @@ Makefile: Makefile.in configure
 configure: configure.ac
 	./bootstrap
 
-borked: borked.c xclib.o xcprint.o 
-	$(CC) $^ $(CFLAGS) -o $@ $(X11OBJ) $(LDFLAGS)
-
+# Create documentation from the man page
 xclip.pdf: xclip.1 
 	groff -Tpdf -mandoc $^ > $@ 
 
 xclip.cat: xclip.1 
 	nroff -mandoc $^ > $@ 
 
+# Run the test script
 test:	xctest
 	./xctest
+
+# borked is a test program which intentionally causes errors.
+borked: borked.c xclib.o xcprint.o 
+	$(CC) $^ $(CFLAGS) -o $@ $(X11OBJ) $(LDFLAGS)
+
+# For ease of editing the man page, automatically regenerate the PDF every time
+# xclip.1 (the groff source code of the man page) is saved. If the document is
+# already being viewed in atril or evince, it will be reloaded immediately.
+watch:
+	./autogroff.sh
 
 .SUFFIXES:
 .SUFFIXES: .c .o
