@@ -81,6 +81,9 @@ borked: borked.c xclib.o xcprint.o
 xclip.pdf: xclip.1 
 	groff -Tpdf -man $^ > $@ 
 
+test:	xctest
+	./xctest
+
 .SUFFIXES:
 .SUFFIXES: .c .o
 
