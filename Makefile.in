@@ -85,6 +85,9 @@ xclip.pdf: xclip.1
 xclip.cat: xclip.1 
 	nroff -mandoc $^ > $@ 
 
+test:	xctest
+	./xctest
+
 .SUFFIXES:
 .SUFFIXES: .c .o
 
