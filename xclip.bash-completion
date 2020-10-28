@@ -3,6 +3,9 @@
 # This file is part of the xclip program.
 # This lists available TARGETS for -t, available selections for -se,
 # available options for -, and files otherwise.
+#
+# To use once, simply 'source' this file. To have this setup at each login,
+# put this file in /etc/bash_completion.d/ .
 
 _getselection() {
     # Did the user specify which selection to use already?
@@ -12,14 +15,21 @@ _getselection() {
 
     for w in "${COMP_WORDS[@]}"; do
 	[[ -z "$nextandbreak" ]] || break
-	[[ $w == -se* ]] && nextandbreak=1
+	[[ $w == -sel* ]] && nextandbreak=1
+	[[ $w == -c* ]] && break
     done	
 
-    if [[ "$w" && $w != -se* ]]; then
-	echo "$w"
-    else
-	echo "Primary"
-    fi
+    case "$w" in
+	"")
+	    echo "Primary"
+	    ;;
+	-c*)
+	    echo "Clipboard"
+	    ;;
+	*)
+	    echo "$w"
+	    ;;
+    esac
 }
 
 _xclip()
@@ -37,7 +47,7 @@ _xclip()
 		COMPREPLY=( $( compgen -W "$options" -- $cur ) )
 		return 0
 		;;
-	    -se*)
+	    -sel*)
 		options="Primary Secondary Clipboard Buffer-cut"
 		COMPREPLY=( $( compgen -W "$options" -- ${cur^} ) )
 		return 0
@@ -46,9 +56,10 @@ _xclip()
 
 	# Begins with -, so command line option (or badly named file, I suppose)
 	if [[ "$cur" == -* ]]; then
-	    options="-in -out -loops -display -help -selection"
-	    options+=" -c -noutf8 -target -T -rmlastnl -version"
-	    options+=" -silent -quiet -verbose"
+	    options="-in -out -filter -selection -display -help"
+	    options+=" -clipboard -target -TARGETS -rmlastnl -V -version"
+	    options+=" -sensitive -wait -loops -noutf8"
+	    options+=" -silent -quiet -v -verbose -debug"
 	    COMPREPLY=(  $( compgen -W "$options" -- $cur ) )
 	    return 0
 	fi
