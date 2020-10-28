@@ -20,13 +20,13 @@ Here are some ideas for things you can do with xclip:
 	xclip /etc/passwd
 
 	Save some text you have Edit | Copied in a web browser:
-	xclip -o -sel clip > webpage.txt
+	xclip -c > webpage.txt
 
 	Open a URL selected in an email client
-	mozilla `xclip -o`
+	mozilla `xclip`
 
 	Copy XA_PRIMARY to XA_CLIPBOARD
-	xclip -o | xclip -sel clip
+	xclip | xclip -c
 
 	In command mode in vim, select some lines of text, then press shift-:
 	for an ex prompt, and use this command to copy the selected lines of
