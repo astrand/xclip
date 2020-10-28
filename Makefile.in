@@ -35,6 +35,11 @@ install.man: xclip.1 xclip-copyfile.1
 	mkdir -p $(DESTDIR)$(mandir)/man1
 	$(INSTALL) -m 644 $^ $(DESTDIR)$(mandir)/man1
 
+.PHONY: install.completion
+install.completion: xclip.bash-completion
+	mkdir -p $(DESTDIR)/etc/bash_completion.d/
+	$(INSTALL) -m 755 $^ $(DESTDIR)/etc/bash_completion.d
+
 .PHONY: clean
 clean:
 	rm -f *.o *~ xclip xclip-$(VERSION).tar.gz borked
