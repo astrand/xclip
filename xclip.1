@@ -286,7 +286,7 @@ Copy a string into the PRIMARY selection.
 Then middle click in an X application to paste.
 .
 .TP
-.B pwd | xclip -r
+.B pwd | xclip \-r
 .IP
 Middle click will paste the current working directory, but without the
 trailing newline.
@@ -297,11 +297,9 @@ trailing newline.
 Print the PRIMARY selection to the screen.
 .
 .TP
-.B xclip < foo.txt
+.B xclip foo.txt
 .IP
-Read the file foo.txt and copy it into the PRIMARY selection. Note that
-\fBxclip foo.txt\fP (without the redirection) also works but is currently
-incompatible with the \fB-filter\fP option.
+Read the file foo.txt and copy it into the PRIMARY selection. 
 .
 .TP
 .B xclip > helloworld.c
@@ -331,19 +329,25 @@ __,,_____|,(_)_,__,,,|,|,,/,_(_),__,_|,|,___|,|_,
 Download the video at the URL selected by the mouse. (Requires youtube-dl). 
 .
 .TP
-.B xclip -t text/html index.html
+.B xclip \-t text/html index.html
 .IP
 Copy a file with a specific MIME type. Middle click in an X application
 supporting HTML to paste the contents of the given file as HTML.
 .
 .TP
-.B xclip -c -t image/jpeg foo.jpg
+.B xclip \-c \-t image/jpeg foo.jpg
 .IP
-Copy an image to the clipboard. Now it is possible topaste it into a graphical
-application using Control-V. 
+Copy an image to the clipboard. Now it is possible to paste it into a graphical
+application using Control-V.
 .
 .TP
-.B xclip -c -T
+.B xclip \-c \-t $(file \-\-brief \-\-mime-type foo) foo
+.IP
+Copy a file named \(lqfoo\(rq, advertising the target format to be the same as
+the file's MIME filetype.
+.
+.TP
+.B xclip \-c \-T
 .IP
 List valid data formats available on the clipboard. For example, after doing
 Right Click \[->] Copy Image in a web browser, one might see:
@@ -366,28 +370,28 @@ Note that in this case the text/html target is the HTML source code that
 embedded the image on the page.
 .RE
 .TP
-.B xclip -c -t image/jpeg > bar.jpg
+.B xclip \-c \-t image/jpeg > bar.jpg
 .IP
 Paste an image from the clipboard to a file.
 .
 .TP
-.B xclip -t image/jpeg | convert -geometry \[aq]>800x>480\[aq] - sixel:-
+.B xclip \-t image/jpeg | convert \-geometry \[aq]>800x>480\[aq] \- sixel:-
 .IP
 Show the image from the clipboard in a terminal which handles sixel graphics
 (e.g., \fIxterm\~-ti\~vt340\fP). 
 .
 .TP
-.B xclip -loops 10 -verbose /etc/motd
+.B xclip \-loops 10 \-verbose /etc/motd
 .IP
 Exit after /etc/motd (message of the day) has been pasted 10 times. Show how
 many selection requests (pastes) have been processed.
 .
 .TP
 .B xclip \
-|\~sed\~-E\~\[aq]\
+|\~sed\~\-E\~\[aq]\
 s/\[dq](\[rs]s|$)|\[rs]b\[dq]/\[rs]xE2\[rs]x80\[rs]x9D\[rs]1/g;\~\
 s/\[dq]\[rs]b|(\[rs]s)\[dq]/\[rs]1\[rs]xE2\[rs]x80\[rs]x9C/g\[aq] \
-| xclip\~-f | xclip\~-c
+| xclip\~\-f | xclip\~\-c
 .IP
 Modify the selection so that plain ASCII quotes\~(\[dq]) are
 replaced with left\~(\[lq]) or right\~(\[rq]) quotes, as appropriate. The
@@ -418,9 +422,9 @@ if you so desire. For example, to swap the PRIMARY and SECONDARY selections,
 you could do this:
 
 .EX
-$ xclip -sel s | xclip -sel b
-$ xclip | xclip -sel s
-$ xclip -sel b | xclip
+$ xclip \-sel s | xclip \-sel b
+$ xclip | xclip \-sel s
+$ xclip \-sel b | xclip
 .EE
 
 Note that the BUFFERCUT selection uses an older transfer method and has
@@ -476,8 +480,8 @@ Only one target type can be chosen. It would be useful to let users pick a
 different type for each input file.
 .PP
 Making users specify the MIME type of files by hand is silly. Xclip ought to be
-able to automatically set the target appropriately using `file --brief
---mime-type` on any files provided on the command line.
+able to automatically set the target appropriately using `file \-\-brief
+\-\-mime-type` on any files provided on the command line.
 .PP
 Xclip cannot automatically convert between data types. For example, if the user
 has specified \fB-t image/png\fP as input, xclip will not correctly handle a
