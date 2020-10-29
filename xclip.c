@@ -749,6 +749,11 @@ doOut(Window win)
     XEvent evt;			/* X Event Structures */
     unsigned int context = XCLIB_XCOUT_NONE;
 
+    if (xcverb >= OVERBOSE) {
+	Window owner = XGetSelectionOwner(dpy, sseln);
+	fprintf(stderr, "Current owner of %s ", xcatomstr(dpy, sseln));
+	fprintf(stderr, "is %s.\n", xcnamestr(dpy, owner));
+    }
     
     /* Handle old-style cut buffer if needed */
     if (sseln == XA_STRING)
