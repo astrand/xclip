@@ -99,8 +99,8 @@ static struct requestor *get_requestor(Window win, Atom pty)
 	if (!r) {
 	    errmalloc();
 	} else {
-	    r->context = XCLIB_XCIN_NONE;
 	    /* XXX Please Comment: Why do we not set r->cwin or r->pty here? */
+	    r->context = XCLIB_XCIN_NONE;
 	    
 	    /* xsel(1) hangs if given more than 4,000,000 bytes at a time. */
 	    /* FIXME: report bug to xsel and then remove this kludge */
@@ -762,7 +762,7 @@ doOut(Window win)
 	    /* fetch the selection, or part of it */
 	    xcout(dpy, win, evt, sseln, target, &sel_type, &sel_buf, &sel_len, &context);
 
-	    if (context == XCLIB_XCOUT_SELECTION_REFUSED) { /* XXX */
+	    if (context == XCLIB_XCOUT_SELECTION_REFUSED) {
 		fprintf(stderr, "xclip: error: selection owner signaled an error\n");
 		return EXIT_FAILURE;
 	    }
@@ -1069,6 +1069,10 @@ main(int argc, char *argv[])
 
     /* Create a window to trap events */
     win = XCreateSimpleWindow(dpy, DefaultRootWindow(dpy), 0, 0, 1, 1, 0, 0, 0);
+
+    if (xcverb >= ODEBUG) {
+	fprintf(stderr,"xclip: debug: Our window is %s\n",xcnamestr(dpy, win));
+    }
 
     /* get events about property changes */
     XSelectInput(dpy, win, PropertyChangeMask);
