@@ -572,7 +572,7 @@ xcin(Display * dpy,
 	res.xselection.time = evt.xselectionrequest.time;
 
 	if (xcchangeproperr) {
-	    /* if XChangeProp failed, refuse XSelectionRequestion */
+	    /* if XChangeProp failed, refuse XSelectionRequest */
 	    XDeleteProperty(dpy, *theirwin, *pty);
 	    res.xselection.property = None;
 	    fprintf(stderr, "xclib: error: XCIN_NONE: "
@@ -676,7 +676,6 @@ xcin(Display * dpy,
 	XFlush(dpy);
 
 	/* Did XChangeProp fail? Refuse xfr and return -1*/
-	/* Fixme: This doesn't seem to work to tell xsel to quit XXX */ 
 	if (xcchangeproperr) {
 	    if (xcverb >= ODEBUG) {
 		fprintf(stderr, "xclib: debug: Refusing INCR transfer.\n");

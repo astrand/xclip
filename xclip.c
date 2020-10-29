@@ -43,7 +43,7 @@ int opt_tab_size;		/* for sanity check later */
 int sloop = 0;			/* number of loops */
 char *sdisp = NULL;		/* X display to connect to */
 Atom sseln = XA_PRIMARY;	/* X selection to work with */
-Atom target = XA_STRING;
+Atom target = None;
 int wait = 0;              /* wait: stop xclip after wait msec
                             after last 'paste event', start counting
                             after first 'paste event' */
@@ -68,8 +68,12 @@ char *rec_typ;
 
 int tempi = 0;
 
-// See xclip.h for definition of struct requestor.
+/* FIXME: Stub variable for fixing XSetSelectionOwner's timestamp. */
+/* Eventually this should append zero-length to a property and get timestamp
+ * from server's PropertyNotify event. */
+unsigned long int ownertime = CurrentTime; 
 
+// See xclip.h for definition of struct requestor.
 static struct requestor *requestors;
 
 static struct requestor *get_requestor(Window win, Atom pty)
@@ -437,7 +441,7 @@ doIn(Window win, const char *progname)
     if (sseln == XA_STRING) {
 	xcerrflag = False;
 	XStoreBuffer(dpy, (char *) sel_buf, (int) sel_len, 0);
-	XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+	XSetSelectionOwner(dpy, sseln, None, ownertime);
 	XSync(dpy, False);	/* Force error to occur now or never */
 	if (xcerrflag == True) {
 	    fprintf(stderr, "xclip: error: Could not copy to old-style cut buffer\n");
@@ -455,7 +459,7 @@ doIn(Window win, const char *progname)
      * SelectionRequest events from other windows
      */
     /* FIXME: Should not use CurrentTime, according to ICCCM section 2.1 */
-    XSetSelectionOwner(dpy, sseln, win, CurrentTime);
+    XSetSelectionOwner(dpy, sseln, win, ownertime);
 
     /* Double-check SetSelectionOwner did not "merely appear to succeed". */
     Window owner = XGetSelectionOwner(dpy, sseln);
@@ -473,7 +477,7 @@ doIn(Window win, const char *progname)
 	pid = fork();
 	/* exit the parent process; */
 	if (pid) {
-	    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+	    XSetSelectionOwner(dpy, sseln, None, ownertime);
 	    xcmemzero(sel_buf,sel_len);
 	    exit(EXIT_SUCCESS);
 	}
@@ -539,7 +543,7 @@ doIn(Window win, const char *progname)
 		FD_ZERO(&in_fds);
 		FD_SET(x11_fd, &in_fds);
 		if (!select(x11_fd + 1, &in_fds, 0, 0, &tv)) {
-		    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+		    XSetSelectionOwner(dpy, sseln, None, ownertime);
 		    xcmemzero(sel_buf,sel_len);
 		    return EXIT_SUCCESS;
 		}
@@ -666,7 +670,7 @@ start:
 	dloop++;		/* increment loop counter */
     }
 
-    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+    XSetSelectionOwner(dpy, sseln, None, ownertime);
     xcmemzero(sel_buf,sel_len);
 
     return EXIT_SUCCESS;
@@ -749,6 +753,11 @@ doOut(Window win)
     XEvent evt;			/* X Event Structures */
     unsigned int context = XCLIB_XCOUT_NONE;
 
+    if (xcverb >= OVERBOSE) {
+	Window owner = XGetSelectionOwner(dpy, sseln);
+	fprintf(stderr, "Current owner of %s ", xcatomstr(dpy, sseln));
+	fprintf(stderr, "is %s.\n", xcnamestr(dpy, owner));
+    }
     
     /* Handle old-style cut buffer if needed */
     if (sseln == XA_STRING)
@@ -782,7 +791,7 @@ doOut(Window win)
 		    /* no fallback available, exit with failure */
 		    if (fsecm) {
 			/* If user requested -sensitive, then prevent further pastes (even though we failed to paste) */
-			XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+			XSetSelectionOwner(dpy, sseln, None, ownertime);
 			/* Clear memory buffer */
 			xcmemzero(sel_buf,sel_len);
 		    }
@@ -809,7 +818,7 @@ doOut(Window win)
 
 	if (fsecm) {
 	    /* If user requested -sensitive, then prevent further pastes */
-	    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+	    XSetSelectionOwner(dpy, sseln, None, ownertime);
 	    /* Clear memory buffer */
 	    xcmemzero(sel_buf,sel_len);
 	}
@@ -1061,11 +1070,14 @@ main(int argc, char *argv[])
 	errxdisplay(sdisp);
     }
 
-    /* parse selection command line option */
+    /* parse selection command line option; sets sseln */
     doOptSel();
 
-    /* parse noutf8 and target command line options */
-    doOptTarget();
+    /* parse noutf8 and target command line options; sets target */
+    if (sseln != XA_STRING)
+	doOptTarget();
+    else
+	target = XA_STRING; 		/* Old-style cut buffer had no target */
 
     /* Create a window to trap events */
     win = XCreateSimpleWindow(dpy, DefaultRootWindow(dpy), 0, 0, 1, 1, 0, 0, 0);
