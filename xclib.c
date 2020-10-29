@@ -223,8 +223,13 @@ xcout(Display * dpy,
 
 	if ( xcverb >= ODEBUG ) {
 	    fprintf(stderr,"xclib: debug: XCOUT_NONE: "
-		    "Requesting XConvertSelection from %s\n",
-		    xcnamestr(dpy, win));
+		    "Requesting XConvertSelection(");
+	    fprintf(stderr,"Display = %s, ", DisplayString(dpy));
+	    fprintf(stderr,"Selection = %s, ", xcatomstr(dpy, sel));
+	    fprintf(stderr,"Target = %s, ", xcatomstr(dpy, target));
+	    fprintf(stderr,"Property = %s, ", xcatomstr(dpy, pty));
+	    fprintf(stderr,"Window = %s, ", xcnamestr(dpy, win));
+	    fprintf(stderr,"Time = %ld)\n", CurrentTime);
 	}
 
 	/* send a selection request */
