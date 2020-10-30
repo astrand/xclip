@@ -10,6 +10,7 @@ make			# build the binary
 su			# su to root to install
 make install		# install xclip
 make install.man	# install man page
+make install.completion	# install tab completion (for bash)
 
 This should make and install xclip using the configuration (in terms of install
 directories, libraries, etc) used to build everything else in your X11
@@ -56,5 +57,5 @@ primarily for my own benefit so that I can quickly test that all xclip features
 are working correctly after I make a change. However, I have included it to
 help out anyone who may be modifying the xclip code themselves.
 
-Basically, when you run xctest, you shouldn't see any extra output from diff
-in between each test (because the input and output should be identical).
+Basically, when you run xctest, the script should run all the way through,
+showing "PASS" for everything.
