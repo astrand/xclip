@@ -1,7 +1,7 @@
 /*
  *
  *
- *  borked.c - emulate ways X selections can break for testing. 
+ *  borked.c - emulate ways X selections can break for testing.
  *  Copyright (C) 2020 Hackerb9, Peter Åstrand
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -32,6 +32,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xmu/Atoms.h>
+#include <X11/Xmu/Error.h>
 #include "xcdef.h"
 #include "xcprint.h"
 #include "xclib.h"
@@ -133,7 +134,7 @@ outReadAndSteal(Window win)
 
 	/* but since we're intentionally borken, we'll steal the selection! */
 	XSetSelectionOwner(dpy, sseln, None, CurrentTime);
-	printf("Selection owner set to None.\n"); 
+	printf("Selection owner set to None.\n");
     }
 
     return EXIT_SUCCESS;
@@ -182,17 +183,126 @@ outReadAndHang(Window win)
 	    break;
 
 	/* but since we're intentionally borken, we'll hang forever! */
-	printf("Selection now hanging forever. Hit ^C to cancel.\n"); 
+	printf("Selection now hanging forever. Hit ^C to cancel.\n");
 	while (1)
-	    sleep(1);	   
+	    sleep(1);
     }
 
     return EXIT_SUCCESS;
 }
 
+static int
+inHang(Window win)
+{
+    /* Own the PRIMARY selection */
+    XSetSelectionOwner(dpy, XA_PRIMARY, None, CurrentTime);
+
+    /* just hang forever.  */
+    printf("Selection now hanging forever. Hit ^C to cancel.\n");
+    while (1)
+	sleep(1);
+
+    return EXIT_SUCCESS;
+}
+
+static int
+inPasteHang(Window win)
+{
+    /*                 */
+    printf("Note implemented yet\n");
+    // XXXX
+
+//    printf("Selection now hanging forever. Hit ^C to cancel.\n");
+//    while (1)
+//	sleep(1);
+
+    return EXIT_SUCCESS;
+}
+
+    // X11R5 spec said each request header was 4 bytes.
+    // Experimentally, I'm finding that it is 32-bytes. 20 October 2020.
+    // X11/SelectionI.h:MAX_SELECTION_INCR leaves room for 100 bytes.
+#define MAX_SELECTION_INCR(dpy) (              \
+	((65536 < XMaxRequestSize(dpy)) ?      \
+	 (65536 << 2)  :		       \
+	 (XMaxRequestSize(dpy) << 2))-100)
+
+static int
+inChunkTooLarge(Window win) {
+    Window theirwin;
+    XEvent evt;
+    Atom pty;
+    unsigned long sel_pos = 0;
+    unsigned int context = XCLIB_XCIN_NONE;;
+
+    long maxreq = XExtendedMaxRequestSize(dpy);
+    maxreq = maxreq?maxreq:XMaxRequestSize(dpy);
+    printf("maxreq is %ld words (%ld bytes)\n", maxreq, 4*maxreq);
+
+    // Normally chunk_size = 4*maxreq - 1024.
+    // But we WANT to cause an error.
+    long chunk_size = 4*maxreq;
+    printf("chunk_size is %ld bytes\n", chunk_size);
+    unsigned char *sel_buf = malloc(chunk_size);
+    unsigned long sel_len = (chunk_size);
+
+    if (4*maxreq >= chunk_size + 32) {
+	printf("OOOPS! chunk_size fits in maxreq, will not cause error.\n");
+    }
+
+    /* Own the PRIMARY selection */
+    XSetSelectionOwner(dpy, XA_PRIMARY, win, CurrentTime);
+    if (XGetSelectionOwner(dpy, XA_PRIMARY) == win) {
+	printf("We now own PRIMARY\n");
+    }
+    else {
+	printf("Humph, selection owned by 0x%lx\n",
+	       XGetSelectionOwner(dpy, XA_PRIMARY));
+	return EXIT_FAILURE;
+    }
+
+    while (1) {
+	printf("\nWaiting for an event\n");
+	XNextEvent(dpy, &evt); /* Wait until next request comes in */
+	printf("Received %s event\n", evtstr[evt.type]);
+
+	switch (evt.type) {
+	case SelectionRequest:
+	    theirwin = evt.xselectionrequest.requestor;
+	    break;
+	case PropertyNotify:
+	    theirwin = evt.xproperty.window;
+	    break;
+	case SelectionClear:
+	    printf("Lost selection ownership.\n");
+	    return 0;
+	default:
+	    /* Ignore all other event types */
+	    printf("Ignoring X event type %d (%s)\n",
+		   evt.type, evtstr[evt.type]);
+	    continue;
+	}
+
+	xcin(dpy, win, &theirwin,
+	     evt, &pty,
+	     target, sel_buf, sel_len,
+	     &sel_pos, &context, &chunk_size);
+
+    }
+
+    return EXIT_SUCCESS;
+}
+
+
+
+
+
 int
 main(int argc, char *argv[])
 {
+    XSetErrorHandler(xchandler);
+    xcverb = ODEBUG;
+
     /* Declare variables */
     Window win;			/* Window */
 
@@ -228,6 +338,18 @@ main(int argc, char *argv[])
     case 2:
 	printf("Mode 2: start reading X selection (paste), but then just hang forever.\n");
 	outReadAndHang(win);
+	break;
+    case 10:
+	printf("Mode 10: own selection, but never reply to paste requests.\n");
+	inHang(win);
+	break;
+    case 11:
+	printf("Mode 11: own selection, start paste response, but then hang.\n");
+	inPasteHang(win);
+	break;
+    case 12:
+	printf("Mode 12: own selection, but call xcin with too large a chunk.\n");
+	inChunkTooLarge(win);
 	break;
     default:
 	errx(1, "Unknown mode number '%s'", argv[1]);

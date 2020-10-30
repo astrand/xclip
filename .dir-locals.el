@@ -1,5 +1,5 @@
 ((nil . ((indent-tabs-mode . t)
-         (fill-column . 80)
+         (fill-column . 79)
 	 (tab-width . 8)
 	 ))
  (c-mode . ((c-file-style . "stroustrup")

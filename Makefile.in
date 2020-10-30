@@ -35,6 +35,11 @@ install.man: xclip.1 xclip-copyfile.1
 	mkdir -p $(DESTDIR)$(mandir)/man1
 	$(INSTALL) -m 644 $^ $(DESTDIR)$(mandir)/man1
 
+.PHONY: install.completion
+install.completion: xclip.bash-completion
+	mkdir -p $(DESTDIR)/etc/bash_completion.d/
+	$(INSTALL) -m 755 $^ $(DESTDIR)/etc/bash_completion.d
+
 .PHONY: clean
 clean:
 	rm -f *.o *~ xclip xclip-$(VERSION).tar.gz borked
@@ -76,8 +81,26 @@ Makefile: Makefile.in configure
 configure: configure.ac
 	./bootstrap
 
+# Create documentation from the man page
+xclip.pdf: xclip.1 
+	groff -Tpdf -mandoc $^ > $@ 
+
+xclip.cat: xclip.1 
+	nroff -mandoc $^ > $@ 
+
+# Run the test script
+test:	xctest
+	./xctest
+
+# borked is a test program which intentionally causes errors.
 borked: borked.c xclib.o xcprint.o 
 	$(CC) $^ $(CFLAGS) -o $@ $(X11OBJ) $(LDFLAGS)
+
+# For ease of editing the man page, automatically regenerate the PDF every time
+# xclip.1 (the groff source code of the man page) is saved. If the document is
+# already being viewed in atril or evince, it will be reloaded immediately.
+watch:
+	./autogroff.sh
 
 .SUFFIXES:
 .SUFFIXES: .c .o
