@@ -421,6 +421,11 @@ doIn(Window win, const char *progname)
 	    }
 	    sel_len += fread(sel_buf + sel_len, sizeof(char), sel_all - sel_len, fil_handle);
 	}
+
+	if (fil_handle && (fil_handle != stdin)) {
+	    fclose(fil_handle);
+	    fil_handle = NULL;
+	}
     } while (fil_current < fil_number);
 
     /* if there are no files being read from (i.e., input
@@ -430,6 +435,11 @@ doIn(Window win, const char *progname)
     if ((fil_number == 0) && ffilt) {
 	fwrite(sel_buf, sizeof(char), sel_len, stdout);
 	fclose(stdout);
+    }
+
+    if (fil_names) {
+	free(fil_names);
+	fil_names = NULL;
     }
 
     /* remove the last newline character if necessary */
