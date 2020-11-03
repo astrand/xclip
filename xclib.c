@@ -925,6 +925,7 @@ int xchandler(Display *dpy, XErrorEvent *evt) {
     }
 
     XSetErrorHandler(fn);
+
     if (evt->error_code == BadWindow) {
 	if (xcourwin) {
 	    /* We need to break the mainloop out of XNextEvent so it can delete
