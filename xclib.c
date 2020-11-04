@@ -517,12 +517,6 @@ xcin(Display * dpy,
 
     switch (*context) {
     case XCLIB_XCIN_NONE:
-	if ( xcverb >= ODEBUG  &&  evt.xselectionrequest.target) {
-	    fprintf(stderr, "xclib: debug: XCIN_NONE: target: %s.\n",
-		    xcatomstr(dpy, evt.xselectionrequest.target));
-	    
-	}
-
 	if (evt.type != SelectionRequest) {
 	    if ( xcverb >= ODEBUG ) {
 		fprintf(stderr,
@@ -530,6 +524,10 @@ xcin(Display * dpy,
 			evtstr[evt.type]);
 	    }
 	    return (0);
+	}
+	if ( xcverb >= ODEBUG  &&  evt.xselectionrequest.target) {
+	    fprintf(stderr, "xclib: debug: XCIN_NONE: target: %s.\n",
+		    xcatomstr(dpy, evt.xselectionrequest.target));
 	}
 	/* set the window and property that is being used */
 	*theirwin = evt.xselectionrequest.requestor;
