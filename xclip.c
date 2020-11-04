@@ -488,7 +488,7 @@ doIn(Window win, const char *progname)
 	if (sloop == 1)
 	    fprintf(stderr, "Waiting for one selection request.\n");
 
-	if (sloop < 1)
+	if (sloop == 0)
 	    fprintf(stderr,
 		    "Waiting for selection requests, Control-C to quit\n");
 
@@ -496,6 +496,11 @@ doIn(Window win, const char *progname)
 	    fprintf(stderr,
 		    "Waiting for %i selection request%s, Control-C to quit\n",
 		    sloop,  (sloop==1)?"":"s");
+
+	if (sloop < 0)
+	    fprintf(stderr,
+		    "xclip: error: loops set to a negative number (%d).\n",
+		    sloop);
     }
 
     /* Avoid making the current directory in use, in case it will need to be umounted */
@@ -510,7 +515,7 @@ doIn(Window win, const char *progname)
     /* loop and wait for the expected number of
      * SelectionRequest events
      */
-    while (dloop < sloop || sloop < 1) {
+    while (dloop < sloop || sloop == 0) {
 	if (xcverb >= ODEBUG)
 	    fprintf(stderr, "\n________\n");
 
@@ -524,8 +529,13 @@ doIn(Window win, const char *progname)
 	    if (sloop == 1)
 		fprintf(stderr, "  Waiting for a selection request.\n");
 
-	    if (sloop < 1)
-		fprintf(stderr, "  Waiting for selection request number %i\n", dloop + 1);
+	    if (sloop == 0)
+		fprintf(stderr, "  Waiting for selection request number %i\n",
+			dloop + 1);
+
+	    if (sloop < 0)
+		fprintf(stderr, "  This can't happen: negative sloop (%i)\n",
+			sloop);
 	}
 
 	/* wait for a SelectionRequest (paste) event */
@@ -588,8 +598,8 @@ start:
 		 * service the ongoing transfer until it is completed.
 		 * See ICCCM section 2.2.
 		 */
-		/* Set dloop to force exit after all transfers finish. */
-		dloop = sloop;
+		/* Set sloop to force exit after all transfers finish. */
+		sloop = -1;
 		/* remove requestors for dead windows */
 		clean_requestors();
 		/* if there are no more in-progress transfers, force exit */
@@ -603,16 +613,15 @@ start:
 		    if (xcverb >= OVERBOSE) {
 			struct requestor *r = requestors;
 			int i=0;
-			fprintf(stderr, "Requestors: ");
+			fprintf(stderr, "Requestors still alive: ");
 			while (r) {
 			    fprintf(stderr, "0x%lx\t", r->cwin);
 			    r = r->next;
 			    i++;
 			}
 			fprintf(stderr, "\n");
-			fprintf(stderr,
-				"Still transfering data to %d requestor%s.\n",
-				i, (i==1)?"":"s");
+			fprintf(stderr, "Will exit after transfering data to "
+				"%d requestor%s.\n", i, (i==1)?"":"s");
 		    }
 		}
 		continue;	/* Wait for INCR PropertyNotify events */
