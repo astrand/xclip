@@ -515,6 +515,15 @@ xcin(Display * dpy,
      */
     int xcchangeproperr = False; /* Flag if XChangeProperty() failed */
 
+    /* A SelectionRequest while waiting for INCR should restart statemachine. */
+    if (evt.type == SelectionRequest && *context == XCLIB_XCIN_INCR) {
+	if ( xcverb >= ODEBUG ) {
+	    fprintf(stderr,
+		    "xclib: debug: Got SelectionRequest, aborting INCR and restarting state machine.\n");
+	}
+	*context = XCLIB_XCIN_NONE;
+    }
+
     switch (*context) {
     case XCLIB_XCIN_NONE:
 	if (evt.type != SelectionRequest) {
