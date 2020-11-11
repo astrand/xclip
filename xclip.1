@@ -272,9 +272,14 @@ copy provides a list of targets (data types) that it is willing to convert to
 upon request. In xclip, one can see all targets currently available for pasting
 with \fB-T\fP and pick one with \fB-t\fP.
 
-When setting the selection (copying), xclip can only specify a single target
+If you are using bash(1), then you can use tab completion to choose a target
+interactively. After typing \fBxclip -t <space>\fP press the \fB<tab>\fP key
+twice to be shown a list of currently available targets.
+
+When inputting the selection (copying), xclip can only specify a single target
 per selection. (This may change in the future). If no target is specified, then
-xclip's default is UTF8_STRING. 
+xclip's default is UTF8_STRING. Output (pasting) works the same, with one
+change: if the default target, UTF8_STRING, is not found, then STRING is tried.
 
 For more information about target atoms refer to ICCCM section 2.6.2.
 
@@ -337,8 +342,8 @@ supporting HTML to paste the contents of the given file as HTML.
 .TP
 .B xclip \-c \-t image/jpeg foo.jpg
 .IP
-Copy an image to the clipboard. Now it is possible to paste it into a graphical
-application using Control-V.
+Copy an image to the CLIPBOARD selection. Now it is possible to paste it into a
+graphical application using Control-V.
 .
 .TP
 .B xclip \-c \-t $(file \-\-brief \-\-mime-type foo) foo
@@ -349,7 +354,7 @@ the file's MIME filetype.
 .TP
 .B xclip \-c \-T
 .IP
-List valid data formats available on the clipboard. For example, after doing
+List valid data formats available on the CLIPBOARD. For example, after doing
 Right Click \[->] Copy Image in a web browser, one might see:
 .
 .EX
@@ -366,18 +371,18 @@ image/jpeg
 .RE
 .EE
 .
-Note that in this case the text/html target is the HTML source code that
+Note that in this example the text/html target is the HTML source code that
 embedded the image on the page.
 .RE
 .TP
 .B xclip \-c \-t image/jpeg > bar.jpg
 .IP
-Paste an image from the clipboard to a file.
+Paste an image from the CLIPBOARD selection to a file.
 .
 .TP
-.B xclip \-t image/jpeg | convert \-geometry \[aq]>800x>480\[aq] \- sixel:-
+.B xclip \-c \-t image/jpeg | convert \-geometry \[aq]>800x>480\[aq] \- sixel:\-
 .IP
-Show the image from the clipboard in a terminal which handles sixel graphics
+Show the image in CLIPBOARD within a terminal which handles sixel graphics
 (e.g., \fIxterm\~-ti\~vt340\fP). 
 .
 .TP
@@ -452,7 +457,7 @@ copy and move files via the X clipboard.
 and
 .IR wl-clipboard (1)
 are command line programs similar to xclip. xsel only works with text, but has
-the ability to keep a primary selection even after a program has closed.
+the ability to keep a PRIMARY selection even after a program has closed.
 wl-clipboard works with Wayland instead of X.
 .PP
 .IR clipit (1),
