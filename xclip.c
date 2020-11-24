@@ -176,6 +176,14 @@ int clean_requestors() {
 static void
 doOptMain(int argc, char *argv[])
 {
+    /* Support both -option and --option form. */
+    int i;
+    for (i = 1; i < argc; ++i) {
+	if (!strncmp(argv[i], "--", 2)) {
+	    argv[i]++;
+	}
+    }
+
     /* Initialise resource manager and parse options into database */
     XrmInitialize();
     XrmParseCommand(&opt_db, opt_tab, opt_tab_size, PACKAGE_NAME, &argc,
