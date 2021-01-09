@@ -5,7 +5,7 @@ if [ "x$1" = "x" ]; then
     echo "-p Copy path information; preserve tree structure"
     exit 1
 fi
-archive=`mktemp` || exit 1
+archive=`mktemp -t xclip` || exit 1
 trap 'rm -f "${archive}"' 1 2 3 15
 if [ "x$1" = "x-p" ]; then
     tar cf "${archive}" "$@"
