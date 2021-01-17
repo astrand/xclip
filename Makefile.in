@@ -5,6 +5,8 @@ bindir      = @bindir@
 mandir      = @mandir@
 datarootdir = @datarootdir@
 datadir     = @datadir@
+srcdir      = @srcdir@
+VPATH       = @srcdir@
 
 VERSION     = @PACKAGE_VERSION@
 
@@ -73,8 +75,8 @@ xclip-$(VERSION).tar.gz:
 Makefile: Makefile.in configure
 	./config.status
 
-configure: configure.ac
-	./bootstrap
+$(srcdir)/configure: configure.ac
+	$(srcdir)/bootstrap $(srcdir)
 
 borked: borked.c xclib.o xcprint.o 
 	$(CC) $^ $(CFLAGS) -o $@ $(X11OBJ) $(LDFLAGS)
