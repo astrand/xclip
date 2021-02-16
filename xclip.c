@@ -278,7 +278,7 @@ doOptMain(int argc, char *argv[])
 	fil_number++;
     }
 
-    /* If filenames were given on the command line, 
+    /* If filenames were given on the command line,
      * default to reading input (unless -o was used).
      */
     if (fil_number > 0) {
@@ -745,7 +745,6 @@ doOut(Window win)
 			/* Clear memory buffer */
 			xcmemzero(sel_buf,sel_len);
 		    }
-		    free(sel_buf);
 		    errconvsel(dpy, target, sseln);
 		    // errconvsel does not return but exits with EXIT_FAILURE
 		}
@@ -937,7 +936,7 @@ main(int argc, char *argv[])
 		sizeof(opt_tab) / sizeof(opt_tab[0]), opt_tab_size);
 	return EXIT_FAILURE;
     }
-		
+
 
     /* parse command line options */
     doOptMain(argc, argv);
