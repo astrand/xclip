@@ -56,10 +56,10 @@ static int fsecm = F;		/* zero out selection buffer before exiting */
 Display *dpy;			/* connection to X11 display */
 XrmDatabase opt_db = NULL;	/* database for options */
 
-char **fil_names;		/* names of files to read */
-int fil_number = 0;		/* number of files to read */
-int fil_current = 0;
-FILE *fil_handle = NULL;
+static char **fil_names;		/* names of files to read */
+static int fil_number = 0;		/* number of files to read */
+static int fil_current = 0;
+static FILE *fil_handle = NULL;
 
 /* variables to hold Xrm database record and type */
 XrmValue rec_val;
