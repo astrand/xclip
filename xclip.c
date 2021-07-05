@@ -19,6 +19,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <sys/select.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -278,7 +279,7 @@ doOptMain(int argc, char *argv[])
 	fil_number++;
     }
 
-    /* If filenames were given on the command line, 
+    /* If filenames were given on the command line,
      * default to reading input (unless -o was used).
      */
     if (fil_number > 0) {
@@ -937,7 +938,7 @@ main(int argc, char *argv[])
 		sizeof(opt_tab) / sizeof(opt_tab[0]), opt_tab_size);
 	return EXIT_FAILURE;
     }
-		
+
 
     /* parse command line options */
     doOptMain(argc, argv);
