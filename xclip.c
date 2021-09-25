@@ -594,7 +594,7 @@ start:
 			}
 			fprintf(stderr, "\n");
 			fprintf(stderr,
-				"Still transfering data to %d requestor%s.\n",
+				"Still transferring data to %d requestor%s.\n",
 				i, (i==1)?"":"s");
 		    }
 		}
@@ -794,7 +794,7 @@ main(int argc, char *argv[])
     int exit_code;
 
      /* As a convenience to command-line users, default to -o if stdin
-     * is a tty. Will be overriden by -i or if user specifies a
+     * is a tty. Will be overridden by -i or if user specifies a
      * filename as input.
      */
     if (isatty(0)) {
