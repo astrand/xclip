@@ -126,27 +126,27 @@ Date:   Fri Apr 30 20:09:08 2010 +0000
 Version 0.12 (Peter Åstrand)
 	Build fixes: Check for Xmu and Xt
 
-	The version number has been corrected. 
+	The version number has been corrected.
 
 	Man pages are now available. Contributed by Maximilian Gass.
 
 Version 0.11 (Peter Åstrand)
-	xclip-copyfile is now compatible with recent tar versions. 
+	xclip-copyfile is now compatible with recent tar versions.
 
-	The Fedora UTF-8 patch has been applied. 
+	The Fedora UTF-8 patch has been applied.
 
 Version 0.10 (Peter Åstrand)
 	The performance has been greatly enhanced, especially over
 	slow networks. Two helper scripts, xclip-copyfile and
 	xclip-pastefile, has been added. Taken together, xclip can now
 	be used as an alternative to sftp/scp, thus avoiding password
-	prompt when X11 forwarding has already been setup. 
+	prompt when X11 forwarding has already been setup.
 
-	Autoconf is now used instead of Imake. 
+	Autoconf is now used instead of Imake.
 
 	The maintainer and web site address has been updated.
 
-	All Debian patches have been applied. 
+	All Debian patches have been applied.
 
 
 Version 0.09: (Baruch Even)
@@ -165,7 +165,7 @@ Version 0.08:
 Version 0.07:
 	Not a lot of changes in terms of features, but tonnes of bug and
 	portability fixes, as well as general code cleanup.
-	
+
 	Fixed a segfault problem with errperror in v0.06. Can't believe I
 	didn't notice it before I released it.
 
@@ -191,7 +191,7 @@ Version 0.07:
 	memory of known length, so you can now copy and paste data with nulls
 	in it. It's probably not recommended though, gtk doesn't seem to read
 	beyond the first null byte.
-	
+
 	I have successfully used xclip to copy and paste a 500k PNG image, it
 	came out identical (same md5sum), so it's fairly robust in terms of
 	the size and nature of the data that it will handle.
@@ -243,7 +243,7 @@ Version 0.04:
 Version 0.03:
 	Changed use of getopt_long_only to getopt_long, which should work
 	better with non-GNU platforms.
-	
+
 	Fixed segfault when given a non-existent file to read.
 
 	Made Imakefile for use with xmkmf. This means that xclip should build

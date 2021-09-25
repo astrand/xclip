@@ -1,6 +1,6 @@
 /*
- *  
- * 
+ *
+ *
  *  xclib.h - header file for functions in xclib.c
  *  Copyright (C) 2001 Kim Saunders
  *  Copyright (C) 2007-2020 Peter Åstrand

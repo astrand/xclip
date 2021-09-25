@@ -1,6 +1,6 @@
 /*
- *  
- * 
+ *
+ *
  *  xcprint.c - functions to print help, version, errors, etc
  *  Copyright (C) 2001 Kim Saunders
  *  Copyright (C) 2007-2020 Peter Åstrand
@@ -169,8 +169,8 @@ errconvsel(Display *display, Atom target, Atom selection)
 	}
 	else {
 	    /* Should never happen. */
-	    fprintf(stderr, " cannot convert to NULL target.\n"); 
-	}    
+	    fprintf(stderr, " cannot convert to NULL target.\n");
+	}
     }
 
     if (selection_name)

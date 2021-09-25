@@ -1,4 +1,3 @@
-
 prefix      = @prefix@
 exec_prefix = @exec_prefix@
 bindir      = @bindir@
@@ -98,7 +97,7 @@ test:	xctest
 	./xctest
 
 # borked is a test program which intentionally causes errors.
-borked: borked.c xclib.o xcprint.o 
+borked: borked.c xclib.o xcprint.o
 	$(CC) $^ $(CFLAGS) -o $@ $(X11OBJ) $(LDFLAGS)
 
 # For ease of editing the man page, automatically regenerate the PDF every time
@@ -112,4 +111,3 @@ watch:
 
 .c.o:
 	$(CC) $(CFLAGS) -o $@ -c $<
-

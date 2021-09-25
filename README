@@ -1,5 +1,3 @@
-
-
 WHAT IS XCLIP?
 ==============
 
@@ -90,20 +88,20 @@ FEATURES
 * Accesses the XA_PRIMARY, XA_SECONDARY or XA_CLIPBOARD selection
 * Accesses the cut-buffers
 * Supports the INCR mechanism for large transfers
-* Connects to the X display in $DISPLAY, or specified with -display host:0 
+* Connects to the X display in $DISPLAY, or specified with -display host:0
 * Waits for selection requests in the background
 
 SELECTIONS
 ==========
 
-For a good overview of what selections are about, have a look at 
+For a good overview of what selections are about, have a look at
 <https://specifications.freedesktop.org/clipboards-spec/clipboards-latest.txt>. Short version:
 
 * XA_PRIMARY contains the last text you highlighted
 * Middle click pastes XA_PRIMARY
 * XA_CLIPBOARD contains text explicitly copied with Edit | Copy, Ctrl-C etc.
 * Edit | Paste pastes XA_CLIPBOARD
-* xclip uses XA_PRIMARY unless you specify otherwise with -selection 
+* xclip uses XA_PRIMARY unless you specify otherwise with -selection
 
 CAN I HELP?
 ===========
@@ -128,4 +126,4 @@ https://github.com/astrand/xclip
 Email:
 astrand@lysator.liu.se
 
-Please email me about problems, experiences, patches, fixes, etc. 
+Please email me about problems, experiences, patches, fixes, etc.
