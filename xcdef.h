@@ -1,6 +1,6 @@
 /*
- *  
- * 
+ *
+ *
  *  xcdef.h - definitions for use throughout xclip
  *  Copyright (C) 2001 Kim Saunders
  *  Copyright (C) 2007-2008 Peter Åstrand

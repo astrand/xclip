@@ -1,4 +1,3 @@
-
 prefix      = @prefix@
 exec_prefix = @exec_prefix@
 bindir      = @bindir@
@@ -47,7 +46,7 @@ distclean: clean
 dist: xclip-$(VERSION).tar.gz
 
 .PHONY: xclip-$(VERSION).tar.gz
-xclip-$(VERSION).tar.gz: 
+xclip-$(VERSION).tar.gz:
 	mkdir -p /tmp/xclip-make-dist-dir
 	ln -sf `pwd` /tmp/xclip-make-dist-dir/xclip-$(VERSION)
 	(cd /tmp/xclip-make-dist-dir; \
@@ -76,7 +75,7 @@ Makefile: Makefile.in configure
 configure: configure.ac
 	./bootstrap
 
-borked: borked.c xclib.o xcprint.o 
+borked: borked.c xclib.o xcprint.o
 	$(CC) $^ $(CFLAGS) -o $@ $(X11OBJ) $(LDFLAGS)
 
 .SUFFIXES:
@@ -84,4 +83,3 @@ borked: borked.c xclib.o xcprint.o
 
 .c.o:
 	$(CC) $(CFLAGS) -o $@ -c $<
-

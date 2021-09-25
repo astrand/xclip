@@ -1,7 +1,7 @@
 /*
  *
  *
- *  borked.c - emulate ways X selections can break for testing. 
+ *  borked.c - emulate ways X selections can break for testing.
  *  Copyright (C) 2020 Hackerb9, Peter Åstrand
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -133,7 +133,7 @@ outReadAndSteal(Window win)
 
 	/* but since we're intentionally borken, we'll steal the selection! */
 	XSetSelectionOwner(dpy, sseln, None, CurrentTime);
-	printf("Selection owner set to None.\n"); 
+	printf("Selection owner set to None.\n");
     }
 
     return EXIT_SUCCESS;
@@ -182,9 +182,9 @@ outReadAndHang(Window win)
 	    break;
 
 	/* but since we're intentionally borken, we'll hang forever! */
-	printf("Selection now hanging forever. Hit ^C to cancel.\n"); 
+	printf("Selection now hanging forever. Hit ^C to cancel.\n");
 	while (1)
-	    sleep(1);	   
+	    sleep(1);
     }
 
     return EXIT_SUCCESS;
@@ -196,7 +196,7 @@ main(int argc, char *argv[])
     /* Declare variables */
     Window win;			/* Window */
 
-    int mode = 0;		/* What sort of brokeness to emulate */
+    int mode = 0;		/* What sort of brokenness to emulate */
     if (argc > 1)
 	mode = atoi(argv[1]);
 
