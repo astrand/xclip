@@ -306,7 +306,7 @@ main(int argc, char *argv[])
     /* Declare variables */
     Window win;			/* Window */
 
-    int mode = 0;		/* What sort of brokeness to emulate */
+    int mode = 0;		/* What sort of brokenness to emulate */
     if (argc > 1)
 	mode = atoi(argv[1]);
 

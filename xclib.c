@@ -92,7 +92,7 @@ const char *reqstr[X_NoOperation+1] = { "0",
 
 
 
-/* a memset function that won't be optimized away by compler */
+/* a memset function that won't be optimized away by compiler */
 void
 xcmemzero(void *ptr, size_t len)
 {
