@@ -1,6 +1,6 @@
 /*
- *  
- * 
+ *
+ *
  *  xclib.c - xclip library to look after xlib mechanics for xclip
  *  Copyright (C) 2001 Kim Saunders
  *  Copyright (C) 2007-2008 Peter Åstrand
@@ -45,7 +45,7 @@ const char *evtstr[LASTEvent] = {
     "ClientMessage", "MappingNotify", "GenericEvent", };
 
 /* a memset function that won't be optimized away by compiler */
-void 
+void
 xcmemzero(void *ptr, size_t len)
 {
     if (xcverb >= ODEBUG) {
@@ -118,19 +118,19 @@ mach_itemsize(int format)
 /* Retrieves the contents of a selections. Arguments are:
  *
  * A display that has been opened.
- * 
+ *
  * A window
- * 
+ *
  * An event to process
- * 
+ *
  * The selection to return
- * 
- * The target(UTF8_STRING or XA_STRING) to return 
+ *
+ * The target(UTF8_STRING or XA_STRING) to return
  *
  * A pointer to an atom that receives the type of the data
  *
  * A pointer to a char array to put the selection into.
- * 
+ *
  * A pointer to a long to record the length of the char array
  *
  * A pointer to an int to record the context in which to process the event
@@ -329,19 +329,19 @@ xcout(Display * dpy,
  * Arguments are:
  *
  * A display
- * 
+ *
  * A window
- * 
+ *
  * The event to respond to
- * 
+ *
  * A pointer to an Atom. This gets set to the property nominated by the other
  * app in it's SelectionRequest. Things are likely to break if you change the
  * value of this yourself.
- * 
+ *
  * The target(UTF8_STRING or XA_STRING) to respond to
  *
  * A pointer to an array of chars to read selection data from.
- * 
+ *
  * The length of the array of chars.
  *
  * In the case of an INCR transfer, the position within the array of chars
@@ -502,7 +502,7 @@ xcin(Display * dpy,
 	 */
 	if (evt.xproperty.state != PropertyDelete) {
 	    if ( xcverb >= ODEBUG ) {
-		if ( evt.xproperty.state == 0 ) 
+		if ( evt.xproperty.state == 0 )
 		    fprintf(stderr,
 			    "xclib: debug: ignoring PropertyNewValue\n");
 		else
@@ -614,7 +614,7 @@ xcfetchname(Display *display, Window w, char **namep) {
  *
  * Given a Window ID number, e.g., 0xfa1afe1, return
  * either the window name followed by the ID in parens, IFF it can be found,
- * otherwise, the string "window id 0xfa1afe1". 
+ * otherwise, the string "window id 0xfa1afe1".
  *
  * Example output:  "'Falafel' (0xfa1afe1)"
  * Example output:  "window id 0xfa1afe1"
@@ -656,21 +656,19 @@ int xchandler(Display *dpy, XErrorEvent *evt) {
 		evt->type, buf);
     }
     if (xcverb >= ODEBUG) {
-	fprintf(stderr, 
+	fprintf(stderr,
 		"\t\tEvent Type: %d\n"
 		"\t\tResource ID: 0x%lx\n"
 		"\t\tSerial Num: %lu\n"
 		"\t\tError code: %u\n"
 		"\t\tRequest op code: %u major, %u minor\n",
-		evt->type, 
-		evt->resourceid, 
-		evt->serial, 
-		evt->error_code, 
-		evt->request_code, 
+		evt->type,
+		evt->resourceid,
+		evt->serial,
+		evt->error_code,
+		evt->request_code,
 		evt->minor_code);
     }
 
     return 0;
 }
-
-

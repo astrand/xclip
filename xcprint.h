@@ -1,6 +1,6 @@
 /*
- *  
- * 
+ *
+ *
  *  xcprint.h - header file for functions in xcprint.c
  *  Copyright (C) 2001 Kim Saunders
  *
