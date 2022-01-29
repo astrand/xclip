@@ -367,7 +367,7 @@ doOptTarget(void)
 static int
 doIn(Window win, const char *progname)
 {
-    unsigned char *sel_buf;	/* buffer for selection data */
+    unsigned char *sel_buf = NULL;	/* buffer for selection data */
     unsigned long sel_len = 0;	/* length of sel_buf */
     unsigned long sel_all = 0;	/* allocated size of sel_buf */
     XEvent evt;			/* X Event Structures */
@@ -767,7 +767,7 @@ static int
 doOut(Window win)
 {
     Atom sel_type = None;
-    unsigned char *sel_buf;	/* buffer for selection data */
+    unsigned char *sel_buf = NULL;	/* buffer for selection data */
     unsigned long sel_len = 0;	/* length of sel_buf */
     XEvent evt;			/* X Event Structures */
     unsigned int context = XCLIB_XCOUT_NONE;
