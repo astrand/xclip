@@ -27,6 +27,9 @@ Here are some ideas for things you can do with xclip:
 
 	Copy XA_PRIMARY to XA_CLIPBOARD
 	xclip -o | xclip -sel clip
+	
+	Take a screenshot and copy it to clipboard
+	scrot -e 'xclip -selection clipboard -t image/png -i $f'
 
 	In command mode in vim, select some lines of text, then press shift-:
 	for an ex prompt, and use this command to copy the selected lines of
