@@ -745,7 +745,6 @@ doOut(Window win)
 			/* Clear memory buffer */
 			xcmemzero(sel_buf,sel_len);
 		    }
-		    free(sel_buf);
 		    errconvsel(dpy, target, sseln);
 		    // errconvsel does not return but exits with EXIT_FAILURE
 		}
