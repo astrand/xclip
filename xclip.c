@@ -372,7 +372,7 @@ doIn(Window win, const char *progname)
 
     /* Put chars into inc from stdin or files until we hit EOF */
     do {
-	if (fil_number == 0) {
+	if (fil_number == 0 || strcmp(fil_names[fil_current], "-") == 0) {
 	    /* read from stdin if no files specified */
 	    fil_handle = stdin;
 	}

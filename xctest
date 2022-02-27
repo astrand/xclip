@@ -94,6 +94,23 @@ for fold in 1 4 7 10 13; do
     done
     echo
 
+    # test piping the file to xclip
+    echo Piping a $lines line file to xclip using -
+    for sel in primary secondary clipboard buffer
+    do
+	echo -n "  Using the $sel selection	"
+	cat $tempi | $checker ./xclip -sel $sel -i -
+	sleep $delay
+	$checker ./xclip -sel $sel -o > $tempo
+	if diff $tempi $tempo; then
+	    echo "PASS"
+	else
+	    echo "FAIL"
+	    exit 1
+	fi
+    done
+    echo
+
     # test xclip reading the file
     echo "Reading a $lines line file with xclip"
     for sel in primary secondary clipboard buffer; do
