@@ -3,7 +3,7 @@
  *
  *  xclip.c - command line interface to X server selections
  *  Copyright (C) 2001 Kim Saunders
- *  Copyright (C) 2007-2008 Peter Åstrand
+ *  Copyright (C) 2007-2022 Peter Åstrand
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,6 +30,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xmu/Atoms.h>
+#include <X11/Xmu/Error.h>
 #include "xcdef.h"
 #include "xcprint.h"
 #include "xclib.h"
@@ -67,85 +68,92 @@ char *rec_typ;
 
 int tempi = 0;
 
-struct requestor
-{
-	Window cwin;
-	Atom pty;
-	unsigned int context;
-	unsigned long sel_pos;
-	int finished;
-	long chunk_size;
-	struct requestor *next;
-};
+/* FIXME: Stub variable for fixing XSetSelectionOwner's timestamp. */
+/* Eventually this should append zero-length to a property and get timestamp
+ * from server's PropertyNotify event. */
+unsigned long int ownertime = CurrentTime; 
 
+// See xclip.h for definition of struct requestor.
 static struct requestor *requestors;
 
-static struct requestor *get_requestor(Window win)
+static struct requestor *get_requestor(Window win, Atom pty)
 {
-	struct requestor *requestor;
+	struct requestor *r;
 
 	if (requestors) {
-	    for (requestor = requestors; requestor != NULL; requestor = requestor->next) {
-	        if (requestor->cwin == win) {
+	    for (r = requestors; r != NULL; r = r->next) {
+	        if (r->cwin == win  &&  r->pty == pty) {
 		    if (xcverb >= OVERBOSE) {
 			fprintf(stderr,
-				"    = Reusing requestor for %s\n",
-				xcnamestr(dpy, win) );
+				"    = Reusing requestor %lx-%s for %s\n", win,
+				xcatomstr(dpy, pty), xcnamestr(dpy, win) );
 		    }
 
-	            return requestor;
+	            return r;
 	        }
 	    }
 	}
 
 	if (xcverb >= OVERBOSE) {
-	    fprintf(stderr, "    + Creating new requestor for %s\n",
-		    xcnamestr(dpy, win) );
+	    fprintf(stderr, "    + Creating new requestor %lx-%s for %s\n",
+		    win, xcatomstr(dpy, pty), xcnamestr(dpy, win) );
 	}
 
-	requestor = (struct requestor *)calloc(1, sizeof(struct requestor));
-	if (!requestor) {
+	r = (struct requestor *)calloc(1, sizeof(struct requestor));
+	if (!r) {
 	    errmalloc();
 	} else {
-	    requestor->context = XCLIB_XCIN_NONE;
+	    /* XXX Please Comment: Why do we not set r->cwin or r->pty here? */
+	    r->context = XCLIB_XCIN_NONE;
+	    
+	    /* xsel(1) hangs if given more than 4,000,000 bytes at a time. */
+	    /* FIXME: report bug to xsel and then remove this kludge */
+	    /* XXX: Do other programs have similar limits? */
+	    if (!strcmp(xcatomstr(dpy, pty), "XSEL_DATA")) {
+		r->chunk_size = 4*1000*1000; 
+		if (xcverb >= ODEBUG)
+		    fprintf(stderr,
+			    "Kludging chunksize to 4,000,000 for xsel\n");
+	    }
 	}
 
 	if (!requestors) {
-	    requestors = requestor;
+	    requestors = r;
 	} else {
-	    requestor->next = requestors;
-	    requestors = requestor;
+	    r->next = requestors;
+	    requestors = r;
 	}
 
-	return requestor;
+	return r;
 }
 
-static void del_requestor(struct requestor *requestor)
+static void del_requestor(struct requestor *r)
 {
 	struct requestor *reqitr;
 
-	if (!requestor) {
+	if (!r) {
 	    return;
 	}
 
 	if (xcverb >= OVERBOSE) {
 	    fprintf(stderr,
-		    "    - Deleting requestor for %s\n",
-		    xcnamestr(dpy, requestor->cwin) );
+		    "    - Deleting requestor %lx-%s for %s\n",
+		    r->cwin, xcatomstr(dpy, r->pty), xcnamestr(dpy, r->cwin) );
 	}
 
-	if (requestors == requestor) {
+	if (requestors == r) {
 	    requestors = requestors->next;
 	} else {
 	    for (reqitr = requestors; reqitr != NULL; reqitr = reqitr->next) {
-	        if (reqitr->next == requestor) {
+	        if (reqitr->next == r) {
 	            reqitr->next = reqitr->next->next;
 	            break;
 	        }
 	    }
 	}
 
-	free(requestor);
+	free(r);
+	r = NULL;
 }
 
 int clean_requestors() {
@@ -517,7 +525,8 @@ doIn(Window win, const char *progname)
 	/* wait for a SelectionRequest (paste) event */
 	while (1) {
 	    struct requestor *requestor;
-	    Window requestor_id;
+	    Window requestor_win;
+	    Atom requestor_pty;
 	    int finished;
 
 	    if (!XPending(dpy) && wait > 0) {
@@ -536,7 +545,7 @@ doIn(Window win, const char *progname)
 
 start:
 
-	    XNextEvent(dpy, &evt);
+	    XNextEvent(dpy, &evt); /* Wait until next request comes in */
 
 	    if (xcverb >= ODEBUG)
 		fprintf(stderr, "\n");
@@ -548,23 +557,25 @@ start:
 
 	    switch (evt.type) {
 	    case SelectionRequest:
-		requestor_id = evt.xselectionrequest.requestor;
-		requestor = get_requestor(requestor_id);
+		requestor_win = evt.xselectionrequest.requestor;
+		requestor_pty = evt.xselectionrequest.property;
+		requestor = get_requestor(requestor_win, requestor_pty);
 		/* FIXME: ICCCM 2.2: check evt.time and refuse requests from
 		 * outside the period of time we have owned the selection. */
 		break;
 	    case PropertyNotify:
-		requestor_id = evt.xproperty.window;
-		requestor = get_requestor(requestor_id);
+		requestor_win = evt.xproperty.window;
+		requestor_pty = evt.xproperty.atom;
+		requestor = get_requestor(requestor_win, requestor_pty);
 		break;
 	    case SelectionClear:
 		if (xcverb >= OVERBOSE) {
 		    fprintf(stderr, "Lost selection ownership. ");
-		    requestor_id = XGetSelectionOwner(dpy, sseln);
-		    if (requestor_id == None)
+		    requestor_win = XGetSelectionOwner(dpy, sseln);
+		    if (requestor_win == None)
 			fprintf(stderr, "(Some other client cleared the selection).\n");
 		    else
-			fprintf(stderr, "(%s did a copy).\n", xcnamestr(dpy, requestor_id) );
+			fprintf(stderr, "(%s did a copy).\n", xcnamestr(dpy, requestor_win) );
 		}
 		/* If the client loses ownership(SelectionClear event)
 		 * while it has a transfer in progress, it must continue to
@@ -586,19 +597,22 @@ start:
 		    if (xcverb >= OVERBOSE) {
 			struct requestor *r = requestors;
 			int i=0;
-			fprintf(stderr, "Requestors: ");
+			fprintf(stderr, "Requestors still alive: ");
 			while (r) {
 			    fprintf(stderr, "0x%lx\t", r->cwin);
 			    r = r->next;
 			    i++;
 			}
 			fprintf(stderr, "\n");
-			fprintf(stderr,
-				"Still transferring data to %d requestor%s.\n",
-				i, (i==1)?"":"s");
+			fprintf(stderr, "Will exit after transfering data to "
+				"%d requestor%s.\n", i, (i==1)?"":"s");
 		    }
 		}
 		continue;	/* Wait for INCR PropertyNotify events */
+	    case ClientMessage:
+		/* xchandler asks us to remove requestors for dead windows */
+		clean_requestors();
+		continue;
 	    default:
 		/* Ignore all other event types */
 		if (xcverb >= ODEBUG) {
@@ -611,14 +625,31 @@ start:
 
 	    if (xcverb >= ODEBUG) {
 		fprintf(stderr, "xclip: debug: event was sent by %s\n",
-			xcnamestr(dpy, requestor_id) );
-		requestor_id=0;
+			xcnamestr(dpy, requestor_win) );
+		requestor_win=0;
 	    }
 
-	    finished = xcin(dpy, &(requestor->cwin), evt, &(requestor->pty),
+	    xcerrflag = False;
+
+	    finished = xcin(dpy, win,
+			    &(requestor->cwin), evt, &(requestor->pty),
 			    target, sel_buf, sel_len, &(requestor->sel_pos),
 			    &(requestor->context), &(requestor->chunk_size));
 
+	    if (xcerrflag == True) {
+		if (xcerrevt.error_code == BadWindow) {
+		    if (xcverb >= OVERBOSE) {
+			fprintf(stderr,
+				"Requestor window 0x%lx disappeared\n",
+				requestor->cwin);
+		    }
+		    if (xcverb >= ODEBUG) {
+			XmuPrintDefaultErrorMessage(dpy, &xcerrevt, stderr);
+		    }
+		    del_requestor(requestor);
+		    break;
+		}
+	    }
 	    if (finished) {
 		del_requestor(requestor);
 		break;
@@ -719,6 +750,13 @@ doOut(Window win)
     XEvent evt;			/* X Event Structures */
     unsigned int context = XCLIB_XCOUT_NONE;
 
+    if (xcverb >= OVERBOSE) {
+	Window owner = XGetSelectionOwner(dpy, sseln);
+	fprintf(stderr, "Current owner of %s ", xcatomstr(dpy, sseln));
+	fprintf(stderr, "is %s.\n", xcnamestr(dpy, owner));
+    }
+    
+    /* Handle old-style cut buffer if needed */
     if (sseln == XA_STRING)
 	sel_buf = (unsigned char *) XFetchBuffer(dpy, (int *) &sel_len, 0);
     else {
@@ -730,9 +768,18 @@ doOut(Window win)
 	    /* fetch the selection, or part of it */
 	    xcout(dpy, win, evt, sseln, target, &sel_type, &sel_buf, &sel_len, &context);
 
+	    if (context == XCLIB_XCOUT_SELECTION_REFUSED) {
+		fprintf(stderr, "xclip: error: selection owner signaled an error\n");
+		return EXIT_FAILURE;
+	    }
+
 	    if (context == XCLIB_XCOUT_BAD_TARGET) {
 		if (target == XA_UTF8_STRING(dpy)) {
 		    /* fallback is needed. set XA_STRING to target and restart the loop. */
+		    if (xcverb >= OVERBOSE) {
+			fprintf(stderr, "Target UTF8_STRING failed, "
+				"falling back to XA_STRING\n");
+		    }
 		    context = XCLIB_XCOUT_NONE;
 		    target = XA_STRING;
 		    continue;
@@ -763,9 +810,7 @@ doOut(Window win)
     }
 
     if (sel_len) {
-	/* only print the buffer out, and free it, if it's not
-	 * empty
-	 */
+	/* only print the buffer out, and free it, if it's not empty */
 	printSelBuf(stdout, sel_type, sel_buf, sel_len);
 
 	if (fsecm) {
@@ -933,7 +978,8 @@ main(int argc, char *argv[])
     opt_tab_size = i;
     if ( ( sizeof(opt_tab) / sizeof(opt_tab[0]) ) < opt_tab_size ) {
 	fprintf(stderr,
-		"xclip: programming error: opt_tab declared to hold %ld options, but %d defined\n",
+		"xclip: programming error: "
+		"opt_tab[] declared to hold %ld options, but %d defined\n",
 		sizeof(opt_tab) / sizeof(opt_tab[0]), opt_tab_size);
 	return EXIT_FAILURE;
     }
@@ -953,7 +999,7 @@ main(int argc, char *argv[])
 	errxdisplay(sdisp);
     }
 
-    /* parse selection command line option */
+    /* parse selection command line option; sets sseln */
     doOptSel();
 
     /* parse noutf8 and target command line options */
@@ -961,6 +1007,10 @@ main(int argc, char *argv[])
 
     /* Create a window to trap events */
     win = XCreateSimpleWindow(dpy, DefaultRootWindow(dpy), 0, 0, 1, 1, 0, 0, 0);
+
+    if (xcverb >= ODEBUG) {
+	fprintf(stderr,"xclip: debug: Our window is %s\n",xcnamestr(dpy, win));
+    }
 
     /* get events about property changes */
     XSelectInput(dpy, win, PropertyChangeMask);
