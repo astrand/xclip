@@ -20,17 +20,31 @@
 
 cleanup() {
     # quietly remove temp files
-    rm "$tempi" "$tempo" 2>/dev/null
+    rm "$tempi" "$tempo" 2>/dev/null || true
     # Kill any remaining xclip processes
-    killall xclip 2>/dev/null
+    killall xclip 2>/dev/null || true
+    return 0
 }
 trap cleanup EXIT HUP INT
 
 
+s() { [ "$1" != "1" ] && printf "s"; } 	# Plural(s)
 
-if sleep 0.1 2>/dev/null; then
-    delay=0.1   # seconds to wait before running xclip -o
+# If terminal can show bold and standout (reverse), do so.
+if tput bold >/dev/null 2>&1; then
+    PASS="$(tput bold)PASS$(tput sgr0)"
 else
+    PASS=PASS
+fi
+if tput smso >/dev/null 2>&1; then
+    FAIL="$(tput smso)FAIL$(tput rmso)"
+else
+    FAIL=FAIL
+fi
+
+
+delay=0.01   # seconds to wait before running xclip -o
+if ! sleep $delay  2>/dev/null; then
     delay=1
 fi
 
@@ -48,105 +62,141 @@ for param in "$@"; do
     esac
 done
 
-echo "Testing whether xclip exits correctly when the selection is lost"
-echo "hello" | ./xclip -q -i 2>/dev/null &
+echo -n "Testing whether xclip exits correctly when the selection is lost: "
+echo hello | ./xclip -q -i 2>/dev/null &
 sleep "$delay"
-echo "goodbye" | ./xclip -i
+echo goodbye | ./xclip -i
 sleep "$delay"
 if ps $! >/dev/null; then
-    echo "FAIL: Zombie xclip yet lives! Killing."
+    echo "$FAIL"
+    echo "Zombie xclip yet lives! Killing."
     killall xclip
     exit 1
 else
-    echo "PASS: xclip exited correctly after losing selection"
+    echo "$PASS"
 fi
 
+echo
+echo "Testing whether xclip recognizes the advertised shorthand options"
+echo -n "Trying: "
+for opt in i o f "v -silent" c T r "t STRING" h V ; do
+    echo -n "-$opt, "
+    if ! ./xclip -$opt -out 2>/dev/null | ./xclip -$opt -in >/dev/null 2>&1
+    then
+	echo "$FAIL"
+	echo "./xclip -$opt returned an error."
+	killall xclip
+	exit 1
+    fi
+done
+printf "\t$PASS\n"
+
+echo
 # temp file names (in and out)
 tempi=`mktemp` || exit 1
 tempo=`mktemp` || exit 1
 
+echo -n "Testing whether xclip can specify target with -t: "
+echo hello | ./xclip -t xctest/datatype &
+sleep $delay
+if ! ./xclip -t TARGETS | grep -q xctest/datatype; then
+    echo "$FAIL"
+    killall xclip
+    exit 1
+elif [ hello != "$(./xclip -t xctest/datatype)" ]; then
+    echo "$FAIL"
+    killall xclip
+    exit 1
+fi
+echo "$PASS"
+
 # test xclip on different amounts of data (2^fold) to bring out any errors
-c=0      # Number of folds completed.
-lines=1  # Current file size (2 to the c power).
-printf '%s' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_ '  > "$tempi"
-printf '%s\n' 'abcdefghijklmnopqrstuvwzyz!@#$%^&*()' >> "$tempi"
-for fold in 1 4 7 10 13; do
-    # double size of file by two
+c=0			# Number of folds completed.
+lines=1			# Current file size (2 to the c power).
+printf 'ABCDEFGHIJKLMNOPQRSTUVWXYZ_+<>!@#$%%^&*() '  > "$tempi"
+printf 'abcdefghijklmnopqrstuvwzyz-=,.1234567890\n' >> "$tempi"
+for fold in 0 4 7 10 15; do
+    # double size of file by two (2 to the $fold power)
     while [ "$c" -lt "$fold" ]; do
-        cat "$tempi" "$tempi" > "$tempo" && mv "$tempo" "$tempi"
-        lines=$(( 2 * lines ))
-        c=$(( c + 1 ))
+	cat "$tempi" "$tempi" > "$tempo"  &&  mv "$tempo" "$tempi"
+	lines=$(( 2 * lines ))
+	c=$(( c + 1 ))
     done
 
-    # test piping the file to xclip, using all selections
-    echo "Piping a $lines line file to xclip"
-    for sel in primary secondary clipboard buffer; do
-        printf '%s' "  Using the $sel selection	"
-        cat "$tempi" | $checker ./xclip -sel "$sel" -i
-        sleep "$delay"
-        $checker ./xclip -sel "$sel" -o > "$tempo"
-        if diff "$tempi" "$tempo"; then
-            echo "PASS"
-        else
-            echo "FAIL"
+    # test sending the file to xclip, using all selections
+    nlines=$(printf "%d line%s"  "$lines"  $(s "$lines"))
+    printf "\nSending $nlines of text to xclip:"
+    for sel in PRIMARY SECONDARY CLIPBOARD BUFFERCUT; do
+        printf "\n\t$sel: "
+
+	printf "\tPipe "
+	cat "$tempi" | $checker ./xclip -sel "$sel" -i
+	sleep "$delay"
+	$checker ./xclip -sel $sel -o > $tempo
+	if ! diff $tempi $tempo; then
+	    echo "$FAIL"
+	    echo "Could not pipe $nlines of text into the $sel selection"
+	    exit 1
+	fi
+	printf "$PASS"
+
+	# test xclip reading the file
+	printf "\tRead "
+	$checker ./xclip -sel $sel -i $tempi
+	sleep $delay
+	$checker ./xclip -sel $sel -o > $tempo
+	if ! diff $tempi $tempo; then
+	    echo "$FAIL"
+	    echo "Could not read a $lines-line file into the $sel selection"
+	    exit 1
+	fi
+	printf "$PASS"
+    
+	# test xclip filtering a file
+	printf "\tFilter "
+	$checker ./xclip -sel $sel -f < $tempi > $tempo
+	sleep "$delay"
+        if ! diff "$tempi" "$tempo"; then
+            echo "$FAIL"
+	    echo "Could not filter $nlines of text through the $sel selection"
             exit 1
         fi
+        printf "$PASS"
+
     done
     echo
-
-    # test xclip reading the file
-    echo "Reading a $lines line file with xclip"
-    for sel in primary secondary clipboard buffer; do
-        printf '%s' "  Using the $sel selection	"
-        $checker ./xclip -sel "$sel" -i "$tempi"
-        sleep "$delay"
-        $checker ./xclip -sel "$sel" -o > "$tempo"
-        if diff "$tempi" "$tempo"; then
-            echo "PASS"
-        else
-            echo "FAIL"
-            exit 1
-        fi
-    done
-    echo
-
-    # test xclip filtering a file
-    echo "Filtering a $lines line file through xclip"
-    for sel in primary secondary clipboard buffer; do
-        printf '%s' "  Using the $sel selection	"
-        $checker ./xclip -sel "$sel" -f < "$tempi" > "$tempo"
-        sleep "$delay"
-        if diff "$tempi" "$tempo"; then
-            echo "PASS"
-        else
-            echo "FAIL"
-            exit 1
-        fi
-    done
-    echo
-
 done
+echo
 
-# test xclip on files >1MB to force INCR mode
-for i in 1 2 16; do
+# test xclip on files >1MB to force INCR mode.
+echo
+printf "Binary files large enough to force INCR mode\n"
+for i in 1 4 16; do
     dd if=/dev/zero bs=1024 count=$((i*1024)) of="$tempi" >/dev/null 2>&1
-    echo "Binary file large enough to force INCR mode ($i MB)"
-    for sel in primary secondary clipboard buffer; do
-        printf '%s' "  Using the $sel selection	"
-        $checker ./xclip -sel "$sel" -i -t image/jpeg < "$tempi"
-        sleep "$delay"
-        $checker ./xclip -sel "$sel" -o -t image/jpeg > "$tempo"
-        if diff "$tempi" "$tempo"; then
-            echo "PASS"
-        else
-            echo "FAIL"
+    # Note: not testing "buffercut" because it cannot do INCR.
+    for sel in PRIMARY SECONDARY CLIPBOARD; do
+	printf "\t%10s ($i MiB)\t" $sel
+	$checker ./xclip -sel "$sel" -i -t image/jpeg < "$tempi"
+	sleep "$delay"
+	$checker ./xclip -sel "$sel" -o -t image/jpeg > "$tempo"
+        if ! diff "$tempi" "$tempo"; then
+            echo "$FAIL"
+	    echo "xclip could not incrementally transfer $i MiB using the $sel selection"
             exit 1
         fi
+        echo "$PASS"
     done
+    echo
 done
 
-# Kill any remain xclip processes
-killall xclip
+echo
+echo "All tests $PASS"
 
 # quietly remove temp files
-rm "$tempi" "$tempo" 2>/dev/null
+rm "$tempi" "$tempo" 2>/dev/null || true
+
+# Kill any remaining xclip processes
+killall xclip || true
+
+# No errors
+exit 0
