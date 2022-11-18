@@ -20,9 +20,10 @@
 
 cleanup() {
     # quietly remove temp files
-    rm "$tempi" "$tempo" 2>/dev/null
+    rm "$tempi" "$tempo" 2>/dev/null || true
     # Kill any remaining xclip processes
-    killall xclip 2>/dev/null
+    killall xclip 2>/dev/null || true
+    return 0
 }
 trap cleanup EXIT HUP INT
 
@@ -192,7 +193,10 @@ echo
 echo "All tests $PASS"
 
 # quietly remove temp files
-rm "$tempi" "$tempo" 2>/dev/null
+rm "$tempi" "$tempo" 2>/dev/null || true
 
 # Kill any remaining xclip processes
-killall xclip
+killall xclip || true
+
+# No errors
+exit 0
