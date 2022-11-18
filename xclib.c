@@ -3,7 +3,7 @@
  *
  *  xclib.c - xclip library to look after xlib mechanics for xclip
  *  Copyright (C) 2001 Kim Saunders
- *  Copyright (C) 2007-2022 Peter Åstrand
+ *  Copyright (C) 2007-2025 Peter Åstrand
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -480,9 +480,7 @@ xcin(Display * dpy,
      Window * theirwin,
      XEvent evt,
      Atom * pty, Atom target, unsigned char *txt, unsigned long len,
-     unsigned long *pos, unsigned int *context, long *chunk_size)
-     Atom * pty, Atom target, unsigned char *txt, unsigned long len,
-    unsigned long *pos, char *alt_txt, unsigned int *context, long *chunk_size)
+     unsigned long *pos, char *alt_txt, unsigned int *context, long *chunk_size)
 {
     unsigned long chunk_len;   /* length of current chunk (for incr xfr only)*/
     XEvent res;		       /* response to event */
@@ -651,6 +649,10 @@ xcin(Display * dpy,
 	/* don't treat alternative text request as contents request */
 	if (evt.xselectionrequest.target == alt_target)
 	    return (1);		/* Finished with request */
+
+	/* if XChangeProp failed, requestor is done no matter what */
+	if (xcchangeproperr)
+	    return (-1);		/* Error in request */
 
 	/* if len <= chunk_size, then the data was sent all at
 	 * once and the transfer is now complete, return 1
