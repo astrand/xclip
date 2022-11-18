@@ -3,7 +3,7 @@
  *
  *  xcprint.c - functions to print help, version, errors, etc
  *  Copyright (C) 2001 Kim Saunders
- *  Copyright (C) 2007-2008 Peter Åstrand
+ *  Copyright (C) 2007-2022 Peter Åstrand
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -62,7 +62,7 @@ void
 prversion(void)
 {
     fprintf(stderr, "%s version %s\n", PACKAGE_NAME, PACKAGE_VERSION);
-    fprintf(stderr, "Copyright (C) 2001-2008 Kim Saunders et al.\n");
+    fprintf(stderr, "Copyright (C) 2001-2022 Kim Saunders et al.\n");
     fprintf(stderr, "Distributed under the terms of the GNU GPL\n");
     exit(EXIT_SUCCESS);
 }
