@@ -36,14 +36,14 @@
 #include "xclib.h"
 
 /* command line option table for XrmParseCommand() */
-XrmOptionDescRec opt_tab[17];
-int opt_tab_size;
+XrmOptionDescRec opt_tab[29];
+int opt_tab_size;		/* for sanity check later */
 
 /* Options that get set on the command line */
 int sloop = 0;			/* number of loops */
 char *sdisp = NULL;		/* X display to connect to */
 Atom sseln = XA_PRIMARY;	/* X selection to work with */
-Atom target = XA_STRING;
+Atom target = None;
 int wait = 0;              /* wait: stop xclip after wait msec
                             after last 'paste event', start counting
                             after first 'paste event' */
@@ -351,6 +351,12 @@ doOptTarget(void)
 	if (xcverb >= OVERBOSE)
 	    fprintf(stderr, "Using target: %s\n", rec_val.addr);
     }
+    else if (XrmGetResource(opt_db, "xclip.TARGETS", "", &rec_typ, &rec_val) ) {
+	target = XInternAtom(dpy, "TARGETS", False);
+	fdiri = F;		/* direction is always output when -T used */
+	if (xcverb >= OVERBOSE)
+	    fprintf(stderr, "Showing TARGETS.\n");
+    }
     else {
 	target = XA_UTF8_STRING(dpy);
 	if (xcverb >= OVERBOSE)
@@ -441,10 +447,20 @@ doIn(Window win, const char *progname)
 	sel_len--;
     }
 
-    /* Handle cut buffer if needed */
+    /* Handle old-style cut buffer ('-selection buffercut') */
     if (sseln == XA_STRING) {
+	xcerrflag = False;
 	XStoreBuffer(dpy, (char *) sel_buf, (int) sel_len, 0);
-	XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+	XSetSelectionOwner(dpy, sseln, None, ownertime);
+	XSync(dpy, False);	/* Force error to occur now or never */
+	if (xcerrflag == True) {
+	    fprintf(stderr, "xclip: error: Could not copy to old-style cut buffer\n");
+	    if (xcverb >= OVERBOSE)
+		XmuPrintDefaultErrorMessage(dpy, &xcerrevt, stderr);
+	    xcmemzero(sel_buf,sel_len);
+	    return EXIT_FAILURE;
+	}
+
 	xcmemzero(sel_buf,sel_len);
 	return EXIT_SUCCESS;
     }
@@ -453,7 +469,7 @@ doIn(Window win, const char *progname)
      * SelectionRequest events from other windows
      */
     /* FIXME: Should not use CurrentTime, according to ICCCM section 2.1 */
-    XSetSelectionOwner(dpy, sseln, win, CurrentTime);
+    XSetSelectionOwner(dpy, sseln, win, ownertime);
 
     /* Double-check SetSelectionOwner did not "merely appear to succeed". */
     Window owner = XGetSelectionOwner(dpy, sseln);
@@ -471,7 +487,7 @@ doIn(Window win, const char *progname)
 	pid = fork();
 	/* exit the parent process; */
 	if (pid) {
-	    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+	    XSetSelectionOwner(dpy, sseln, None, ownertime);
 	    xcmemzero(sel_buf,sel_len);
 	    exit(EXIT_SUCCESS);
 	}
@@ -482,7 +498,7 @@ doIn(Window win, const char *progname)
 	if (sloop == 1)
 	    fprintf(stderr, "Waiting for one selection request.\n");
 
-	if (sloop < 1)
+	if (sloop == 0)
 	    fprintf(stderr,
 		    "Waiting for selection requests, Control-C to quit\n");
 
@@ -490,6 +506,11 @@ doIn(Window win, const char *progname)
 	    fprintf(stderr,
 		    "Waiting for %i selection request%s, Control-C to quit\n",
 		    sloop,  (sloop==1)?"":"s");
+
+	if (sloop < 0)
+	    fprintf(stderr,
+		    "xclip: error: loops set to a negative number (%d).\n",
+		    sloop);
     }
 
     /* Avoid making the current directory in use, in case it will need to be umounted */
@@ -504,9 +525,9 @@ doIn(Window win, const char *progname)
     /* loop and wait for the expected number of
      * SelectionRequest events
      */
-    while (dloop < sloop || sloop < 1) {
+    while (dloop < sloop || sloop == 0) {
 	if (xcverb >= ODEBUG)
-	    fprintf(stderr, "\n========\n");
+	    fprintf(stderr, "\n________\n");
 
 	/* print messages about what we're waiting for
 	 * if not in silent mode
@@ -518,8 +539,13 @@ doIn(Window win, const char *progname)
 	    if (sloop == 1)
 		fprintf(stderr, "  Waiting for a selection request.\n");
 
-	    if (sloop < 1)
-		fprintf(stderr, "  Waiting for selection request number %i\n", dloop + 1);
+	    if (sloop == 0)
+		fprintf(stderr, "  Waiting for selection request number %i\n",
+			dloop + 1);
+
+	    if (sloop < 0)
+		fprintf(stderr, "  This can't happen: negative sloop (%i)\n",
+			sloop);
 	}
 
 	/* wait for a SelectionRequest (paste) event */
@@ -537,7 +563,7 @@ doIn(Window win, const char *progname)
 		FD_ZERO(&in_fds);
 		FD_SET(x11_fd, &in_fds);
 		if (!select(x11_fd + 1, &in_fds, 0, 0, &tv)) {
-		    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+		    XSetSelectionOwner(dpy, sseln, None, ownertime);
 		    xcmemzero(sel_buf,sel_len);
 		    return EXIT_SUCCESS;
 		}
@@ -582,8 +608,8 @@ start:
 		 * service the ongoing transfer until it is completed.
 		 * See ICCCM section 2.2.
 		 */
-		/* Set dloop to force exit after all transfers finish. */
-		dloop = sloop;
+		/* Set sloop to force exit after all transfers finish. */
+		sloop = -1;
 		/* remove requestors for dead windows */
 		clean_requestors();
 		/* if there are no more in-progress transfers, force exit */
@@ -663,7 +689,7 @@ start:
 	dloop++;		/* increment loop counter */
     }
 
-    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+    XSetSelectionOwner(dpy, sseln, None, ownertime);
     xcmemzero(sel_buf,sel_len);
 
     return EXIT_SUCCESS;
@@ -677,9 +703,7 @@ printSelBuf(FILE * fout, Atom sel_type, unsigned char *sel_buf, size_t sel_len)
 #endif
 
     if (xcverb >= OVERBOSE) {	/* print in verbose mode only */
-	char *atom_name = XGetAtomName(dpy, sel_type);
-	fprintf(stderr, "Type is %s.\n", atom_name);
-	XFree(atom_name);
+	fprintf(stderr, "Type is %s.\n", xcatomstr(dpy, sel_type));
     }
 
     if (sel_type == XA_INTEGER) {
@@ -696,9 +720,7 @@ printSelBuf(FILE * fout, Atom sel_type, unsigned char *sel_buf, size_t sel_len)
 	Atom *atom_buf = (Atom *) sel_buf;
 	size_t atom_len = sel_len / sizeof(Atom);
 	while (atom_len--) {
-	    char *atom_name = XGetAtomName(dpy, *atom_buf++);
-	    fprintf(fout, "%s\n", atom_name);
-	    XFree(atom_name);
+	    fprintf(fout, "%s\n", xcatomstr(dpy, *atom_buf++));
 	}
 	return;
     }
@@ -788,7 +810,7 @@ doOut(Window win)
 		    /* no fallback available, exit with failure */
 		    if (fsecm) {
 			/* If user requested -sensitive, then prevent further pastes (even though we failed to paste) */
-			XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+			XSetSelectionOwner(dpy, sseln, None, ownertime);
 			/* Clear memory buffer */
 			xcmemzero(sel_buf,sel_len);
 		    }
@@ -815,7 +837,7 @@ doOut(Window win)
 
 	if (fsecm) {
 	    /* If user requested -sensitive, then prevent further pastes */
-	    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+	    XSetSelectionOwner(dpy, sseln, None, ownertime);
 	    /* Clear memory buffer */
 	    xcmemzero(sel_buf,sel_len);
 	}
@@ -882,9 +904,19 @@ main(int argc, char *argv[])
     opt_tab[i].argKind = XrmoptionNoArg;
     opt_tab[i].value = (XPointer) xcstrdup(ST);
     i++;
+    opt_tab[i].option = xcstrdup("-f"); /* Ensure -f always means filter */
+    opt_tab[i].specifier = xcstrdup(".filter");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup(ST);
+    i++;
 
     /* in option entry */
     opt_tab[i].option = xcstrdup("-in");
+    opt_tab[i].specifier = xcstrdup(".direction");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("I");
+    i++;
+    opt_tab[i].option = xcstrdup("-i"); /* Ensure -i always mean -in */
     opt_tab[i].specifier = xcstrdup(".direction");
     opt_tab[i].argKind = XrmoptionNoArg;
     opt_tab[i].value = (XPointer) xcstrdup("I");
@@ -896,9 +928,19 @@ main(int argc, char *argv[])
     opt_tab[i].argKind = XrmoptionNoArg;
     opt_tab[i].value = (XPointer) xcstrdup("O");
     i++;
+    opt_tab[i].option = xcstrdup("-o"); /* Ensure -o always means -out */
+    opt_tab[i].specifier = xcstrdup(".direction");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("O");
+    i++;
 
     /* version option entry */
     opt_tab[i].option = xcstrdup("-version");
+    opt_tab[i].specifier = xcstrdup(".print");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("V");
+    i++;
+    opt_tab[i].option = xcstrdup("-V"); /* Allow capital -V for version */
     opt_tab[i].specifier = xcstrdup(".print");
     opt_tab[i].argKind = XrmoptionNoArg;
     opt_tab[i].value = (XPointer) xcstrdup("V");
@@ -931,6 +973,11 @@ main(int argc, char *argv[])
     opt_tab[i].argKind = XrmoptionNoArg;
     opt_tab[i].value = (XPointer) xcstrdup("V");
     i++;
+    opt_tab[i].option = xcstrdup("-v"); /* Ensure -v always means verbose */
+    opt_tab[i].specifier = xcstrdup(".olevel");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("V");
+    i++;
 
     /* debug option entry */
     opt_tab[i].option = xcstrdup("-debug");
@@ -952,9 +999,52 @@ main(int argc, char *argv[])
     opt_tab[i].argKind = XrmoptionSepArg;
     opt_tab[i].value = (XPointer) NULL;
     i++;
+    opt_tab[i].option = xcstrdup("-t"); /* Ensure -t always means -target */
+    opt_tab[i].specifier = xcstrdup(".target");
+    opt_tab[i].argKind = XrmoptionSepArg;
+    opt_tab[i].value = (XPointer) NULL;
+    i++;
+
+    /* -T is shorthand for "-target TARGETS" */
+    opt_tab[i].option = xcstrdup("-T");
+    opt_tab[i].specifier = xcstrdup(".TARGETS");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("T");
+    i++;
+    /* Allow -TARGETS instead of -T, though why would anyone do that? */
+    opt_tab[i].option = xcstrdup("-TARGETS");
+    opt_tab[i].specifier = xcstrdup(".TARGETS");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("T");
+    i++;
+
+    /* -c is shorthand for "-selection clipboard" */
+    opt_tab[i].option = xcstrdup("-c");
+    opt_tab[i].specifier = xcstrdup(".selection");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("clipboard");
+    i++;
+    /* Allow -clipboard instead of -c, but why would anyone do that? */
+    opt_tab[i].option = xcstrdup("-clipboard");
+    opt_tab[i].specifier = xcstrdup(".selection");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("clipboard");
+    i++;
+
+    /* Allow -b as synonym for -c for folks used to xsel */
+    opt_tab[i].option = xcstrdup("-b");
+    opt_tab[i].specifier = xcstrdup(".selection");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("clipboard");
+    i++;
 
     /* "remove newline if it is the last character" entry */
     opt_tab[i].option = xcstrdup("-rmlastnl");
+    opt_tab[i].specifier = xcstrdup(".rmlastnl");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup(ST);
+    i++;
+    opt_tab[i].option = xcstrdup("-r"); /* Ensure -r always means -rmlastnl */
     opt_tab[i].specifier = xcstrdup(".rmlastnl");
     opt_tab[i].argKind = XrmoptionNoArg;
     opt_tab[i].value = (XPointer) xcstrdup(ST);
@@ -1002,8 +1092,11 @@ main(int argc, char *argv[])
     /* parse selection command line option; sets sseln */
     doOptSel();
 
-    /* parse noutf8 and target command line options */
-    doOptTarget();
+    /* parse noutf8 and target command line options; sets target */
+    if (sseln != XA_STRING)
+	doOptTarget();
+    else
+	target = XA_STRING; 		/* Old-style cut buffer had no target */
 
     /* Create a window to trap events */
     win = XCreateSimpleWindow(dpy, DefaultRootWindow(dpy), 0, 0, 1, 1, 0, 0, 0);
