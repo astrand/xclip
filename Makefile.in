@@ -21,10 +21,10 @@ all: xclip
 xclip: $(X11OBJ) $(OBJS)
 	$(CC) $(OBJS) $(CFLAGS) -o $@ $(X11OBJ) $(LDFLAGS)
 
-install: installbin install.man
+install: install.bin install.man install.completion
 
-.PHONY: installbin
-installbin: xclip xclip-copyfile xclip-pastefile xclip-cutfile
+.PHONY: install.bin
+install.bin: xclip xclip-copyfile xclip-pastefile xclip-cutfile
 	mkdir -p $(DESTDIR)$(bindir)
 	$(INSTALL) $^ $(DESTDIR)$(bindir)
 
@@ -33,6 +33,11 @@ installbin: xclip xclip-copyfile xclip-pastefile xclip-cutfile
 install.man: xclip.1 xclip-copyfile.1
 	mkdir -p $(DESTDIR)$(mandir)/man1
 	$(INSTALL) -m 644 $^ $(DESTDIR)$(mandir)/man1
+
+.PHONY: install.completion
+install.completion: xclip.bash-completion
+	mkdir -p $(DESTDIR)/etc/bash_completion.d/
+	$(INSTALL) -m 755 $^ $(DESTDIR)/etc/bash_completion.d
 
 .PHONY: clean
 clean:
@@ -52,22 +57,27 @@ xclip-$(VERSION).tar.gz:
 	(cd /tmp/xclip-make-dist-dir; \
 	tar zcvf xclip-$(VERSION)/xclip-$(VERSION).tar.gz \
 	xclip-$(VERSION)/COPYING \
+	xclip-$(VERSION)/INSTALL \
 	xclip-$(VERSION)/README \
 	xclip-$(VERSION)/ChangeLog \
 	xclip-$(VERSION)/configure \
 	xclip-$(VERSION)/configure.ac \
 	xclip-$(VERSION)/bootstrap \
-	xclip-$(VERSION)/xclip-copyfile \
-	xclip-$(VERSION)/xclip-pastefile \
-	xclip-$(VERSION)/xclip-cutfile \
 	xclip-$(VERSION)/install-sh \
 	xclip-$(VERSION)/Makefile.in \
+	xclip-$(VERSION)/xclip.bash-completion \
+	xclip-$(VERSION)/xclip-copyfile \
+	xclip-$(VERSION)/xclip-cutfile \
+	xclip-$(VERSION)/xclip-pastefile \
 	xclip-$(VERSION)/xclip.spec \
+	xclip-$(VERSION)/xctest \
 	xclip-$(VERSION)/*.c \
 	xclip-$(VERSION)/*.h \
+	xclip-$(VERSION)/autogroff.sh \
 	xclip-$(VERSION)/xclip-copyfile.1 \
 	xclip-$(VERSION)/xclip.1 )
-	rm -rf /tmp/xclip-make-dist-dir
+	rm /tmp/xclip-make-dist-dir/xclip-$(VERSION)
+	rmdir /tmp/xclip-make-dist-dir
 
 Makefile: Makefile.in configure
 	./config.status
@@ -75,8 +85,26 @@ Makefile: Makefile.in configure
 configure: configure.ac
 	./bootstrap
 
+# Create documentation from the man page
+xclip.pdf: xclip.1 
+	groff -Tpdf -mandoc $^ > $@ 
+
+xclip.cat: xclip.1 
+	nroff -mandoc $^ > $@ 
+
+# Run the test script
+test:	xctest
+	./xctest
+
+# borked is a test program which intentionally causes errors.
 borked: borked.c xclib.o xcprint.o
 	$(CC) $^ $(CFLAGS) -o $@ $(X11OBJ) $(LDFLAGS)
+
+# For ease of editing the man page, automatically regenerate the PDF every time
+# xclip.1 (the groff source code of the man page) is saved. If the document is
+# already being viewed in atril or evince, it will be reloaded immediately.
+watch:
+	./autogroff.sh
 
 .SUFFIXES:
 .SUFFIXES: .c .o

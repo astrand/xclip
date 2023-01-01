@@ -1,4 +1,4 @@
-AC_INIT(xclip, 0.13)
+AC_INIT([xclip],[0.14])
 
 AC_CONFIG_SRCDIR([xclip.c])
 
@@ -8,8 +8,7 @@ if test "$GCC" = yes; then
 fi
 
 AC_PROG_INSTALL
-AC_LANG_C
-AC_HEADER_STDC
+AC_LANG([C])
 AC_PATH_XTRA
 AC_CHECK_TOOL(STRIP, strip, :)
 AC_CHECK_HEADER([X11/Xmu/Atoms.h], [], AC_MSG_ERROR([*** X11/Xmu/Atoms.h is missing ***]))
@@ -19,4 +18,5 @@ AC_CHECK_HEADER([iconv.h],
         AC_DEFINE([HAVE_ICONV]), []), [])
 AC_CHECK_LIB(Xmu, XmuClientWindow, [], AC_MSG_ERROR([*** libXmu not found ***]))
 
-AC_OUTPUT(Makefile)
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT
