@@ -3,7 +3,7 @@
  *
  *  xcprint.c - functions to print help, version, errors, etc
  *  Copyright (C) 2001 Kim Saunders
- *  Copyright (C) 2007-2022 Peter Åstrand
+ *  Copyright (C) 2007-2025 Peter Åstrand
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -40,6 +40,7 @@ prhelp(char *name)
 "  -o, -out         prints the selection to standard out\n"
 "      -selection   primary [DEFAULT], clipboard, secondary, or buffer-cut\n"
 "  -t, -target      specify target atom: image/jpeg, UTF8_STRING [DEFAULT]\n"
+"      -alt-text    specify text representation for STRING target\n"
 "      -silent      errors only, (run in background) [DEFAULT]\n"
 "      -quiet       minimal output (foreground)\n"
 "      -verbose     running commentary (foreground)\n"

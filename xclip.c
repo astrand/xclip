@@ -43,7 +43,8 @@ int opt_tab_size;		/* for sanity check later */
 int sloop = 0;			/* number of loops */
 char *sdisp = NULL;		/* X display to connect to */
 Atom sseln = XA_PRIMARY;	/* X selection to work with */
-Atom target = None;
+Atom target = XA_STRING;
+char *alt_text = NULL;		/* Text to put into textual targets */
 int wait = 0;              /* wait: stop xclip after wait msec
                             after last 'paste event', start counting
                             after first 'paste event' */
@@ -278,6 +279,14 @@ doOptMain(int argc, char *argv[])
 	wait = atoi(rec_val.addr);
 	if (xcverb >= OVERBOSE)
 	    fprintf(stderr, "wait: %i msec\n", wait);
+    }
+
+    /* check for -alt-text */
+    if (XrmGetResource(opt_db, "xclip.alt-text", "Xclip.Alt-text", &rec_typ, &rec_val)
+	) {
+	alt_text = rec_val.addr;
+	if (xcverb >= OVERBOSE)	/* print in verbose or debug mode only */
+	    fprintf(stderr, "Alternative text: %s\n", alt_text);
     }
 
     /* Read remaining options (filenames) */
@@ -667,7 +676,8 @@ start:
 	    finished = xcin(dpy, win,
 			    &(requestor->cwin), evt, &(requestor->pty),
 			    target, sel_buf, sel_len, &(requestor->sel_pos),
-			    &(requestor->context), &(requestor->chunk_size));
+			    alt_text, &(requestor->context),
+			    &(requestor->chunk_size));
 
 	    if (xcerrflag == True) {
 		if (xcerrevt.error_code == BadWindow) {
@@ -1043,6 +1053,13 @@ main(int argc, char *argv[])
     opt_tab[i].specifier = xcstrdup(".selection");
     opt_tab[i].argKind = XrmoptionNoArg;
     opt_tab[i].value = (XPointer) xcstrdup("clipboard");
+    i++;
+
+    /* alt-text option entry */
+    opt_tab[i].option = xcstrdup("-alt-text");
+    opt_tab[i].specifier = xcstrdup(".alt-text");
+    opt_tab[i].argKind = XrmoptionSepArg;
+    opt_tab[i].value = (XPointer) NULL;
     i++;
 
     /* "remove newline if it is the last character" entry */

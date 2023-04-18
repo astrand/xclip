@@ -68,6 +68,7 @@ extern int xcin(
 	unsigned char*,
 	unsigned long,
 	unsigned long*,
+	char*,
 	unsigned int*,
 	long*
 );
