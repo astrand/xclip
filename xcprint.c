@@ -40,6 +40,7 @@ prhelp(char *name)
 "  -o, -out         prints the selection to standard out\n"
 "      -selection   primary [DEFAULT], clipboard, secondary, or buffer-cut\n"
 "      -target      specify target atom: image/jpeg, UTF8_STRING [DEFAULT]\n"
+"      -alt-text    specify text representation for STRING target\n"
 "      -silent      errors only, (run in background) [DEFAULT]\n"
 "      -quiet       minimal output (foreground)\n"
 "      -verbose     running commentary (foreground)\n"

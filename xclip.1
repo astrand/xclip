@@ -47,6 +47,9 @@ special target atom name "TARGETS" can be used to get a list of valid target
 atoms for this selection. The default target is "STRING". For more information
 about target atoms refer to ICCCM section 2.6.2
 .TP
+\fB\-alt-text\fR \fIt\fR
+specify an alternative text to put into the target atom "STRING". Some applications refuse to paste text unless this atom is provided in addition to other text targets such as "text/html".
+.TP
 \fB\-d\fR, \fB\-display\fR
 X display to use (e.g. "localhost:0"), xclip defaults to the value in $\fBDISPLAY\fR if this option is omitted
 .TP

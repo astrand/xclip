@@ -35,7 +35,7 @@
 #include "xclib.h"
 
 /* command line option table for XrmParseCommand() */
-XrmOptionDescRec opt_tab[17];
+XrmOptionDescRec opt_tab[18];
 int opt_tab_size;
 
 /* Options that get set on the command line */
@@ -43,6 +43,7 @@ int sloop = 0;			/* number of loops */
 char *sdisp = NULL;		/* X display to connect to */
 Atom sseln = XA_PRIMARY;	/* X selection to work with */
 Atom target = XA_STRING;
+char *alt_text = NULL;		/* Text to put into textual targets */
 int wait = 0;              /* wait: stop xclip after wait msec
                             after last 'paste event', start counting
                             after first 'paste event' */
@@ -263,6 +264,14 @@ doOptMain(int argc, char *argv[])
 	wait = atoi(rec_val.addr);
 	if (xcverb >= OVERBOSE)
 	    fprintf(stderr, "wait: %i msec\n", wait);
+    }
+
+    /* check for -alt-text */
+    if (XrmGetResource(opt_db, "xclip.alt-text", "Xclip.Alt-text", &rec_typ, &rec_val)
+	) {
+	alt_text = rec_val.addr;
+	if (xcverb >= OVERBOSE)	/* print in verbose or debug mode only */
+	    fprintf(stderr, "Alternative text: %s\n", alt_text);
     }
 
     /* Read remaining options (filenames) */
@@ -617,7 +626,8 @@ start:
 
 	    finished = xcin(dpy, &(requestor->cwin), evt, &(requestor->pty),
 			    target, sel_buf, sel_len, &(requestor->sel_pos),
-			    &(requestor->context), &(requestor->chunk_size));
+			    alt_text, &(requestor->context),
+			    &(requestor->chunk_size));
 
 	    if (finished) {
 		del_requestor(requestor);
@@ -904,6 +914,13 @@ main(int argc, char *argv[])
     /* target option entry */
     opt_tab[i].option = xcstrdup("-target");
     opt_tab[i].specifier = xcstrdup(".target");
+    opt_tab[i].argKind = XrmoptionSepArg;
+    opt_tab[i].value = (XPointer) NULL;
+    i++;
+
+    /* alt-text option entry */
+    opt_tab[i].option = xcstrdup("-alt-text");
+    opt_tab[i].specifier = xcstrdup(".alt-text");
     opt_tab[i].argKind = XrmoptionSepArg;
     opt_tab[i].value = (XPointer) NULL;
     i++;
