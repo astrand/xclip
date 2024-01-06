@@ -48,6 +48,7 @@ prhelp(char *name)
 "  -l, -loops       number of selection requests to wait for before exiting\n"
 "      -wait n      exit n milliseconds pasting, timer restarts on each paste\n"
 "      -noutf8      don't treat text as utf-8, use old unicode\n"
+"      -appendnl    append a newline character if not present\n"
 "      -rmlastnl    remove the last newline character if present\n"
 "  -d, -display     X display to connect to (eg localhost:0\")\n"
 "      -version     version information\n"
