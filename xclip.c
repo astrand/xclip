@@ -35,7 +35,7 @@
 #include "xclib.h"
 
 /* command line option table for XrmParseCommand() */
-XrmOptionDescRec opt_tab[17];
+XrmOptionDescRec opt_tab[18];
 int opt_tab_size;
 
 /* Options that get set on the command line */
@@ -50,6 +50,7 @@ int wait = 0;              /* wait: stop xclip after wait msec
 /* Flags for command line options */
 static int fdiri = T;		/* direction is in */
 static int ffilt = F;		/* filter mode */
+static int fapnl = F;		/* append (single) newline character at the very end if not present */
 static int frmnl = F;		/* remove (single) newline character at the very end if present */
 static int fsecm = F;		/* zero out selection buffer before exiting */
 
@@ -216,10 +217,22 @@ doOptMain(int argc, char *argv[])
 	    ffilt = T;
     }
 
+    /* set "append a newline character if not present" mode */
+    if (XrmGetResource(opt_db, "xclip.appendnl", "Xclip.ApLastNl", &rec_typ, &rec_val)
+	) {
+	fapnl = T;
+    }
+
     /* set "remove last newline character if present" mode */
     if (XrmGetResource(opt_db, "xclip.rmlastnl", "Xclip.RmLastNl", &rec_typ, &rec_val)
 	) {
 	frmnl = T;
+    }
+
+    /* -apnl and -rmlastnl are mutually exclusive */
+    if (fapnl && frmnl) {
+	fapnl = F;
+	frmnl = F;
     }
 
     /* check for -help and -version */
@@ -368,7 +381,13 @@ doIn(Window win, const char *progname)
 
     /* in mode */
     sel_all = 16;		/* Reasonable ballpark figure */
-    sel_buf = xcmalloc(sel_all * sizeof(char));
+    if (fapnl) {
+	/* Reserve a character for newline */
+	sel_buf = xcmalloc((sel_all + 1) * sizeof(char));
+    }
+    else {
+	sel_buf = xcmalloc(sel_all * sizeof(char));
+    }
 
     /* Put chars into inc from stdin or files until we hit EOF */
     do {
@@ -426,6 +445,12 @@ doIn(Window win, const char *progname)
     if (fil_names) {
 	free(fil_names);
 	fil_names = NULL;
+    }
+
+    /* append a newline character if necessary */
+    if (fapnl && sel_len && sel_buf[sel_len - 1] != '\n') {
+	sel_buf[sel_len] = '\n';
+	sel_len++;
     }
 
     /* remove the last newline character if necessary */
@@ -766,10 +791,16 @@ doOut(Window win)
     }
 
     if (sel_len) {
+	FILE *fout = stdout;
+
 	/* only print the buffer out, and free it, if it's not
 	 * empty
 	 */
-	printSelBuf(stdout, sel_type, sel_buf, sel_len);
+	printSelBuf(fout, sel_type, sel_buf, sel_len);
+
+	/* append a newline character if necessary */
+	if (fapnl && sel_buf[sel_len - 1] != '\n')
+	    fputc('\n', fout);
 
 	if (fsecm) {
 	    /* If user requested -sensitive, then prevent further pastes */
@@ -909,6 +940,13 @@ main(int argc, char *argv[])
     opt_tab[i].specifier = xcstrdup(".target");
     opt_tab[i].argKind = XrmoptionSepArg;
     opt_tab[i].value = (XPointer) NULL;
+    i++;
+
+    /* "append newline if it is not the last character" entry */
+    opt_tab[i].option = xcstrdup("-appendnl");
+    opt_tab[i].specifier = xcstrdup(".appendnl");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup(ST);
     i++;
 
     /* "remove newline if it is the last character" entry */
