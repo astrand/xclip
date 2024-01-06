@@ -719,8 +719,11 @@ doOut(Window win)
     XEvent evt;			/* X Event Structures */
     unsigned int context = XCLIB_XCOUT_NONE;
 
-    if (sseln == XA_STRING)
-	sel_buf = (unsigned char *) XFetchBuffer(dpy, (int *) &sel_len, 0);
+    if (sseln == XA_STRING) {
+	int sel_ilen = 0;
+	sel_buf = (unsigned char *) XFetchBuffer(dpy, &sel_ilen, 0);
+	sel_len = (unsigned long)sel_ilen;
+    }
     else {
 	while (1) {
 	    /* only get an event if xcout() is doing something */
