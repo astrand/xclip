@@ -35,7 +35,7 @@
 #include "xclib.h"
 
 /* command line option table for XrmParseCommand() */
-XrmOptionDescRec opt_tab[17];
+XrmOptionDescRec opt_tab[19];
 int opt_tab_size;
 
 /* Options that get set on the command line */
@@ -792,7 +792,6 @@ main(int argc, char *argv[])
     /* Declare variables */
     Window win;			/* Window */
     int exit_code;
-
      /* As a convenience to command-line users, default to -o if stdin
      * is a tty. Will be overridden by -i or if user specifies a
      * filename as input.
@@ -831,6 +830,13 @@ main(int argc, char *argv[])
     opt_tab[i].value = (XPointer) NULL;
     i++;
 
+    /* selection option shortcut */
+    opt_tab[i].option = xcstrdup("-s");
+    opt_tab[i].specifier = xcstrdup(".selection");
+    opt_tab[i].argKind = XrmoptionSepArg;
+    opt_tab[i].value = (XPointer) NULL;
+    i++;
+
     /* filter option entry */
     opt_tab[i].option = xcstrdup("-filter");
     opt_tab[i].specifier = xcstrdup(".filter");
@@ -854,6 +860,13 @@ main(int argc, char *argv[])
 
     /* version option entry */
     opt_tab[i].option = xcstrdup("-version");
+    opt_tab[i].specifier = xcstrdup(".print");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("V");
+    i++;
+
+    /* version option shortcut*/
+    opt_tab[i].option = xcstrdup("-v");
     opt_tab[i].specifier = xcstrdup(".print");
     opt_tab[i].argKind = XrmoptionNoArg;
     opt_tab[i].value = (XPointer) xcstrdup("V");
