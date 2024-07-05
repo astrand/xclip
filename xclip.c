@@ -408,8 +408,9 @@ doIn(Window win, const char *progname)
 	}
 	else {
 	    if ((fil_handle = fopen(fil_names[fil_current], "r")) == NULL) {
-		errperror(3, progname, ": ", fil_names[fil_current]
-		    );
+	    err:
+		errperror(3, progname, ": ",
+		    fil_number ? fil_names[fil_current] : "(stdin)");
 		return EXIT_FAILURE;
 	    }
 	    else {
@@ -420,8 +421,17 @@ doIn(Window win, const char *progname)
 	    }
 	}
 
-	fil_current++;
-	while (!feof(fil_handle)) {
+	for (;;) {
+	    size_t rd = fread(sel_buf + sel_len, sizeof(char), sel_all - sel_len, fil_handle);
+	    if (rd != sel_all - sel_len) {
+		if (feof(fil_handle)) {
+		    sel_len += rd;
+		    break;
+		}
+		goto err;
+	    }
+	    sel_len += rd;
+
 	    /* If sel_buf is full (used elems =
 	     * allocated elems)
 	     */
@@ -435,14 +445,13 @@ doIn(Window win, const char *progname)
 		    fprintf(stderr, "xclip: debug: Increased buffersize to %ld\n", sel_all);
 		}
 	    }
-	    sel_len += fread(sel_buf + sel_len, sizeof(char), sel_all - sel_len, fil_handle);
 	}
 
 	if (fil_handle && (fil_handle != stdin)) {
 	    fclose(fil_handle);
 	    fil_handle = NULL;
 	}
-    } while (fil_current < fil_number);
+    } while (++fil_current < fil_number);
 
     /* if there are no files being read from (i.e., input
      * is from stdin not files, and we are in filter mode,
