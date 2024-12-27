@@ -1,6 +1,6 @@
 /*
- *  
- * 
+ *
+ *
  *  xcprint.c - functions to print help, version, errors, etc
  *  Copyright (C) 2001 Kim Saunders
  *  Copyright (C) 2007-2008 Peter Åstrand
@@ -32,28 +32,28 @@ void
 prhelp(char *name)
 {
     fprintf(stderr,
-	    "Usage: %s [OPTION] [FILE]...\n"
-	    "Access an X server selection for reading or writing.\n"
-	    "\n"
-	    "  -i, -in          read text into X selection from standard input or files\n"
-	    "                   (default)\n"
-	    "  -o, -out         prints the selection to standard out (generally for\n"
-	    "                   piping to a file or program)\n"
-	    "  -l, -loops       number of selection requests to "
-	    "wait for before exiting\n"
-	    "  -d, -display     X display to connect to (eg "
-	    "localhost:0\")\n"
-	    "  -h, -help        usage information\n"
-	    "      -selection   selection to access (\"primary\", "
-	    "\"secondary\", \"clipboard\" or \"buffer-cut\")\n"
-	    "      -noutf8      don't treat text as utf-8, use old unicode\n"
-	    "      -target      use the given target atom\n"
-	    "      -rmlastnl    remove the last newline charater if present\n"
-	    "      -version     version information\n"
-	    "      -silent      errors only, run in background (default)\n"
-	    "      -quiet       run in foreground, show what's happening\n"
-	    "      -verbose     running commentary\n"
-	    "\n" "Report bugs to <astrand@lysator.liu.se>\n", name);
+"Usage: %s [OPTION] [FILE]...\n"
+"Access an X server selection for reading or writing.\n"
+"\n"
+"  -i, -in          read text into X selection from stdin or files [DEFAULT]\n"
+"  -f, -filter      text piped in to selection will also be printed out\n"
+"  -o, -out         prints the selection to standard out\n"
+"      -selection   primary [DEFAULT], clipboard, secondary, or buffer-cut\n"
+"  -t, -target      specify target atom: image/jpeg, UTF8_STRING [DEFAULT]\n"
+"      -alt-text    specify text representation for STRING target\n"
+"      -silent      errors only, (run in background) [DEFAULT]\n"
+"      -quiet       minimal output (foreground)\n"
+"      -verbose     running commentary (foreground)\n"
+"      -debug       garrulous verbiage (foreground)\n"
+"      -sensitive   only allow copied data to be pasted once\n"
+"  -l, -loops       number of selection requests to wait for before exiting\n"
+"      -wait n      exit n milliseconds pasting, timer restarts on each paste\n"
+"      -noutf8      don't treat text as utf-8, use old unicode\n"
+"  -r, -rmlastnl    remove the last newline character if present\n"
+"  -d, -display     X display to connect to (eg localhost:0\")\n"
+"      -version     version information\n"
+"  -h, -help        this usage information\n"
+"\n" "Report bugs to <astrand@lysator.liu.se>\n", name);
     exit(EXIT_SUCCESS);
 }
 
@@ -72,7 +72,7 @@ prversion(void)
 void
 errmalloc(void)
 {
-    fprintf(stderr, "Error: Could not allocate memory.\n");
+    fprintf(stderr, "xclip: Error: Could not allocate memory.\n");
     exit(EXIT_FAILURE);
 }
 
@@ -80,13 +80,13 @@ errmalloc(void)
 void
 errxdisplay(char *display)
 {
-    /* if the display wasn't specified, read it from the enviroment
+    /* if the display wasn't specified, read it from the environment
      * just like XOpenDisplay would
      */
     if (display == NULL)
 	display = getenv("DISPLAY");
 
-    fprintf(stderr, "Error: Can't open display: %s\n", display);
+    fprintf(stderr, "xclip: Error: Can't open display: %s\n", display ? display : "(null)");
     exit(EXIT_FAILURE);
 }
 
@@ -105,7 +105,7 @@ errperror(int prf_tot, ...)
     /* start off with an empty string */
     msg_all = xcstrdup("");
 
-    /* start looping through the viariable arguments */
+    /* start looping through the variable arguments */
     va_start(ap, prf_tot);
 
     /* loop through each of the arguments */
@@ -119,7 +119,7 @@ errperror(int prf_tot, ...)
 	msg_all = (char *) xcrealloc(msg_all, strlen(msg_all) + strlen(msg_cur) + sizeof(char)
 	    );
 
-	/* append the current message the the total message */
+	/* append the current message to the total message */
 	strcat(msg_all, msg_cur);
     }
     va_end(ap);
@@ -128,4 +128,42 @@ errperror(int prf_tot, ...)
 
     /* free the complete string */
     free(msg_all);
+}
+
+
+/* failure to convert selection */
+void
+errconvsel(Display *display, Atom target, Atom selection)
+{
+    Window w = None;
+    char *selection_name = XGetAtomName(display, selection); /* E.g., "PRIMARY" */
+
+    if (!selection_name)
+	exit(EXIT_FAILURE);	/* Invalid selection Atom  */
+
+    w = XGetSelectionOwner(display, selection);
+    if (w == None) {
+	fprintf(stderr, "xclip: Error: There is no owner for the %s selection\n",
+		selection_name);
+    }
+    else {
+	/* Show the name of the window that holds the selection */
+	fprintf(stderr, "xclip: Error: %s", xcnamestr(display, w));
+
+	char *atom_name = XGetAtomName(display, target);
+	if (atom_name) {
+	    fprintf(stderr, " cannot convert %s selection to target '%s'\n",
+		    selection_name, atom_name);
+	    XFree(atom_name);
+	}
+	else {
+	    /* Should never happen. */
+	    fprintf(stderr, " cannot convert to NULL target.\n");
+	}
+    }
+
+    if (selection_name)
+	XFree(selection_name);
+
+    exit(EXIT_FAILURE);
 }

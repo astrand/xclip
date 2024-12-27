@@ -1,6 +1,6 @@
 /*
- *  
- * 
+ *
+ *
  *  xcprint.h - header file for functions in xcprint.c
  *  Copyright (C) 2001 Kim Saunders
  *
@@ -24,3 +24,4 @@ extern void prversion(void);
 extern void errmalloc(void);
 extern void errxdisplay(char *);
 extern void errperror(int, ...);
+extern void errconvsel(Display *display, Atom target, Atom selection);

@@ -1,4 +1,3 @@
-
 prefix      = @prefix@
 exec_prefix = @exec_prefix@
 bindir      = @bindir@
@@ -11,7 +10,7 @@ VERSION     = @PACKAGE_VERSION@
 CC          = @CC@
 INSTALL     = @INSTALL@
 CFLAGS      = @CFLAGS@ @X_CFLAGS@ @DEFS@
-LDFLAGS     = @LDFLAGS@ @LIBS@ @X_LIBS@ @X_EXTRA_LIBS@
+LDFLAGS     = @LDFLAGS@ @LIBS@ @X_LIBS@ @X_EXTRA_LIBS@ -lX11 -lXmu
 STRIP       = @STRIP@
 
 OBJS = xclib.o xcprint.o xclip.o
@@ -20,7 +19,7 @@ OBJS = xclib.o xcprint.o xclip.o
 all: xclip
 
 xclip: $(X11OBJ) $(OBJS)
-	$(CC) $(OBJS) $(CFLAGS) -o $@ $(X11OBJ) $(LDFLAGS) -lX11 -lXmu
+	$(CC) $(OBJS) $(CFLAGS) -o $@ $(X11OBJ) $(LDFLAGS)
 
 install: installbin install.man
 
@@ -37,7 +36,7 @@ install.man: xclip.1 xclip-copyfile.1
 
 .PHONY: clean
 clean:
-	rm -f *.o *~ xclip xclip-$(VERSION).tar.gz
+	rm -f *.o *~ xclip xclip-$(VERSION).tar.gz borked
 
 .PHONY: distclean
 distclean: clean
@@ -47,7 +46,7 @@ distclean: clean
 dist: xclip-$(VERSION).tar.gz
 
 .PHONY: xclip-$(VERSION).tar.gz
-xclip-$(VERSION).tar.gz: 
+xclip-$(VERSION).tar.gz:
 	mkdir -p /tmp/xclip-make-dist-dir
 	ln -sf `pwd` /tmp/xclip-make-dist-dir/xclip-$(VERSION)
 	(cd /tmp/xclip-make-dist-dir; \
@@ -76,9 +75,11 @@ Makefile: Makefile.in configure
 configure: configure.ac
 	./bootstrap
 
+borked: borked.c xclib.o xcprint.o
+	$(CC) $^ $(CFLAGS) -o $@ $(X11OBJ) $(LDFLAGS)
+
 .SUFFIXES:
 .SUFFIXES: .c .o
 
 .c.o:
 	$(CC) $(CFLAGS) -o $@ -c $<
-

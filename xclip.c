@@ -1,7 +1,7 @@
 /*
- *  
- * 
- *  xclip.c - command line interface to X server selections 
+ *
+ *
+ *  xclip.c - command line interface to X server selections
  *  Copyright (C) 2001 Kim Saunders
  *  Copyright (C) 2007-2008 Peter Åstrand
  *
@@ -35,19 +35,24 @@
 #include "xclib.h"
 
 /* command line option table for XrmParseCommand() */
-XrmOptionDescRec opt_tab[14];
+XrmOptionDescRec opt_tab[18];
+int opt_tab_size;
 
 /* Options that get set on the command line */
 int sloop = 0;			/* number of loops */
 char *sdisp = NULL;		/* X display to connect to */
 Atom sseln = XA_PRIMARY;	/* X selection to work with */
 Atom target = XA_STRING;
+char *alt_text = NULL;		/* Text to put into textual targets */
+int wait = 0;              /* wait: stop xclip after wait msec
+                            after last 'paste event', start counting
+                            after first 'paste event' */
 
 /* Flags for command line options */
-static int fverb = OSILENT;	/* output level */
 static int fdiri = T;		/* direction is in */
 static int ffilt = F;		/* filter mode */
 static int frmnl = F;		/* remove (single) newline character at the very end if present */
+static int fsecm = F;		/* zero out selection buffer before exiting */
 
 Display *dpy;			/* connection to X11 display */
 XrmDatabase opt_db = NULL;	/* database for options */
@@ -63,6 +68,111 @@ char *rec_typ;
 
 int tempi = 0;
 
+struct requestor
+{
+	Window cwin;
+	Atom pty;
+	unsigned int context;
+	unsigned long sel_pos;
+	int finished;
+	long chunk_size;
+	struct requestor *next;
+};
+
+static struct requestor *requestors;
+
+static struct requestor *get_requestor(Window win)
+{
+	struct requestor *requestor;
+
+	if (requestors) {
+	    for (requestor = requestors; requestor != NULL; requestor = requestor->next) {
+	        if (requestor->cwin == win) {
+		    if (xcverb >= OVERBOSE) {
+			fprintf(stderr,
+				"    = Reusing requestor for %s\n",
+				xcnamestr(dpy, win) );
+		    }
+
+	            return requestor;
+	        }
+	    }
+	}
+
+	if (xcverb >= OVERBOSE) {
+	    fprintf(stderr, "    + Creating new requestor for %s\n",
+		    xcnamestr(dpy, win) );
+	}
+
+	requestor = (struct requestor *)calloc(1, sizeof(struct requestor));
+	if (!requestor) {
+	    errmalloc();
+	} else {
+	    requestor->context = XCLIB_XCIN_NONE;
+	}
+
+	if (!requestors) {
+	    requestors = requestor;
+	} else {
+	    requestor->next = requestors;
+	    requestors = requestor;
+	}
+
+	return requestor;
+}
+
+static void del_requestor(struct requestor *requestor)
+{
+	struct requestor *reqitr;
+
+	if (!requestor) {
+	    return;
+	}
+
+	if (xcverb >= OVERBOSE) {
+	    fprintf(stderr,
+		    "    - Deleting requestor for %s\n",
+		    xcnamestr(dpy, requestor->cwin) );
+	}
+
+	if (requestors == requestor) {
+	    requestors = requestors->next;
+	} else {
+	    for (reqitr = requestors; reqitr != NULL; reqitr = reqitr->next) {
+	        if (reqitr->next == requestor) {
+	            reqitr->next = reqitr->next->next;
+	            break;
+	        }
+	    }
+	}
+
+	free(requestor);
+}
+
+int clean_requestors() {
+    /* Remove any requestors for which the X window has disappeared */
+    if (xcverb >= ODEBUG) {
+	fprintf(stderr, "xclip: debug: checking for requestors whose window has closed\n");
+    }
+    struct requestor *r = requestors;
+    Window win;
+    XWindowAttributes dummy;
+    while (r) {
+	win = r->cwin;
+
+	// check if window exists by seeing if XGetWindowAttributes works.
+	// note: this triggers X's BadWindow error and runs xchandler().
+	if ( !XGetWindowAttributes(dpy, win, &dummy) ) {
+	    if (xcverb >= OVERBOSE) {
+		fprintf(stderr, "    ! Found obsolete requestor 0x%lx\n", win);
+	    }
+	    del_requestor(r);
+	}
+	r = r -> next;
+    }
+    return 0;
+}
+
 /* Use XrmParseCommand to parse command line options to option variable */
 static void
 doOptMain(int argc, char *argv[])
@@ -76,20 +186,26 @@ doOptMain(int argc, char *argv[])
 	exit(0);
     }
 
-    XrmParseCommand(&opt_db, opt_tab, sizeof(opt_tab) / sizeof(opt_tab[0]), PACKAGE_NAME, &argc,
+    XrmParseCommand(&opt_db, opt_tab, opt_tab_size, PACKAGE_NAME, &argc,
 		    argv);
 
     /* set output level */
     if (XrmGetResource(opt_db, "xclip.olevel", "Xclip.Olevel", &rec_typ, &rec_val)
 	) {
 	/* set verbose flag according to option */
-	if (strcmp(rec_val.addr, "S") == 0)
-	    fverb = OSILENT;
-	if (strcmp(rec_val.addr, "Q") == 0)
-	    fverb = OQUIET;
-	if (strcmp(rec_val.addr, "V") == 0)
-	    fverb = OVERBOSE;
+	switch (rec_val.addr[0]) {
+	case 'S':
+	    xcverb = OSILENT;	break;
+	case 'Q':
+	    xcverb = OQUIET;	break;
+	case 'V':
+	    xcverb = OVERBOSE;	break;
+	case 'D':
+	    xcverb = ODEBUG;	break;
+	}
     }
+    if (xcverb == ODEBUG)
+	fprintf(stderr, "xclip: debug: Debugging enabled.\n");
 
     /* set direction flag (in or out) */
     if (XrmGetResource(opt_db, "xclip.direction", "Xclip.Direction", &rec_typ, &rec_val)
@@ -104,7 +220,7 @@ doOptMain(int argc, char *argv[])
     if (XrmGetResource(opt_db, "xclip.filter", "Xclip.Filter", &rec_typ, &rec_val)
 	) {
 	/* filter mode only allowed in silent mode */
-	if (fverb == OSILENT)
+	if (xcverb == OSILENT)
 	    ffilt = T;
     }
 
@@ -127,7 +243,7 @@ doOptMain(int argc, char *argv[])
     if (XrmGetResource(opt_db, "xclip.display", "Xclip.Display", &rec_typ, &rec_val)
 	) {
 	sdisp = rec_val.addr;
-	if (fverb == OVERBOSE)	/* print in verbose mode only */
+	if (xcverb >= OVERBOSE)	/* print in verbose or debug mode only */
 	    fprintf(stderr, "Display: %s\n", sdisp);
     }
 
@@ -135,8 +251,34 @@ doOptMain(int argc, char *argv[])
     if (XrmGetResource(opt_db, "xclip.loops", "Xclip.Loops", &rec_typ, &rec_val)
 	) {
 	sloop = atoi(rec_val.addr);
-	if (fverb == OVERBOSE)	/* print in verbose mode only */
+	if (xcverb >= OVERBOSE)
 	    fprintf(stderr, "Loops: %i\n", sloop);
+    }
+
+    /* check for -sensitive */
+    if (XrmGetResource(opt_db, "xclip.sensitive", "Xclip.Sensitive", &rec_typ, &rec_val)
+	) {
+	wait = 50;
+	fsecm = T;
+	if (xcverb >= OVERBOSE) {
+	    fprintf(stderr, "Sensitive Mode Implies -wait 1\n");
+	    fprintf(stderr, "Sensitive Buffers Will Be Zeroed At Exit\n");
+        }
+    }
+
+    if (XrmGetResource(opt_db, "xclip.wait", "Xclip.Wait", &rec_typ, &rec_val)
+        ) {
+	wait = atoi(rec_val.addr);
+	if (xcverb >= OVERBOSE)
+	    fprintf(stderr, "wait: %i msec\n", wait);
+    }
+
+    /* check for -alt-text */
+    if (XrmGetResource(opt_db, "xclip.alt-text", "Xclip.Alt-text", &rec_typ, &rec_val)
+	) {
+	alt_text = rec_val.addr;
+	if (xcverb >= OVERBOSE)	/* print in verbose or debug mode only */
+	    fprintf(stderr, "Alternative text: %s\n", alt_text);
     }
 
     /* Read remaining options (filenames) */
@@ -150,6 +292,15 @@ doOptMain(int argc, char *argv[])
 	}
 	fil_names[fil_number] = argv[fil_number + 1];
 	fil_number++;
+    }
+
+    /* If filenames were given on the command line,
+     * default to reading input (unless -o was used).
+     */
+    if (fil_number > 0) {
+      if (!XrmGetResource(opt_db, "xclip.direction", "Xclip.Direction", &rec_typ, &rec_val)) {
+	  fdiri = T;		/* Direction is input */
+      }
     }
 }
 
@@ -175,7 +326,7 @@ doOptSel(void)
 	    break;
 	}
 
-	if (fverb == OVERBOSE) {
+	if (xcverb >= OVERBOSE) {
 	    fprintf(stderr, "Using selection: ");
 
 	    if (sseln == XA_PRIMARY)
@@ -199,30 +350,37 @@ doOptTarget(void)
     /* check for -noutf8 */
     if (XrmGetResource(opt_db, "xclip.noutf8", "Xclip.noutf8", &rec_typ, &rec_val)
 	) {
-	if (fverb == OVERBOSE)	/* print in verbose mode only */
+	if (xcverb >= OVERBOSE)	/* print in verbose or debug mode only */
 	    fprintf(stderr, "Using old UNICODE instead of UTF8.\n");
     }
     else if (XrmGetResource(opt_db, "xclip.target", "Xclip.Target", &rec_typ, &rec_val)
 	) {
 	target = XInternAtom(dpy, rec_val.addr, False);
-	if (fverb == OVERBOSE)	/* print in verbose mode only */
-	    fprintf(stderr, "Using %s.\n", rec_val.addr);
+	if (xcverb >= OVERBOSE)
+	    fprintf(stderr, "Using target: %s\n", rec_val.addr);
     }
     else {
 	target = XA_UTF8_STRING(dpy);
-	if (fverb == OVERBOSE)	/* print in verbose mode only */
-	    fprintf(stderr, "Using UTF8_STRING.\n");
+	if (xcverb >= OVERBOSE)
+	    fprintf(stderr, "Using target: UTF8_STRING.\n");
     }
 }
 
 static int
 doIn(Window win, const char *progname)
 {
-    unsigned char *sel_buf;	/* buffer for selection data */
+    unsigned char *sel_buf = NULL;	/* buffer for selection data */
     unsigned long sel_len = 0;	/* length of sel_buf */
     unsigned long sel_all = 0;	/* allocated size of sel_buf */
     XEvent evt;			/* X Event Structures */
     int dloop = 0;		/* done loops counter */
+    int x11_fd;                 /* fd on which XEvents appear */
+    fd_set in_fds;
+    struct timeval tv;
+
+    /* ConnectionNumber is a macro, it can't fail */
+    x11_fd = ConnectionNumber(dpy);
+
 
     /* in mode */
     sel_all = 16;		/* Reasonable ballpark figure */
@@ -241,12 +399,10 @@ doIn(Window win, const char *progname)
 		return EXIT_FAILURE;
 	    }
 	    else {
-		/* file opened successfully. Print
-		 * message (verbose mode only).
+		/* file opened successfully.
 		 */
-		if (fverb == OVERBOSE)
-		    fprintf(stderr, "Reading %s...\n", fil_names[fil_current]
-			);
+		if (xcverb >= ODEBUG)
+		    fprintf(stderr, "Reading %s...\n", fil_names[fil_current]);
 	    }
 	}
 
@@ -260,17 +416,19 @@ doIn(Window win, const char *progname)
 		 * allocated elements
 		 */
 		sel_all *= 2;
-		sel_buf = (unsigned char *) xcrealloc(sel_buf, sel_all * sizeof(char)
-		    );
+		sel_buf = (unsigned char *) xcrealloc(sel_buf, sel_all * sizeof(char) );
+		if (xcverb >= ODEBUG) {
+		    fprintf(stderr, "xclip: debug: Increased buffersize to %ld\n", sel_all);
+		}
 	    }
 	    sel_len += fread(sel_buf + sel_len, sizeof(char), sel_all - sel_len, fil_handle);
 	}
-    } while (fil_current < fil_number);
 
-    /* remove the last newline character if necessary */
-    if (frmnl && sel_len && sel_buf[sel_len - 1] == '\n') {
-	sel_len--;
-    }
+	if (fil_handle && (fil_handle != stdin)) {
+	    fclose(fil_handle);
+	    fil_handle = NULL;
+	}
+    } while (fil_current < fil_number);
 
     /* if there are no files being read from (i.e., input
      * is from stdin not files, and we are in filter mode,
@@ -281,9 +439,21 @@ doIn(Window win, const char *progname)
 	fclose(stdout);
     }
 
+    if (fil_names) {
+	free(fil_names);
+	fil_names = NULL;
+    }
+
+    /* remove the last newline character if necessary */
+    if (frmnl && sel_len && sel_buf[sel_len - 1] == '\n') {
+	sel_len--;
+    }
+
     /* Handle cut buffer if needed */
     if (sseln == XA_STRING) {
 	XStoreBuffer(dpy, (char *) sel_buf, (int) sel_len, 0);
+	XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+	xcmemzero(sel_buf,sel_len);
 	return EXIT_SUCCESS;
     }
 
@@ -293,28 +463,41 @@ doIn(Window win, const char *progname)
     /* FIXME: Should not use CurrentTime, according to ICCCM section 2.1 */
     XSetSelectionOwner(dpy, sseln, win, CurrentTime);
 
+    /* Double-check SetSelectionOwner did not "merely appear to succeed". */
+    Window owner = XGetSelectionOwner(dpy, sseln);
+    if (owner != win) {
+	fprintf(stderr, "xclip: error: Failed to take ownership of selection.\n");
+	return EXIT_FAILURE;
+    }
+
     /* fork into the background, exit parent process if we
      * are in silent mode
      */
-    if (fverb == OSILENT) {
+    if (xcverb == OSILENT) {
 	pid_t pid;
 
 	pid = fork();
 	/* exit the parent process; */
-	if (pid)
+	if (pid) {
+	    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+	    xcmemzero(sel_buf,sel_len);
 	    exit(EXIT_SUCCESS);
+	}
     }
 
     /* print a message saying what we're waiting for */
-    if (fverb > OSILENT) {
+    if (xcverb > OSILENT) {
 	if (sloop == 1)
 	    fprintf(stderr, "Waiting for one selection request.\n");
 
 	if (sloop < 1)
-	    fprintf(stderr, "Waiting for selection requests, Control-C to quit\n");
+	    fprintf(stderr,
+		    "Waiting for selection requests, Control-C to quit\n");
 
 	if (sloop > 1)
-	    fprintf(stderr, "Waiting for %i selection requests, Control-C to quit\n", sloop);
+	    fprintf(stderr,
+		    "Waiting for %i selection request%s, Control-C to quit\n",
+		    sloop,  (sloop==1)?"":"s");
     }
 
     /* Avoid making the current directory in use, in case it will need to be umounted */
@@ -323,14 +506,20 @@ doIn(Window win, const char *progname)
 	return EXIT_FAILURE;
     }
 
+    /* Jump into the middle of two while loops */
+    goto start;
+
     /* loop and wait for the expected number of
      * SelectionRequest events
      */
     while (dloop < sloop || sloop < 1) {
+	if (xcverb >= ODEBUG)
+	    fprintf(stderr, "\n========\n");
+
 	/* print messages about what we're waiting for
 	 * if not in silent mode
 	 */
-	if (fverb > OSILENT) {
+	if (xcverb > OSILENT) {
 	    if (sloop > 1)
 		fprintf(stderr, "  Waiting for selection request %i of %i.\n", dloop + 1, sloop);
 
@@ -341,31 +530,127 @@ doIn(Window win, const char *progname)
 		fprintf(stderr, "  Waiting for selection request number %i\n", dloop + 1);
 	}
 
-	/* wait for a SelectionRequest event */
+	/* wait for a SelectionRequest (paste) event */
 	while (1) {
-	    static unsigned int clear = 0;
-	    static unsigned int context = XCLIB_XCIN_NONE;
-	    static unsigned long sel_pos = 0;
-	    static Window cwin;
-	    static Atom pty;
+	    struct requestor *requestor;
+	    Window requestor_id;
 	    int finished;
+
+	    if (!XPending(dpy) && wait > 0) {
+		tv.tv_sec = wait/1000;
+		tv.tv_usec = (wait%1000)*1000;
+
+		/* build fd_set */
+		FD_ZERO(&in_fds);
+		FD_SET(x11_fd, &in_fds);
+		if (!select(x11_fd + 1, &in_fds, 0, 0, &tv)) {
+		    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+		    xcmemzero(sel_buf,sel_len);
+		    return EXIT_SUCCESS;
+		}
+	    }
+
+start:
 
 	    XNextEvent(dpy, &evt);
 
-	    finished = xcin(dpy, &cwin, evt, &pty, target, sel_buf, sel_len, &sel_pos, &context);
+	    if (xcverb >= ODEBUG)
+		fprintf(stderr, "\n");
 
-	    if (evt.type == SelectionClear)
-		clear = 1;
+	    if (xcverb >= ODEBUG) {
+		fprintf(stderr, "xclip: debug: Received %s event\n",
+		    evtstr[evt.type]);
+	    }
 
-	    if ((context == XCLIB_XCIN_NONE) && clear)
-		return EXIT_SUCCESS;
-
-	    if (finished)
+	    switch (evt.type) {
+	    case SelectionRequest:
+		requestor_id = evt.xselectionrequest.requestor;
+		requestor = get_requestor(requestor_id);
+		/* FIXME: ICCCM 2.2: check evt.time and refuse requests from
+		 * outside the period of time we have owned the selection. */
 		break;
+	    case PropertyNotify:
+		requestor_id = evt.xproperty.window;
+		requestor = get_requestor(requestor_id);
+		break;
+	    case SelectionClear:
+		if (xcverb >= OVERBOSE) {
+		    fprintf(stderr, "Lost selection ownership. ");
+		    requestor_id = XGetSelectionOwner(dpy, sseln);
+		    if (requestor_id == None)
+			fprintf(stderr, "(Some other client cleared the selection).\n");
+		    else
+			fprintf(stderr, "(%s did a copy).\n", xcnamestr(dpy, requestor_id) );
+		}
+		/* If the client loses ownership(SelectionClear event)
+		 * while it has a transfer in progress, it must continue to
+		 * service the ongoing transfer until it is completed.
+		 * See ICCCM section 2.2.
+		 */
+		/* Set dloop to force exit after all transfers finish. */
+		dloop = sloop;
+		/* remove requestors for dead windows */
+		clean_requestors();
+		/* if there are no more in-progress transfers, force exit */
+		if (!requestors) {
+		    if (xcverb >= OVERBOSE) {
+			fprintf(stderr, "Exiting.\n");
+		    }
+		    return EXIT_SUCCESS;
+		}
+		else {
+		    if (xcverb >= OVERBOSE) {
+			struct requestor *r = requestors;
+			int i=0;
+			fprintf(stderr, "Requestors: ");
+			while (r) {
+			    fprintf(stderr, "0x%lx\t", r->cwin);
+			    r = r->next;
+			    i++;
+			}
+			fprintf(stderr, "\n");
+			fprintf(stderr,
+				"Still transferring data to %d requestor%s.\n",
+				i, (i==1)?"":"s");
+		    }
+		}
+		continue;	/* Wait for INCR PropertyNotify events */
+	    default:
+		/* Ignore all other event types */
+		if (xcverb >= ODEBUG) {
+		    fprintf(stderr,
+			    "xclip: debug: Ignoring X event type %d (%s)\n",
+			    evt.type, evtstr[evt.type]);
+		}
+		continue;
+	    }
+
+	    if (xcverb >= ODEBUG) {
+		fprintf(stderr, "xclip: debug: event was sent by %s\n",
+			xcnamestr(dpy, requestor_id) );
+		requestor_id=0;
+	    }
+
+	    finished = xcin(dpy, &(requestor->cwin), evt, &(requestor->pty),
+			    target, sel_buf, sel_len, &(requestor->sel_pos),
+			    alt_text, &(requestor->context),
+			    &(requestor->chunk_size));
+
+	    if (finished) {
+		del_requestor(requestor);
+		break;
+	    }
+	    if (requestor->cwin == 0) {
+		del_requestor(requestor);
+		break;
+	    }
 	}
 
 	dloop++;		/* increment loop counter */
     }
+
+    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+    xcmemzero(sel_buf,sel_len);
 
     return EXIT_SUCCESS;
 }
@@ -377,7 +662,7 @@ printSelBuf(FILE * fout, Atom sel_type, unsigned char *sel_buf, size_t sel_len)
     Atom html = XInternAtom(dpy, "text/html", True);
 #endif
 
-    if (fverb == OVERBOSE) {	/* print in verbose mode only */
+    if (xcverb >= OVERBOSE) {	/* print in verbose mode only */
 	char *atom_name = XGetAtomName(dpy, sel_type);
 	fprintf(stderr, "Type is %s.\n", atom_name);
 	XFree(atom_name);
@@ -446,7 +731,7 @@ static int
 doOut(Window win)
 {
     Atom sel_type = None;
-    unsigned char *sel_buf;	/* buffer for selection data */
+    unsigned char *sel_buf = NULL;	/* buffer for selection data */
     unsigned long sel_len = 0;	/* length of sel_buf */
     XEvent evt;			/* X Event Structures */
     unsigned int context = XCLIB_XCOUT_NONE;
@@ -471,10 +756,15 @@ doOut(Window win)
 		}
 		else {
 		    /* no fallback available, exit with failure */
-		    char *atom_name = XGetAtomName(dpy, target);
-		    fprintf(stderr, "Error: target %s not available\n", atom_name);
-		    XFree(atom_name);
-		    return EXIT_FAILURE;
+		    if (fsecm) {
+			/* If user requested -sensitive, then prevent further pastes (even though we failed to paste) */
+			XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+			/* Clear memory buffer */
+			xcmemzero(sel_buf,sel_len);
+		    }
+		    free(sel_buf);
+		    errconvsel(dpy, target, sseln);
+		    // errconvsel does not return but exits with EXIT_FAILURE
 		}
 	    }
 
@@ -494,10 +784,20 @@ doOut(Window win)
 	 * empty
 	 */
 	printSelBuf(stdout, sel_type, sel_buf, sel_len);
-	if (sseln == XA_STRING)
+
+	if (fsecm) {
+	    /* If user requested -sensitive, then prevent further pastes */
+	    XSetSelectionOwner(dpy, sseln, None, CurrentTime);
+	    /* Clear memory buffer */
+	    xcmemzero(sel_buf,sel_len);
+	}
+
+	if (sseln == XA_STRING) {
 	    XFree(sel_buf);
-	else
+	}
+	else {
 	    free(sel_buf);
+	}
     }
 
     return EXIT_SUCCESS;
@@ -510,6 +810,14 @@ main(int argc, char *argv[])
     Window win;			/* Window */
     int exit_code;
 
+     /* As a convenience to command-line users, default to -o if stdin
+     * is a tty. Will be overridden by -i or if user specifies a
+     * filename as input.
+     */
+    if (isatty(0)) {
+      fdiri = F;		/* direction is out */
+    }
+
     /* set up option table. I can't figure out a better way than this to
      * do it while sticking to pure ANSI C. The option and specifier
      * members have a type of volatile char *, so they need to be allocated
@@ -518,89 +826,142 @@ main(int argc, char *argv[])
      * work with gcc
      */
 
+    int i=0;
     /* loop option entry */
-    opt_tab[0].option = xcstrdup("-loops");
-    opt_tab[0].specifier = xcstrdup(".loops");
-    opt_tab[0].argKind = XrmoptionSepArg;
-    opt_tab[0].value = (XPointer) NULL;
+    opt_tab[i].option = xcstrdup("-loops");
+    opt_tab[i].specifier = xcstrdup(".loops");
+    opt_tab[i].argKind = XrmoptionSepArg;
+    opt_tab[i].value = (XPointer) NULL;
+    i++;
 
     /* display option entry */
-    opt_tab[1].option = xcstrdup("-display");
-    opt_tab[1].specifier = xcstrdup(".display");
-    opt_tab[1].argKind = XrmoptionSepArg;
-    opt_tab[1].value = (XPointer) NULL;
+    opt_tab[i].option = xcstrdup("-display");
+    opt_tab[i].specifier = xcstrdup(".display");
+    opt_tab[i].argKind = XrmoptionSepArg;
+    opt_tab[i].value = (XPointer) NULL;
+    i++;
 
     /* selection option entry */
-    opt_tab[2].option = xcstrdup("-selection");
-    opt_tab[2].specifier = xcstrdup(".selection");
-    opt_tab[2].argKind = XrmoptionSepArg;
-    opt_tab[2].value = (XPointer) NULL;
+    opt_tab[i].option = xcstrdup("-selection");
+    opt_tab[i].specifier = xcstrdup(".selection");
+    opt_tab[i].argKind = XrmoptionSepArg;
+    opt_tab[i].value = (XPointer) NULL;
+    i++;
 
     /* filter option entry */
-    opt_tab[3].option = xcstrdup("-filter");
-    opt_tab[3].specifier = xcstrdup(".filter");
-    opt_tab[3].argKind = XrmoptionNoArg;
-    opt_tab[3].value = (XPointer) xcstrdup(ST);
+    opt_tab[i].option = xcstrdup("-filter");
+    opt_tab[i].specifier = xcstrdup(".filter");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup(ST);
+    i++;
 
     /* in option entry */
-    opt_tab[4].option = xcstrdup("-in");
-    opt_tab[4].specifier = xcstrdup(".direction");
-    opt_tab[4].argKind = XrmoptionNoArg;
-    opt_tab[4].value = (XPointer) xcstrdup("I");
+    opt_tab[i].option = xcstrdup("-in");
+    opt_tab[i].specifier = xcstrdup(".direction");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("I");
+    i++;
 
     /* out option entry */
-    opt_tab[5].option = xcstrdup("-out");
-    opt_tab[5].specifier = xcstrdup(".direction");
-    opt_tab[5].argKind = XrmoptionNoArg;
-    opt_tab[5].value = (XPointer) xcstrdup("O");
+    opt_tab[i].option = xcstrdup("-out");
+    opt_tab[i].specifier = xcstrdup(".direction");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("O");
+    i++;
 
     /* version option entry */
-    opt_tab[6].option = xcstrdup("-version");
-    opt_tab[6].specifier = xcstrdup(".print");
-    opt_tab[6].argKind = XrmoptionNoArg;
-    opt_tab[6].value = (XPointer) xcstrdup("V");
+    opt_tab[i].option = xcstrdup("-version");
+    opt_tab[i].specifier = xcstrdup(".print");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("V");
+    i++;
 
     /* help option entry */
-    opt_tab[7].option = xcstrdup("-help");
-    opt_tab[7].specifier = xcstrdup(".print");
-    opt_tab[7].argKind = XrmoptionNoArg;
-    opt_tab[7].value = (XPointer) xcstrdup("H");
+    opt_tab[i].option = xcstrdup("-help");
+    opt_tab[i].specifier = xcstrdup(".print");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("H");
+    i++;
 
     /* silent option entry */
-    opt_tab[8].option = xcstrdup("-silent");
-    opt_tab[8].specifier = xcstrdup(".olevel");
-    opt_tab[8].argKind = XrmoptionNoArg;
-    opt_tab[8].value = (XPointer) xcstrdup("S");
+    opt_tab[i].option = xcstrdup("-silent");
+    opt_tab[i].specifier = xcstrdup(".olevel");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("S");
+    i++;
 
     /* quiet option entry */
-    opt_tab[9].option = xcstrdup("-quiet");
-    opt_tab[9].specifier = xcstrdup(".olevel");
-    opt_tab[9].argKind = XrmoptionNoArg;
-    opt_tab[9].value = (XPointer) xcstrdup("Q");
+    opt_tab[i].option = xcstrdup("-quiet");
+    opt_tab[i].specifier = xcstrdup(".olevel");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("Q");
+    i++;
 
     /* verbose option entry */
-    opt_tab[10].option = xcstrdup("-verbose");
-    opt_tab[10].specifier = xcstrdup(".olevel");
-    opt_tab[10].argKind = XrmoptionNoArg;
-    opt_tab[10].value = (XPointer) xcstrdup("V");
+    opt_tab[i].option = xcstrdup("-verbose");
+    opt_tab[i].specifier = xcstrdup(".olevel");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("V");
+    i++;
+
+    /* debug option entry */
+    opt_tab[i].option = xcstrdup("-debug");
+    opt_tab[i].specifier = xcstrdup(".olevel");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("D");
+    i++;
 
     /* utf8 option entry */
-    opt_tab[11].option = xcstrdup("-noutf8");
-    opt_tab[11].specifier = xcstrdup(".noutf8");
-    opt_tab[11].argKind = XrmoptionNoArg;
-    opt_tab[11].value = (XPointer) xcstrdup("N");
+    opt_tab[i].option = xcstrdup("-noutf8");
+    opt_tab[i].specifier = xcstrdup(".noutf8");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("N");
+    i++;
 
     /* target option entry */
-    opt_tab[12].option = xcstrdup("-target");
-    opt_tab[12].specifier = xcstrdup(".target");
-    opt_tab[12].argKind = XrmoptionSepArg;
-    opt_tab[12].value = (XPointer) NULL;
+    opt_tab[i].option = xcstrdup("-target");
+    opt_tab[i].specifier = xcstrdup(".target");
+    opt_tab[i].argKind = XrmoptionSepArg;
+    opt_tab[i].value = (XPointer) NULL;
+    i++;
+
+    /* alt-text option entry */
+    opt_tab[i].option = xcstrdup("-alt-text");
+    opt_tab[i].specifier = xcstrdup(".alt-text");
+    opt_tab[i].argKind = XrmoptionSepArg;
+    opt_tab[i].value = (XPointer) NULL;
+    i++;
 
     /* "remove newline if it is the last character" entry */
-    opt_tab[13].option = xcstrdup("-rmlastnl");
-    opt_tab[13].specifier = xcstrdup(".rmlastnl");
-    opt_tab[13].argKind = XrmoptionNoArg;
-    opt_tab[13].value = (XPointer) xcstrdup(ST);
+    opt_tab[i].option = xcstrdup("-rmlastnl");
+    opt_tab[i].specifier = xcstrdup(".rmlastnl");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup(ST);
+    i++;
+
+    /* sensitive mode for pasting passwords */
+    opt_tab[i].option = xcstrdup("-sensitive");
+    opt_tab[i].specifier = xcstrdup(".sensitive");
+    opt_tab[i].argKind = XrmoptionNoArg;
+    opt_tab[i].value = (XPointer) xcstrdup("s");
+    i++;
+
+    /* wait option entry */
+    opt_tab[i].option = xcstrdup("-wait");
+    opt_tab[i].specifier = xcstrdup(".wait");
+    opt_tab[i].argKind = XrmoptionSepArg;
+    opt_tab[i].value = (XPointer) NULL;
+    i++;
+
+    /* save size of opt_tab for doOptMain to use */
+    opt_tab_size = i;
+    if ( ( sizeof(opt_tab) / sizeof(opt_tab[0]) ) < opt_tab_size ) {
+	fprintf(stderr,
+		"xclip: programming error: opt_tab declared to hold %ld options, but %d defined\n",
+		sizeof(opt_tab) / sizeof(opt_tab[0]), opt_tab_size);
+	return EXIT_FAILURE;
+    }
+
 
     /* parse command line options */
     doOptMain(argc, argv);
@@ -608,7 +969,7 @@ main(int argc, char *argv[])
     /* Connect to the X server. */
     if ((dpy = XOpenDisplay(sdisp))) {
 	/* successful */
-	if (fverb == OVERBOSE)
+	if (xcverb >= ODEBUG)
 	    fprintf(stderr, "Connected to X server.\n");
     }
     else {
@@ -627,6 +988,9 @@ main(int argc, char *argv[])
 
     /* get events about property changes */
     XSelectInput(dpy, win, PropertyChangeMask);
+
+    /* If we get an X error, catch it instead of barfing */
+    XSetErrorHandler(xchandler);
 
     if (fdiri)
 	exit_code = doIn(win, argv[0]);

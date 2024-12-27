@@ -1,6 +1,6 @@
 /*
- *  
- * 
+ *
+ *
  *  xclib.h - header file for functions in xclib.c
  *  Copyright (C) 2001 Kim Saunders
  *  Copyright (C) 2007-2008 Peter Åstrand
@@ -20,6 +20,19 @@
  */
 
 #include <X11/Xlib.h>
+
+/* global verbosity output level */
+extern int xcverb;
+
+/* global error flags from xchandler() */
+extern int xcerrflag;
+extern XErrorEvent xcerrevt;
+
+/* output level constants for xcverb */
+#define OSILENT  0
+#define OQUIET   1
+#define OVERBOSE 2
+#define ODEBUG   9
 
 /* xcout() contexts */
 #define XCLIB_XCOUT_NONE	0	/* no context */
@@ -53,9 +66,23 @@ extern int xcin(
 	unsigned char*,
 	unsigned long,
 	unsigned long*,
-	unsigned int*
+	char*,
+	unsigned int*,
+	long*
 );
 extern void *xcmalloc(size_t);
 extern void *xcrealloc(void*, size_t);
 extern void *xcstrdup(const char *);
 extern void xcmemcheck(void*);
+extern int xcfetchname(Display *, Window, char **);
+extern char *xcnamestr(Display *, Window);
+
+
+/* volatile prevents compiler from causing dead-store elimination with optimization enabled */
+typedef void *(*memset_t)(void *, int, size_t);
+static volatile memset_t memset_func = memset;
+void xcmemzero(void *ptr, size_t len);
+int xchandler(Display *, XErrorEvent *);
+
+/* Table of event names from event numbers */
+extern const char *evtstr[LASTEvent];

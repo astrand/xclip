@@ -20,4 +20,3 @@ AC_CHECK_HEADER([iconv.h],
 AC_CHECK_LIB(Xmu, XmuClientWindow, [], AC_MSG_ERROR([*** libXmu not found ***]))
 
 AC_OUTPUT(Makefile)
-
