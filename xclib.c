@@ -354,7 +354,7 @@ xcin(Display * dpy,
      Window * win,
      XEvent evt,
      Atom * pty, Atom target, unsigned char *txt, unsigned long len, unsigned long *pos,
-     unsigned int *context, long *chunk_size)
+     char *alt_txt, unsigned int *context, long *chunk_size)
 {
     unsigned long chunk_len;	/* length of current chunk (for incr
 				 * transfers only)
@@ -362,6 +362,12 @@ xcin(Display * dpy,
     XEvent res;			/* response to event */
     static Atom inc;
     static Atom targets;
+    static Atom alt_target;
+
+    if (!alt_target) {
+	alt_target = XInternAtom(dpy, "STRING", False);
+    }
+
 
     if (!targets) {
 	targets = XInternAtom(dpy, "TARGETS", False);
@@ -412,7 +418,8 @@ xcin(Display * dpy,
 
 	/* put the data into a property */
 	if (evt.xselectionrequest.target == targets) {
-	    Atom types[2] = { targets, target };
+	    Atom types[3] = { targets, target, alt_target };
+	    int types_count = alt_txt == NULL ? 2 : 3;
 
 	    if ( xcverb >= ODEBUG ) {
 		fprintf(stderr, "xclib: debug: sending list of TARGETS\n");
@@ -424,8 +431,20 @@ xcin(Display * dpy,
 			    *pty,
 			    XA_ATOM,
 			    32, PropModeReplace, (unsigned char *) types,
-			    (int) (sizeof(types) / sizeof(Atom))
+			    types_count
 		);
+	}
+	else if (evt.xselectionrequest.target == alt_target && alt_txt) {
+	    if ( xcverb >= ODEBUG ) {
+		fprintf(stderr, "xclib: debug: sending alternative text\n");
+	    }
+
+	    XChangeProperty(dpy,
+			    *win,
+			    *pty,
+			    alt_target,
+			    8, PropModeReplace, (unsigned char *)alt_txt,
+			    (int)strlen(alt_txt));
 	}
 	else if (len > *chunk_size) {
 	    /* send INCR response */
@@ -478,6 +497,10 @@ xcin(Display * dpy,
 
 	/* don't treat TARGETS request as contents request */
 	if (evt.xselectionrequest.target == targets)
+	    return (1);		/* Finished with request */
+
+	/* don't treat alternative text request as contents request */
+	if (evt.xselectionrequest.target == alt_target)
 	    return (1);		/* Finished with request */
 
 	/* if len <= chunk_size, then the data was sent all at
