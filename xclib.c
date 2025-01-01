@@ -573,12 +573,13 @@ xcin(Display * dpy,
 		fprintf(stderr, "xclib: debug: sending alternative text\n");
 	    }
 
-	    XChangeProperty(dpy,
-			    *win,
-			    *pty,
-			    alt_target,
-			    8, PropModeReplace, (unsigned char *)alt_txt,
-			    (int)strlen(alt_txt));
+	    xcchangeproperr = xcchangeprop(dpy, *theirwin, *pty,
+					   alt_target, 8, PropModeReplace,
+					   (unsigned char *)alt_txt,
+					   (int)strlen(alt_txt));
+	    if (xcverb >= OVERBOSE && xcchangeproperr) {
+		fprintf(stderr, "Detected XChangeProperty failure.\n");
+	    }
 	}
 	else if (len > *chunk_size) {
 	    /* send INCR response */
