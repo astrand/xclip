@@ -164,6 +164,7 @@ for fold in 0 4 7 10 15; do
         printf "$PASS"
 
     done
+    echo
 
     # test piping the file to xclip
     echo Piping a $lines line file to xclip using -
