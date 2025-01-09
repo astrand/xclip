@@ -180,7 +180,7 @@ doOptMain(int argc, char *argv[])
     /* Initialise resource manager and parse options into database */
     XrmInitialize();
 
-    if (!strcmp(argv[1], "--help"))
+    if (argc > 1 && !strcmp(argv[1], "--help"))
     {
 	prhelp(argv[0]);
 	exit(0);
