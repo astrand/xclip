@@ -414,7 +414,10 @@ doIn(Window win, const char *progname)
 		    sel_len += rd;
 		    break;
 		}
-		goto err;
+		if (errno == EINTR)
+		    clearerr(fil_handle);
+		else
+		    goto err;
 	    }
 	    sel_len += rd;
 
