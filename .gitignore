@@ -14,6 +14,8 @@ depcomp
 install-sh
 missing
 stamp-h1
+configure.ac~
+configure~
 
 # compiling output
 *.o
