@@ -38,7 +38,7 @@ prhelp(char *name)
 "  -i, -in          read text into X selection from stdin or files [DEFAULT]\n"
 "  -f, -filter      text piped in to selection will also be printed out\n"
 "  -o, -out         prints the selection to standard out\n"
-"      -selection   primary [DEFAULT], clipboard, secondary, or buffer-cut\n"
+"  -s, -selection   primary [DEFAULT], clipboard, secondary, or buffer-cut (p, c, s or b)\n"
 "  -t, -target      specify target atom: image/jpeg, UTF8_STRING [DEFAULT]\n"
 "      -alt-text    specify text representation for STRING target\n"
 "      -silent      errors only, (run in background) [DEFAULT]\n"
@@ -51,7 +51,7 @@ prhelp(char *name)
 "      -noutf8      don't treat text as utf-8, use old unicode\n"
 "  -r, -rmlastnl    remove the last newline character if present\n"
 "  -d, -display     X display to connect to (eg localhost:0\")\n"
-"      -version     version information\n"
+"  -v  -version     version information\n"
 "  -h, -help        this usage information\n"
 "\n" "Report bugs to <astrand@lysator.liu.se>\n", name);
     exit(EXIT_SUCCESS);
