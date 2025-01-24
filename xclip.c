@@ -431,7 +431,7 @@ doIn(Window win, const char *progname)
 		sel_all *= 2;
 		sel_buf = (unsigned char *) xcrealloc(sel_buf, sel_all * sizeof(char) );
 		if (xcverb >= ODEBUG) {
-		    fprintf(stderr, "xclip: debug: Increased buffersize to %ld\n", sel_all);
+		    fprintf(stderr, "xclip: debug: Increased buffersize to %lu\n", sel_all);
 		}
 	    }
 	}
