@@ -42,10 +42,14 @@ when the last character of the selection is a newline character, remove it. Newl
 number of X selection requests (pastes into X applications) to wait for before exiting, with a value of 0 (default) causing xclip to wait for an unlimited number of requests until another application (possibly another invocation of xclip) takes ownership of the selection.
 .TP
 \fB\-t\fR \fIt\fR, \fB\-target\fR \fIt\fR
-specify a particular data format using the given target atom. With \fB\-o\fR the
-special target atom name "TARGETS" can be used to get a list of valid target
-atoms for this selection. The default target is "STRING". For more information
-about target atoms refer to ICCCM section 2.6.2
+specify a particular data format using the given target atom. The default target is "STRING".
+Some target atoms have a specfic semantic.
+With \fB\-o\fR the special target atom name "TARGETS" can be used to get a list of valid target
+atoms for this selection. 
+With \fB\-o\fR the special target atom name "TIMESTAMP" can be used to get the timestamp used to acquire the selection.
+With \fB\-o\fR the special target atom name "MULTIPLE" can be used to... (see example below).
+With \fB\-o\fR the special target atom name "SAVE_TARGETS" can be used to ...
+For more information about target atoms refer to ICCCM section 2.6.2
 .TP
 \fB\-alt-text\fR \fIt\fR
 specify an alternative text to put into the target atom "STRING". Some applications refuse to paste text unless this atom is provided in addition to other text targets such as "text/html".
@@ -116,6 +120,11 @@ Middle click in an X application supporting HTML to paste the contents of the gi
 .B xclip -loops 10 -verbose /etc/motd
 .PP
 Exit after /etc/motd (message of the day) has been pasted 10 times. Show how many selection requests (pastes) have been processed.
+
+.B uptime | xclip -o -t MULTIPLE test/html= text=
+.PP
+Put your uptime in ...
+
 
 .SH NOTES
 
