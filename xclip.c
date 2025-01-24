@@ -751,6 +751,7 @@ doOut(Window win)
     if (sseln == XA_STRING)
 	sel_buf = (unsigned char *) XFetchBuffer(dpy, (int *) &sel_len, 0);
     else {
+	sel_buf = NULL;
 	while (1) {
 	    /* only get an event if xcout() is doing something */
 	    if (context != XCLIB_XCOUT_NONE)
@@ -772,9 +773,13 @@ doOut(Window win)
 			/* If user requested -sensitive, then prevent further pastes (even though we failed to paste) */
 			XSetSelectionOwner(dpy, sseln, None, CurrentTime);
 			/* Clear memory buffer */
-			xcmemzero(sel_buf,sel_len);
+			if (sel_buf != NULL)
+				xcmemzero(sel_buf,sel_len);
 		    }
-		    free(sel_buf);
+		    if (sel_buf != NULL) {
+			free(sel_buf);
+			sel_buf = NULL;
+		    }
 		    errconvsel(dpy, target, sseln);
 		    // errconvsel does not return but exits with EXIT_FAILURE
 		}
